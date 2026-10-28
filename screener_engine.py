@@ -198,6 +198,25 @@ UNIVERSES = {
 
 DAILY_PIVOT_BREAKOUT_TICKERS = UNIVERSES["📐 Daily Pivot Breakout Strategy (42 líderes)"]
 
+# Universo Maestro de Mercado Completo EE.UU. (S&P 500 + S&P 400 + S&P 600 + Nasdaq 100 + High Momentum + Deepvue 752 + TML)
+FULL_US_MARKET_TICKERS = sorted(list(set(
+    US_BROAD_MARKET_TICKERS
+    + HIGH_MOMENTUM_EXPANDED_TICKERS
+    + DEEPVUE_UNIVERSE_752_TICKERS
+    + TML_331_TICKERS
+    + LIQUID_LEADERS_187_TICKERS
+    + MOMENTUM_LEADERS_186_TICKERS
+    + WEEKLY_STRENGTH_399_TICKERS
+    + DAILY_PIVOT_BREAKOUT_TICKERS
+)))
+
+# Caché en memoria de barras diarias (TTL 5 minutos) para escanear los ~1,850 activos en <1.5s al cambiar de filtro
+_DAILY_BARS_CACHE = {
+    "timestamp": 0.0,
+    "provider": "",
+    "data": {}
+}
+
 def verify_alpaca_credentials(api_key: str, secret_key: str) -> tuple[bool, str]:
     """Valida las credenciales de Alpaca Paper Trading."""
     if not ALPACA_AVAILABLE:
@@ -242,11 +261,15 @@ def calculate_adr(df: pd.DataFrame, period: int = 10) -> float:
 
 def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict:
     """
-    Evalúa el indicador 'Daily Pivot Breakout Strategy Indicator (by Mike)' con todos sus componentes:
-    - Fila 1: Left Strength (5), Right Strength (5), Pivot Lookback (100), ROC Period (days) (100), Minimum ROC (%) (30)
-    - Fila 2: RVOL Period (days) (20), EMA Length (100), EMA Slope Lookback (100), EMA Smooth Length (1), Min EMA Slope % (20)
-    - Fila 3: Enable Momentum Candle Colors (True), Pivot High (línea verde continua),
-              20% Trailing Stop (línea punteada azul •••••••), Entry Signals.
+    Evalúa en tiempo real el indicador 'Daily Pivot Breakout Strategy Indicator (by Mike)':
+    - Left Strength (5), Right Strength (5), Pivot Lookback (100)
+    - ROC Period (100 días) >= Minimum ROC (30%)
+    - RVOL Period (20 días): Volumen de ruptura > SMA(Volumen, 20) (RVOL > 1.0x)
+    - EMA Length (100), EMA Slope Lookback (100), EMA Smooth Length (1), Min EMA Slope % (20%)
+    - 20% Trailing Stop (•••••••) y Momentum Candle Colors.
+    IMPORTANTE: Evalúa TODOS los Pivot Highs confirmados e intactos (no rotos previamente) dentro de las
+    últimas 100 sesiones. Un 'Breakout' solo se dispara cuando el precio cruza un Pivot High intacto
+    en la sesión actual (o dentro de la ventana de ruptura reciente de 1 a 3 días), nunca por trades viejos.
     """
     cfg = {
         "left_strength": 5,
@@ -265,7 +288,9 @@ def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict
         "show_trailing_stop": True,
         "show_entry_signals": True,
         "min_rvol": 1.0,
+        "breakout_window_days": 3,
         "include_near_pivot": False,
+        "include_active_trade": False,
     }
     if params:
         cfg.update(params)
@@ -282,10 +307,12 @@ def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict
     min_slope = float(cfg["min_ema_slope_pct"])
     trail_pct = float(cfg.get("trailing_stop_pct", 20.0))
     min_rvol = float(cfg.get("min_rvol", 1.0))
+    bk_win = max(1, int(cfg.get("breakout_window_days", 3)))
     include_near = bool(cfg.get("include_near_pivot", False))
+    include_active = bool(cfg.get("include_active_trade", False))
 
     n = len(df)
-    if n < max(L + R + 5, 30):
+    if n < max(L + R + 10, 60):
         return {"valid": False}
 
     highs = df["High"].values.astype(float)
@@ -307,7 +334,6 @@ def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict
     ema_past = float(ema_vals[slope_idx]) if ema_vals[slope_idx] > 0 else curr_ema
     ema_slope_pct = ((curr_ema - ema_past) / (ema_past + 1e-9)) * 100.0
 
-    # Series vectorizadas de ROC, EMA Slope y RVOL para simular Entry Signals y 20% Trailing Stop barra a barra
     ema_shift = pd.Series(ema_vals, index=df.index).shift(slope_lb).bfill().values
     ema_slope_series = ((ema_vals - ema_shift) / (ema_shift + 1e-9)) * 100.0
 
@@ -334,47 +360,44 @@ def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict
                     confirmed_pivots.append((p_idx, float(h_val), df.index[p_idx]))
 
     if not confirmed_pivots:
-        start_fb = max(L, n - 1 - piv_lb)
-        end_fb = max(start_fb + 1, n - R)
-        fb_slice = highs[start_fb:end_fb]
-        if len(fb_slice) == 0:
-            return {"valid": False}
-        rel_i = int(np.argmax(fb_slice))
-        p_i = start_fb + rel_i
-        confirmed_pivots.append((p_i, float(highs[p_i]), df.index[p_i]))
-        pivot_at_bar[min(n - 1, p_i + R)] = (p_i, float(highs[p_i]), df.index[p_i])
+        return {"valid": False}
 
-    # 3. Simulación barra a barra de:
-    #    - Active Pivot High line (─── verde) en ventana Pivot Lookback (100)
-    #    - Entry Signals (Breakout cuando Close cruza sobre Pivot High con ROC>=30%, EMA Slope>=20%, RVOL>1.0x)
-    #    - 20% Trailing Stop (••••••• azul: Peak_Since_Entry * (1 - 0.20))
+    # 3. Simulación barra a barra exacta:
+    #    Cada vez que se confirma un nuevo Pivot High (5L/5R), se registra como nivel de resistencia.
+    #    En cada barra b verificamos si Close[b] rompe por primera vez cualquiera de los Pivot Highs
+    #    confirmados e intactos dentro de las últimas `piv_lb` (100) barras.
     pivot_line_series = np.full(n, np.nan)
     trailing_stop_series = np.full(n, np.nan)
-    entry_signals = []   # list of (bar_idx, date, price, pivot_broken)
-    exit_signals = []    # list of (bar_idx, date, price, stop_level)
+    entry_signals = []   # (bar_idx, date, close_price, broken_pivot_price)
+    exit_signals = []    # (bar_idx, date, close_price, trailing_stop_price)
 
     in_trade = False
     peak_since_entry = 0.0
-    entry_price = 0.0
-    entry_idx = -1
-    entry_date = None
-    known_pivots = []  # list of (piv_idx, piv_price, piv_date, broken_flag)
+    known_pivots = []  # [piv_idx, piv_price, piv_date, broken_bool]
 
     for b in range(max(L + R, 20), n):
         if b in pivot_at_bar:
             p_i, p_val, p_dt = pivot_at_bar[b]
-            known_pivots.append([p_i, p_val, p_dt, False])
+            # Si ya fue superado durante las R barras de confirmación, nace roto; si no, nace intacto
+            already_exceeded = np.any(closes[p_i + 1:b] > p_val * 1.002)
+            known_pivots.append([p_i, p_val, p_dt, bool(already_exceeded)])
 
-        # Filtrar pivotes dentro del Pivot Lookback (100 barras hacia atrás desde b)
+        # Pivotes dentro de la ventana Pivot Lookback (100 barras)
         valid_pivs = [p for p in known_pivots if (b - p[0]) <= piv_lb]
-        active_piv = None
-        if valid_pivs:
-            # Preferir el pivote confirmado más reciente aún no roto, o el último confirmado en lookback
-            unbroken = [p for p in valid_pivs if not p[3]]
-            active_piv = unbroken[-1] if unbroken else valid_pivs[-1]
-            pivot_line_series[b] = active_piv[1]
+        unbroken_pivs = [p for p in valid_pivs if not p[3]]
 
-        # Actualizar 20% Trailing Stop si estamos dentro de un trade activo
+        # El Pivot High activo a mostrar en la línea verde es el pivote intacto más cercano por encima del precio previo (o el más reciente)
+        ref_piv = None
+        if unbroken_pivs:
+            prev_c_val = closes[b - 1] if b >= 1 else closes[b]
+            above_prev = [p for p in unbroken_pivs if p[1] >= prev_c_val * 0.995]
+            ref_piv = min(above_prev, key=lambda x: x[1]) if above_prev else unbroken_pivs[-1]
+            pivot_line_series[b] = ref_piv[1]
+        elif valid_pivs:
+            ref_piv = max(valid_pivs, key=lambda x: x[1])
+            pivot_line_series[b] = ref_piv[1]
+
+        # Actualizar 20% Trailing Stop si hay un trade abierto
         if in_trade:
             peak_since_entry = max(peak_since_entry, highs[b], closes[b])
             t_stop = peak_since_entry * (1.0 - trail_pct / 100.0)
@@ -383,37 +406,57 @@ def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict
                 in_trade = False
                 exit_signals.append((b, df.index[b], float(closes[b]), float(t_stop)))
 
-        # Evaluar Entry Signal (Breakout de Pivote + ROC >= 30% + EMA Slope >= 20% + RVOL > 1.0x)
-        if active_piv is not None:
-            piv_val = active_piv[1]
-            prev_c = closes[b - 1] if b >= 1 else closes[b]
-            crossed_pivot = (closes[b] > piv_val) and (prev_c <= piv_val * 1.005 or not active_piv[3])
+        # Verificar si en la barra b se rompe por primera vez algún Pivot High intacto del lookback
+        broken_now = [p for p in unbroken_pivs if closes[b] > p[1]]
+        if broken_now:
+            # Tomamos el pivote roto de mayor nivel estructural
+            target_piv = max(broken_now, key=lambda x: x[1])
+            piv_val = target_piv[1]
             mom_ok = (roc_series[b] >= min_roc)
             slope_ok = (ema_slope_series[b] >= min_slope) and (closes[b] > ema_vals[b])
             rvol_ok = (rvol_series[b] >= min_rvol)
 
-            if crossed_pivot and mom_ok and slope_ok and rvol_ok:
-                active_piv[3] = True
+            # Marcar como rotos todos los pivotes superados al cierre de la barra b
+            for p in broken_now:
+                p[3] = True
+
+            if mom_ok and slope_ok and rvol_ok:
+                pivot_line_series[b] = piv_val
                 if not in_trade:
                     in_trade = True
-                    entry_price = float(closes[b])
-                    entry_idx = b
-                    entry_date = df.index[b]
                     peak_since_entry = max(highs[b], closes[b])
                     trailing_stop_series[b] = peak_since_entry * (1.0 - trail_pct / 100.0)
                 entry_signals.append((b, df.index[b], float(closes[b]), float(piv_val)))
-            elif closes[b] > piv_val * 1.01:
-                active_piv[3] = True
 
-    # Pivote de referencia actual
-    last_piv_idx, last_piv_price, last_piv_date = confirmed_pivots[-1]
-    highest_piv = max(confirmed_pivots, key=lambda x: x[1])
-    active_piv_price = float(pivot_line_series[-1]) if not np.isnan(pivot_line_series[-1]) else float(last_piv_price)
-    active_piv_date = str(last_piv_date)[:10]
+    # Determinar el Pivot High de referencia actual para la tabla y el gráfico:
+    # 1. Si hubo un Entry Signal reciente (en los últimos `bk_win` días), mostramos el pivote exacto que acaba de romper
+    recent_entries = [e for e in entry_signals if (n - 1 - e[0]) < bk_win]
+    fresh_cross = len(recent_entries) > 0
+
+    valid_pivs_now = [p for p in known_pivots if (n - 1 - p[0]) <= piv_lb]
+    unbroken_now = [p for p in valid_pivs_now if not p[3]]
+
+    if fresh_cross:
+        last_ent = recent_entries[-1]
+        active_piv_price = float(last_ent[3])
+        active_piv_date = str(last_ent[1])[:10]
+        breakout_bar_rvol = max(curr_rvol, float(rvol_series[last_ent[0]]))
+    elif unbroken_now:
+        # El pivote intacto más cercano por encima del precio actual
+        above_curr = [p for p in unbroken_now if p[1] >= curr_close]
+        chosen_p = min(above_curr, key=lambda x: x[1]) if above_curr else unbroken_now[-1]
+        active_piv_price = float(chosen_p[1])
+        active_piv_date = str(chosen_p[2])[:10]
+        breakout_bar_rvol = curr_rvol
+    else:
+        highest_p = max(confirmed_pivots, key=lambda x: x[1])
+        active_piv_price = float(highest_p[1])
+        active_piv_date = str(highest_p[2])[:10]
+        breakout_bar_rvol = curr_rvol
 
     dist_pivot_pct = ((curr_close - active_piv_price) / (active_piv_price + 1e-9)) * 100.0
 
-    # Trailing Stop actual (si está en trade activo, usa el del trade; si no, calcula referencia 20% bajo máximo de 20d)
+    # Trailing Stop actual
     if not np.isnan(trailing_stop_series[-1]):
         curr_trailing_stop = float(trailing_stop_series[-1])
     else:
@@ -421,29 +464,31 @@ def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict
         curr_trailing_stop = recent_peak * (1.0 - trail_pct / 100.0)
     dist_trailing_stop_pct = ((curr_close - curr_trailing_stop) / (curr_trailing_stop + 1e-9)) * 100.0
 
-    # Verificar si hubo Entry Signal reciente (últimas 5 sesiones) o si está en trade activo con criterios cumplidos
-    recent_entry_5d = any((n - 1 - b_idx) <= 5 for b_idx, _, _, _ in entry_signals)
     last_entry_info = entry_signals[-1] if entry_signals else None
     gain_since_entry_pct = ((curr_close - last_entry_info[2]) / (last_entry_info[2] + 1e-9)) * 100.0 if last_entry_info else 0.0
+    days_since_entry = (n - 1 - last_entry_info[0]) if last_entry_info else 999
 
-    breakout_bar_rvol = curr_rvol
-    if last_entry_info and (n - 1 - last_entry_info[0]) <= 5:
-        breakout_bar_rvol = max(curr_rvol, float(rvol_series[last_entry_info[0]]))
-
-    # Condiciones del filtro en la barra actual
+    # Condiciones cuantitativas actuales
     cond_momentum = (roc_val >= min_roc)
     cond_trend_slope = (ema_slope_pct >= min_slope) and (curr_close > curr_ema)
-    cond_rvol = (curr_rvol >= min_rvol) or (breakout_bar_rvol >= min_rvol)
-    cond_breakout = ((curr_close > active_piv_price) and (cond_rvol or recent_entry_5d or in_trade)) or recent_entry_5d
-    cond_near_pivot = (-3.5 <= dist_pivot_pct <= 8.0)
+    cond_rvol = (curr_rvol >= min_rvol) or (fresh_cross and breakout_bar_rvol >= min_rvol)
 
-    # Clasificación de color de vela por Momentum (Enable Momentum Candle Colors)
-    if cond_momentum and cond_trend_slope and (recent_entry_5d or (curr_close > active_piv_price and cond_rvol)):
-        candle_state = "🔥 Entry Breakout (ROC+Slope+RVOL)"
+    # Un Breakout verdadero exige que la ruptura haya ocurrido en la ventana reciente (`fresh_cross`) Y el precio se mantenga sobre el pivote
+    cond_true_breakout = fresh_cross and (curr_close >= active_piv_price * 0.995) and cond_momentum and cond_trend_slope and cond_rvol
+    # Un Pre-Breakout exige un pivote intacto justo arriba (entre -3.5% y 0%) con ROC >= 30% y EMA Slope >= 20%
+    cond_near_pivot = (len(unbroken_now) > 0) and (-3.5 <= dist_pivot_pct <= 0.5) and cond_momentum and cond_trend_slope
+    # En Trade Activo (rompió hace pocos días y sigue sobre el pivote y sobre el 20% Trailing Stop)
+    cond_active_trade = in_trade and (days_since_entry <= 15) and (curr_close > active_piv_price) and cond_momentum and cond_trend_slope
+
+    if cond_true_breakout:
+        candle_state = f"🔥 BREAKOUT ({days_since_entry}d • RVOL {breakout_bar_rvol:.2f}x)"
         candle_hex = "#00FF87"
+    elif cond_near_pivot:
+        candle_state = f"🎯 PRE-BREAKOUT (A {dist_pivot_pct:+.1f}% del Pivote)"
+        candle_hex = "#00F0FF"
     elif cond_momentum and cond_trend_slope:
         candle_state = "💎 Momentum Activo (ROC≥30% & Slope≥20%)"
-        candle_hex = "#00F0FF"
+        candle_hex = "#38BDF8"
     elif (roc_val >= min_roc * 0.65 or ema_slope_pct >= min_slope * 0.65) and curr_close > curr_ema:
         candle_state = "🟡 Momentum en Construcción"
         candle_hex = "#FFD600"
@@ -454,32 +499,33 @@ def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict
         candle_state = "🔴 Bajo EMA 100 / Sin Tendencia"
         candle_hex = "#FF2E63"
 
-    if include_near:
-        matched = cond_momentum and cond_trend_slope and (cond_breakout or cond_near_pivot or in_trade)
-    else:
-        matched = cond_momentum and cond_trend_slope and cond_breakout
+    matched = cond_true_breakout
+    if include_near and cond_near_pivot:
+        matched = True
+    if include_active and cond_active_trade:
+        matched = True
 
-    if recent_entry_5d and cond_momentum and cond_trend_slope:
-        setup_status = f"🚀 ENTRY SIGNAL BREAKOUT (Pivote ${active_piv_price:.2f})"
-    elif in_trade and cond_momentum and cond_trend_slope:
-        setup_status = f"✅ EN TRADE SOBRE PIVOTE (Stop 20%: ${curr_trailing_stop:.2f})"
-    elif cond_breakout and cond_momentum and cond_trend_slope:
-        setup_status = f"✅ SOBRE PIVOTE (${active_piv_price:.2f}, {dist_pivot_pct:+.1f}%)"
-    elif cond_near_pivot and cond_momentum and cond_trend_slope:
-        setup_status = f"🎯 PRE-BREAKOUT EN PIVOTE (${active_piv_price:.2f}, {dist_pivot_pct:+.1f}%)"
+    if cond_true_breakout:
+        when_lbl = "HOY" if days_since_entry == 0 else f"Hace {days_since_entry}d"
+        setup_status = f"🚀 BREAKOUT {when_lbl} (Pivote ${active_piv_price:.2f})"
+    elif cond_near_pivot:
+        setup_status = f"🎯 ACECHANDO PIVOTE (${active_piv_price:.2f}, {dist_pivot_pct:+.1f}%)"
+    elif cond_active_trade:
+        setup_status = f"📈 EN TRADE ({days_since_entry}d desde Entry, Stop ${curr_trailing_stop:.2f})"
     else:
         setup_status = f"Pivote ${active_piv_price:.2f} ({dist_pivot_pct:+.1f}%)"
 
     return {
         "valid": True,
         "matched": bool(matched),
-        "strict_breakout": bool(cond_momentum and cond_trend_slope and cond_breakout),
-        "fresh_cross": bool(recent_entry_5d),
+        "strict_breakout": bool(cond_true_breakout),
+        "fresh_cross": bool(fresh_cross),
         "in_trade": bool(in_trade),
+        "days_since_entry": int(days_since_entry),
         "pivot_price": round(active_piv_price, 2),
-        "pivot_idx": int(last_piv_idx),
+        "pivot_idx": int(confirmed_pivots[-1][0]),
         "pivot_date": active_piv_date,
-        "highest_pivot_price": round(highest_piv[1], 2),
+        "highest_pivot_price": round(max(confirmed_pivots, key=lambda x: x[1])[1], 2),
         "confirmed_pivots": confirmed_pivots,
         "pivot_line_series": pivot_line_series,
         "trailing_stop_series": trailing_stop_series,
@@ -502,7 +548,7 @@ def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict
         "cond_momentum": bool(cond_momentum),
         "cond_trend_slope": bool(cond_trend_slope),
         "cond_rvol": bool(cond_rvol),
-        "cond_breakout": bool(cond_breakout),
+        "cond_breakout": bool(cond_true_breakout),
     }
 
 def fetch_data_alpaca_daily(tickers: list[str], api_key: str, secret_key: str) -> dict[str, pd.DataFrame]:
@@ -510,9 +556,8 @@ def fetch_data_alpaca_daily(tickers: list[str], api_key: str, secret_key: str) -
     if not tickers or not api_key or not secret_key:
         return {}
     client = StockHistoricalDataClient(api_key.strip(), secret_key.strip())
-    start_date = datetime.now() - timedelta(days=365)
+    start_date = datetime.now() - timedelta(days=380)
     
-    # Normalizar tickers con guión a punto para Alpaca (ej. BF-B -> BF.B)
     clean_map = {t: t.replace('-', '.') for t in tickers}
     reverse_map = {v: k for k, v in clean_map.items()}
     alpaca_syms = list(clean_map.values())
@@ -547,8 +592,7 @@ def fetch_data_alpaca_daily(tickers: list[str], api_key: str, secret_key: str) -
                             result[orig_ticker] = sub_df
                 except Exception:
                     continue
-        except Exception as e:
-            # En caso de símbolo individual inválido en chunk, reintentar individualmente
+        except Exception:
             for s in chunk:
                 try:
                     req_single = StockBarsRequest(
@@ -617,70 +661,111 @@ def fetch_data_alpaca_intraday(tickers: list[str], api_key: str, secret_key: str
 def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_000, 
                       min_price: float = 10.0, max_dist_52w: float = 20.0,
                       provider: str = "yfinance", alpaca_key: str = None, alpaca_secret: str = None,
-                      pivot_params: dict = None) -> pd.DataFrame:
-    """Ejecuta el scanner de Swing Trading con Alpaca o yfinance."""
+                      pivot_params: dict = None, force_refresh: bool = False) -> pd.DataFrame:
+    """
+    Ejecuta el scanner de Swing Trading 100% en tiempo real sobre el mercado completo
+    sin listas estáticas forzadas (cero hardcoding de benchmarks).
+    Incluye caché de 5 minutos en memoria para que cambiar entre los 29 filtros sobre ~1,850 activos sea instantáneo.
+    """
+    import time as _time
     if not tickers:
-        return pd.DataFrame()
+        tickers = FULL_US_MARKET_TICKERS
         
-    # Si se solicitó el universo dinámico en vivo o autónomo
     live_meta = {}
-    if (isinstance(tickers, str) and tickers == "LIVE_MOVERS") or (isinstance(tickers, list) and len(tickers) == 1 and tickers[0] == "LIVE_MOVERS"):
-        tickers, live_meta = eu.fetch_live_market_movers()
+    if (isinstance(tickers, str) and tickers == "FULL_MARKET") or (isinstance(tickers, list) and len(tickers) == 1 and tickers[0] == "FULL_MARKET"):
+        tickers = FULL_US_MARKET_TICKERS
+    elif (isinstance(tickers, str) and tickers == "LIVE_MOVERS") or (isinstance(tickers, list) and len(tickers) == 1 and tickers[0] == "LIVE_MOVERS"):
+        movers, live_meta = eu.fetch_live_market_movers()
+        tickers = sorted(list(set(movers + HIGH_MOMENTUM_EXPANDED_TICKERS)))
     elif (isinstance(tickers, str) and tickers == "AUTONOMOUS_LEADERS") or (isinstance(tickers, list) and len(tickers) == 1 and tickers[0] == "AUTONOMOUS_LEADERS"):
         tickers = get_autonomous_market_leaders(top_n=260)
         if not tickers:
-            tickers = TML_331_TICKERS
+            tickers = FULL_US_MARKET_TICKERS
 
-    # Normalizar tickers (ej. BF.B -> BF-B)
-    tickers = [t.strip().upper().replace('.', '-') for t in tickers if t.strip()]
+    # Normalizar tickers (ej. BF.B -> BF-B) y eliminar duplicados manteniendo orden
+    seen_t = set()
+    clean_tickers = []
+    for raw_t in tickers:
+        if raw_t and str(raw_t).strip():
+            ct = str(raw_t).strip().upper().replace('.', '-')
+            if ct not in seen_t:
+                seen_t.add(ct)
+                clean_tickers.append(ct)
+    tickers = clean_tickers
+
+    now_ts = _time.time()
+    cache_age = now_ts - _DAILY_BARS_CACHE.get("timestamp", 0.0)
+    cached_store = _DAILY_BARS_CACHE.get("data", {}) if (not force_refresh and cache_age < 300.0 and _DAILY_BARS_CACHE.get("provider") == provider) else {}
+
     ticker_dfs = {}
-    
-    # Intento con Alpaca si se seleccionó
-    if provider == "Alpaca" and alpaca_key and alpaca_secret:
-        try:
-            ticker_dfs = fetch_data_alpaca_daily(tickers, alpaca_key, alpaca_secret)
-        except Exception as e:
-            print(f"Fallo Alpaca, recurriendo a yfinance: {e}")
-            ticker_dfs = {}
+    missing_tickers = []
+    for t in tickers:
+        if t in cached_store:
+            ticker_dfs[t] = cached_store[t]
+        else:
+            missing_tickers.append(t)
 
-    # Si no es Alpaca o falló, usar yfinance con descarga por lotes (batching)
-    if not ticker_dfs:
-        try:
-            chunk_size = 150
-            for i in range(0, len(tickers), chunk_size):
-                chunk = tickers[i:i + chunk_size]
-                data = yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=True, progress=False)
-                for t in chunk:
-                    try:
-                        if isinstance(data.columns, pd.MultiIndex) and t in data.columns.levels[0]:
-                            df = data[t].dropna(how="all")
-                        elif isinstance(data.columns, pd.MultiIndex):
-                            df = data.dropna(how="all")
-                            df.columns = df.columns.get_level_values(0)
-                        else:
-                            df = data.dropna(how="all")
-                        if not df.empty:
-                            # Filtro estricto: descartar filas con Close NaN o <= 0 (ej. placeholders post-market)
-                            df = df.dropna(subset=['Close'])
-                            df = df[df['Close'] > 0]
-                            if not df.empty:
-                                ticker_dfs[t] = df
-                    except Exception:
+    if missing_tickers:
+        fetched_dfs = {}
+        if provider == "Alpaca" and alpaca_key and alpaca_secret:
+            try:
+                fetched_dfs = fetch_data_alpaca_daily(missing_tickers, alpaca_key, alpaca_secret)
+            except Exception as e:
+                print(f"Fallo Alpaca, recurriendo a yfinance: {e}")
+                fetched_dfs = {}
+
+        if not fetched_dfs:
+            try:
+                chunk_size = 250
+                for i in range(0, len(missing_tickers), chunk_size):
+                    chunk = missing_tickers[i:i + chunk_size]
+                    data = yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=True, progress=False)
+                    if data is None or data.empty:
                         continue
-        except Exception as e:
-            print(f"Error descargando datos diarios: {e}")
-            if not ticker_dfs:
-                return pd.DataFrame()
+                    for t in chunk:
+                        try:
+                            if isinstance(data.columns, pd.MultiIndex) and t in data.columns.levels[0]:
+                                df = data[t].dropna(how="all")
+                            elif isinstance(data.columns, pd.MultiIndex):
+                                if len(chunk) == 1:
+                                    df = data.dropna(how="all").copy()
+                                    df.columns = df.columns.get_level_values(0)
+                                else:
+                                    continue
+                            else:
+                                df = data.dropna(how="all")
+                            if not df.empty and 'Close' in df.columns:
+                                df = df.dropna(subset=['Close'])
+                                df = df[df['Close'] > 0]
+                                if not df.empty:
+                                    fetched_dfs[t] = df
+                        except Exception:
+                            continue
+            except Exception as e:
+                print(f"Error descargando datos diarios: {e}")
+
+        if fetched_dfs:
+            ticker_dfs.update(fetched_dfs)
+            if cache_age >= 300.0 or _DAILY_BARS_CACHE.get("provider") != provider or force_refresh:
+                _DAILY_BARS_CACHE["timestamp"] = now_ts
+                _DAILY_BARS_CACHE["provider"] = provider
+                _DAILY_BARS_CACHE["data"] = dict(ticker_dfs)
+            else:
+                _DAILY_BARS_CACHE["data"].update(fetched_dfs)
+
+    if not ticker_dfs:
+        return pd.DataFrame()
 
     results = []
     
     for t, df in ticker_dfs.items():
         try:
-            min_bars = 5 if ("HVE" in strategy or "Highest Volume" in strategy) else (20 if ("Stage 2" in strategy or "Weinstein" in strategy or "CANSLIM" in strategy or "RS" in strategy or "Leaders" in strategy) else (2 if ("Pre Market" in strategy or "Gap" in strategy or "Movers" in strategy) else (5 if ("Episodic" in strategy or "EP" in strategy) else (20 if "Pure Momentum" in strategy else (16 if ("Up on Volume" in strategy or "Ants" in strategy) else 150)))))
+            is_ipo_strat = ("IPO" in strategy or "HVE" in strategy or "Highest Volume" in strategy)
+            is_intraday_mover = ("Pre Market" in strategy or "Post Market" in strategy or "Gap" in strategy)
+            min_bars = 5 if is_ipo_strat else (5 if is_intraday_mover else (15 if ("Episodic" in strategy or "EP" in strategy or "Ants" in strategy or "Up on Volume" in strategy) else (105 if ("Pivot Breakout" in strategy or "Daily Pivot" in strategy) else 50)))
             if df.empty or len(df) < min_bars:
                 continue
                 
-            # Garantizar que no haya NaN en Close
             df = df.dropna(subset=['Close'])
             df = df[df['Close'] > 0]
             if len(df) < 2:
@@ -692,39 +777,47 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
             prev_close = float(close.iloc[-2])
             if np.isnan(current_price) or current_price <= 0 or np.isnan(prev_close) or prev_close <= 0:
                 continue
-            change_pct = ((current_price - prev_close) / prev_close) * 100
+            change_pct = ((current_price - prev_close) / prev_close) * 100.0
             if np.isnan(change_pct):
                 change_pct = 0.0
             
-            # Promedios de volumen de 20 y 50 días (excluyendo la barra actual para no sesgar)
-            vol_avg_20 = float(df['Volume'].tail(20).iloc[:-1].mean()) if len(df) >= 21 else float(volume.mean())
-            vol_avg_50 = float(df['Volume'].tail(50).iloc[:-1].mean()) if len(df) >= 51 else vol_avg_20
+            # Promedios de volumen de 5, 20 y 50 días (excluyendo la barra actual para referencia limpia)
+            vol_avg_20 = float(volume.tail(21).iloc[:-1].mean()) if len(df) >= 21 else float(volume.mean())
+            vol_avg_50 = float(volume.tail(51).iloc[:-1].mean()) if len(df) >= 51 else vol_avg_20
+            vol_5d = float(volume.tail(5).mean()) if len(df) >= 5 else float(volume.iloc[-1])
+            vol_dryup = vol_5d / (vol_avg_50 + 1e-9)
             
-            # Volumen en Dólares ($ Volume)
+            # Volumen físico y en Dólares ($ Volume)
             last_vol = float(volume.iloc[-1])
             dollar_vol = last_vol * current_price
-            dollar_vol_m = dollar_vol / 1_000_000
+            dollar_vol_m = dollar_vol / 1_000_000.0
+            dollar_vol_avg_20 = float(((volume.tail(20) * close.tail(20)).mean()) / 1_000_000.0) if len(df) >= 20 else dollar_vol_m
             
-            # Promedio de Volumen en Dólares a 20 días ($M)
-            dollar_vol_avg_20 = float(((df['Volume'].tail(20) * df['Close'].tail(20)).mean()) / 1_000_000) if len(df) >= 20 else dollar_vol_m
-            
-            # ADR 10 días (%)
+            # ADR 10 días (%) y RMV 15 días (%)
             adr_10 = calculate_adr(df, 10)
+            if len(df) >= 15:
+                high_15 = float(df['High'].tail(15).max())
+                low_15 = float(df['Low'].tail(15).min())
+                rmv_15 = ((high_15 - low_15) / (low_15 + 1e-9)) * 100.0
+            else:
+                rmv_15 = 15.0
             
-            # Rate of Change (1M y 3M)
-            roc_1m = float(((current_price - df['Close'].iloc[-21]) / df['Close'].iloc[-21]) * 100) if len(df) >= 22 else change_pct
-            roc_3m = float(((current_price - df['Close'].iloc[-63]) / df['Close'].iloc[-63]) * 100) if len(df) >= 64 else roc_1m
+            # Rate of Change (1W, 1M, 3M, 6M)
+            roc_1w = float(((current_price - close.iloc[-6]) / close.iloc[-6]) * 100.0) if len(df) >= 6 else change_pct
+            roc_1m = float(((current_price - close.iloc[-21]) / close.iloc[-21]) * 100.0) if len(df) >= 22 else change_pct
+            roc_3m = float(((current_price - close.iloc[-63]) / close.iloc[-63]) * 100.0) if len(df) >= 64 else roc_1m
+            roc_6m = float(((current_price - close.iloc[-126]) / close.iloc[-126]) * 100.0) if len(df) >= 127 else roc_3m
             
-            # Filtro base
-            effective_min_vol = 10_000 if ("Episodic" in strategy or "EP" in strategy) else (50_000 if ("Up on Volume" in strategy or "Ants" in strategy or "Pure Momentum" in strategy) else min_volume)
-            effective_min_price = 0.2 if ("Episodic" in strategy or "EP" in strategy) else (1.0 if ("Up on Volume" in strategy or "Ants" in strategy or "Pure Momentum" in strategy) else min_price)
-            if current_price < effective_min_price or vol_avg_20 < effective_min_vol:
-                if "Ants" not in strategy or t != "MAGH":
-                    continue
+            # Filtro base de liquidez mínima operable
+            effective_min_vol = 25_000 if ("Episodic" in strategy or "EP" in strategy or is_ipo_strat) else (50_000 if ("Up on Volume" in strategy or "Ants" in strategy or "Pure Momentum" in strategy or "Pivot Breakout" in strategy or "Daily Pivot" in strategy) else min_volume)
+            effective_min_price = 2.0 if ("Episodic" in strategy or "EP" in strategy or is_ipo_strat or "HTF" in strategy or "High Tight" in strategy) else (3.0 if ("Up on Volume" in strategy or "Ants" in strategy or "Pure Momentum" in strategy or "Pre Market" in strategy or "RS Days" in strategy) else min_price)
+            if current_price < effective_min_price or (vol_avg_20 < effective_min_vol and last_vol < effective_min_vol):
+                continue
                 
-            # Indicadores técnicos
-            sma_20 = float(close.rolling(20).mean().iloc[-1])
+            # Medias móviles e indicadores técnicos
+            sma_20 = float(close.rolling(20).mean().iloc[-1]) if len(df) >= 20 else current_price
             sma_50 = float(close.rolling(50).mean().iloc[-1]) if len(df) >= 50 else sma_20
+            sma_150 = float(close.rolling(150).mean().iloc[-1]) if len(df) >= 150 else sma_50
             sma_200 = float(close.rolling(200).mean().iloc[-1]) if len(df) >= 200 else float(close.rolling(len(df)).mean().iloc[-1])
             ema_21 = float(close.ewm(span=21, adjust=False).mean().iloc[-1]) if len(df) >= 21 else sma_20
             dist_ema21_pct = ((current_price - ema_21) / (ema_21 + 1e-9)) * 100.0
@@ -735,571 +828,376 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
             atr_series = calculate_atr(df, 14)
             atr = float(atr_series.iloc[-1]) if not np.isnan(atr_series.iloc[-1]) else 0.0
             
-            # RVOL considerando promedio de 20 o 50 días
             rvol_20 = last_vol / (vol_avg_20 + 1e-9)
             rvol_50 = last_vol / (vol_avg_50 + 1e-9)
-            rvol = max(rvol_20, rvol_50)
+            rvol = rvol_20
             
             high_52w = float(df['High'].tail(252).max())
             low_52w = float(df['Low'].tail(252).min())
-            dist_high_52w = ((current_price - high_52w) / high_52w) * 100
-            dist_low_52w = ((current_price - low_52w) / low_52w) * 100
+            dist_high_52w = ((current_price - high_52w) / (high_52w + 1e-9)) * 100.0
+            dist_low_52w = ((current_price - low_52w) / (low_52w + 1e-9)) * 100.0
             
-            # Rango del día y posición de cierre
             day_high = float(df['High'].iloc[-1])
             day_low = float(df['Low'].iloc[-1])
-            prev_high = float(df['High'].iloc[-2]) if len(df) >= 2 else 0.0
             range_spread = day_high - day_low
-            pos_in_range = ((current_price - day_low) / (range_spread + 1e-9)) * 100
+            pos_in_range = ((current_price - day_low) / (range_spread + 1e-9)) * 100.0
             
-            # Evaluación según estrategia
             matched = False
             pattern_name = ""
             
-            if strategy == "Trend Template (Etapa 2)":
-                cond_trend = (current_price > sma_50) and (sma_50 > sma_200)
-                cond_high = dist_high_52w >= -abs(max_dist_52w)
-                cond_low = dist_low_52w >= 20.0
-                cond_rsi = 50 <= rsi <= 78
-                if cond_trend and cond_high and cond_low and cond_rsi:
+            # =========================================================================
+            # EVALUACIÓN CUANTITATIVA 100% EN TIEMPO REAL (CERO LISTAS HARDCODEADAS)
+            # =========================================================================
+            if "Pivot Breakout" in strategy or "Daily Pivot" in strategy:
+                # Daily Pivot Breakout Strategy Indicator (by Mike):
+                # Left=5, Right=5, Lookback=100, ROC(100)>=30%, RVOL(20)>1.0x, EMA(100) Slope(100)>=20%
+                piv_eval = evaluate_daily_pivot_breakout(df, params=pivot_params)
+                if piv_eval.get("valid") and piv_eval.get("matched") and (dollar_vol_avg_20 >= 3.0 or dollar_vol_m >= 3.0):
                     matched = True
-                    pattern_name = "Tendencia Fuerte (Etapa 2)"
+                    rvol = piv_eval["rvol_val"]
+                    pattern_name = f"{piv_eval['setup_status']} • ROC {piv_eval['roc_val']:+.1f}% • Slope {piv_eval['ema_slope_pct']:+.1f}%"
+
+            elif strategy == "Trend Template (Etapa 2)":
+                cond_trend = (current_price > sma_50) and (sma_50 > sma_150) and (sma_150 > sma_200)
+                cond_high = dist_high_52w >= -abs(max_dist_52w)
+                cond_low = dist_low_52w >= 25.0
+                cond_rsi = 50.0 <= rsi <= 80.0
+                if cond_trend and cond_high and cond_low and cond_rsi and dollar_vol_avg_20 >= 5.0:
+                    matched = True
+                    pattern_name = f"Minervini Etapa 2 ({dist_high_52w:+.1f}% de 52w High)"
                     
-            elif "Highest Volume" in strategy or "HVE" in strategy or "IPO" in strategy:
-                # Criterios oficiales Highest Volume IPO / Since IPO Day (Deepvue):
-                # 1. Mayor Volumen desde el día de la IPO (Highest Volume Since IPO Day signature):
-                # Se compara el volumen con el histórico excluyendo la barra inicial de apertura si es debut reciente
-                if len(df) > 3:
+            elif "Highest Volume" in strategy or "HVE" in strategy:
+                # Highest Volume IPO / Since IPO Day (Récord de volumen real en las últimas 1-3 sesiones):
+                if len(df) > 5:
                     v_hist_max = float(df['Volume'].iloc[1:-1].max())
-                elif len(df) > 1:
-                    v_hist_max = float(df['Volume'].iloc[:-1].max())
                 else:
                     v_hist_max = 0.0
-                is_hve = (last_vol >= v_hist_max) or (t in HV_IPO_7_TICKERS) or (t in HVE_7_TICKERS)
-                
-                # 2. Promedio de volumen en dólares superior a $3 millones ($3M):
-                cond_dollar_vol = (dollar_vol_avg_20 >= 3.0) or (dollar_vol_m >= 3.0) or (t in HV_IPO_7_TICKERS) or (t in HVE_7_TICKERS)
-                
-                # 3. Daily Closing Range (DCR) > 40%:
-                cond_dcr = (pos_in_range >= 40.0) or (t in HV_IPO_7_TICKERS) or (t in HVE_7_TICKERS)
-                
-                # 4. Cambio de precio positivo en el día (> 0%):
-                cond_positive = (change_pct > 0.0) or (t in HV_IPO_7_TICKERS) or (t in HVE_7_TICKERS)
-                
-                if is_hve and cond_dollar_vol and cond_dcr and cond_positive:
+                is_hve_today = (v_hist_max > 0) and (last_vol >= v_hist_max) and (change_pct > 0.0) and (pos_in_range >= 40.0)
+                # También detectar si el récord ocurrió en las últimas 2 sesiones manteniendo el cierre sobre el mínimo
+                is_hve_recent = False
+                hve_ratio = last_vol / (v_hist_max + 1e-9) if v_hist_max > 0 else 0.0
+                if not is_hve_today and len(df) > 6:
+                    for back_i in (2, 3):
+                        v_b = float(df['Volume'].iloc[-back_i])
+                        v_prior_max = float(df['Volume'].iloc[1:-back_i].max())
+                        c_b = float(df['Close'].iloc[-back_i])
+                        c_prev_b = float(df['Close'].iloc[-back_i - 1])
+                        l_b = float(df['Low'].iloc[-back_i])
+                        h_b = float(df['High'].iloc[-back_i])
+                        dcr_b = ((c_b - l_b) / (h_b - l_b + 1e-9)) * 100.0
+                        if v_prior_max > 0 and v_b >= v_prior_max and c_b > c_prev_b and dcr_b >= 45.0 and current_price >= l_b:
+                            is_hve_recent = True
+                            hve_ratio = v_b / (v_prior_max + 1e-9)
+                            break
+                if (is_hve_today or is_hve_recent) and (dollar_vol_avg_20 >= 3.0 or dollar_vol_m >= 5.0):
                     matched = True
-                    hve_ratio = last_vol / (v_hist_max + 1e-9) if v_hist_max > 0 else 1.0
-                    pattern_name = f"Highest Vol Since IPO ({hve_ratio:.1f}x récord, DCR {pos_in_range:.0f}%)"
+                    tag_when = "HOY" if is_hve_today else "Reciente 2d"
+                    pattern_name = f"Highest Vol Record {tag_when} ({hve_ratio:.2f}x máx, DCR {pos_in_range:.0f}%)"
 
             elif "VCP" in strategy or "Volatility Contraction" in strategy:
-                # Criterios oficiales Mark Minervini VCP (Volatility Contraction Pattern):
-                # 1. Liquidez ($Vol >= $10M o Vol >= 100k o en benchmark)
-                cond_liquid = (dollar_vol_avg_20 >= 10.0) or (dollar_vol_m >= 10.0) or (last_vol >= 100_000) or (t in VCP_MINERVINI_43_TICKERS)
-                # 2. Estructura Etapa 2 (Precio sobre SMA 50 / 200 o cerca de máximos)
-                cond_trend = (current_price >= sma_50 * 0.95) or (current_price >= sma_200 * 0.95) or (dist_high_52w >= -25.0) or (t in VCP_MINERVINI_43_TICKERS)
-                # 3. Contracción de Volatilidad y Secado de Volumen (VCP)
-                vol_5d = float(df['Volume'].tail(5).mean()) if len(df) >= 5 else last_vol
-                vol_dryup = vol_5d / (vol_avg_50 + 1e-9)
-                cond_vcp = (vol_dryup <= 1.35) or (dist_high_52w >= -20.0) or (t in VCP_MINERVINI_43_TICKERS)
-                if cond_liquid and cond_trend and cond_vcp:
+                # Mark Minervini VCP (Volatility Contraction Pattern en Etapa 2 con contracción real de rango y secado de volumen):
+                cond_liquid = (dollar_vol_avg_20 >= 8.0)
+                cond_stage2 = (current_price > sma_50 > sma_200) and (current_price >= sma_20 * 0.97) and (dist_high_52w >= -18.0) and (dist_low_52w >= 25.0)
+                # Contracción progresiva de volatilidad: rango de 5 días menor que rango de 20 días y RMV_15 comprimido
+                if len(df) >= 20:
+                    rng_5d = ((float(df['High'].tail(5).max()) - float(df['Low'].tail(5).min())) / (float(df['Low'].tail(5).min()) + 1e-9)) * 100.0
+                    rng_20d = ((float(df['High'].tail(20).max()) - float(df['Low'].tail(20).min())) / (float(df['Low'].tail(20).min()) + 1e-9)) * 100.0
+                    is_contracting = (rng_5d <= 8.5) and (rmv_15 <= 14.0) and (rng_5d < rng_20d * 0.75)
+                else:
+                    is_contracting = False
+                cond_vol_dry = (vol_dryup <= 0.90) or (rvol_20 <= 0.85)
+                if cond_liquid and cond_stage2 and is_contracting and cond_vol_dry:
                     matched = True
-                    pattern_name = f"Minervini VCP (Secado {vol_dryup:.2f}x)"
+                    pattern_name = f"Minervini VCP (RMV {rmv_15:.1f}%, Vol 5d/50d {vol_dryup:.2f}x)"
 
             elif "Deepvue Universe" in strategy:
-                # Criterios cuantitativos oficiales Deepvue Universe (752 acciones):
-                # 1. Altísima Liquidez Institucional (20d $Vol >= $20M o Vol >= 200k o en benchmark)
-                cond_liquid = (dollar_vol_avg_20 >= 20.0) or (dollar_vol_m >= 20.0) or (last_vol >= 200_000) or (t in DEEPVUE_UNIVERSE_752_TICKERS)
-                
-                # 2. Precio Institucional (Precio >= $10.00)
-                cond_price = (current_price >= 10.0) or (t in DEEPVUE_UNIVERSE_752_TICKERS)
-                
-                # 3. Fuerza Relativa y Estructura (RS 1M > 45 o cerca de máximos)
-                cond_rs = (dist_high_52w >= -30.0) or (roc_1m >= -5.0) or (current_price >= sma_200 * 0.90) or (t in DEEPVUE_UNIVERSE_752_TICKERS)
-                
-                if cond_liquid and cond_price and cond_rs:
+                cond_liquid = (dollar_vol_avg_20 >= 20.0)
+                cond_price = (current_price >= 10.0)
+                cond_trend = (current_price > sma_50) and (current_price > sma_200)
+                cond_rs = (dist_high_52w >= -25.0) and (roc_1m > 0.0) and (roc_3m >= 5.0)
+                if cond_liquid and cond_price and cond_trend and cond_rs:
                     matched = True
-                    pattern_name = f"Deepvue Universe ($Vol ${dollar_vol_avg_20:.1f}M, P ${current_price:.2f})"
+                    pattern_name = f"Deepvue Institutional ($Vol ${dollar_vol_avg_20:.0f}M, 3M {roc_3m:+.1f}%)"
 
             elif "Liquid Leaders" in strategy:
-                # Criterios oficiales Liquid Leaders (Deepvue):
-                # 1. Altísima Liquidez Institucional ($Vol >= $15M o Vol >= 200k o en benchmark)
-                cond_liquid = (dollar_vol_avg_20 >= 15.0) or (dollar_vol_m >= 15.0) or (last_vol >= 200_000) or (t in LIQUID_LEADERS_187_TICKERS)
-                
-                # 2. Fuerza Absoluta (Estructura de Tendencia sobre SMA 50 / 200)
-                cond_trend = (current_price >= sma_50 * 0.95) or (current_price >= sma_200 * 0.95) or (dist_high_52w >= -25.0) or (t in LIQUID_LEADERS_187_TICKERS)
-                
-                # 3. Fuerza Relativa y Momentum (ROC 3M positivo o dentro de 25% de máximos anuales)
-                cond_rs = (dist_high_52w >= -25.0) or (roc_3m >= 3.0) or (roc_1m >= 0.0) or (t in LIQUID_LEADERS_187_TICKERS)
-                
+                cond_liquid = (dollar_vol_avg_20 >= 25.0)
+                cond_trend = (current_price > sma_20) and (sma_20 > sma_50) and (sma_50 > sma_200)
+                cond_rs = (dist_high_52w >= -18.0) and (roc_3m >= 12.0) and (roc_1m >= 2.0) and (adr_10 >= 2.2)
                 if cond_liquid and cond_trend and cond_rs:
                     matched = True
-                    pattern_name = f"Liquid Leader ($Vol ${dollar_vol_avg_20:.1f}M, 3M {roc_3m:+.1f}%)"
+                    pattern_name = f"Liquid Leader ($Vol ${dollar_vol_avg_20:.0f}M, 3M {roc_3m:+.1f}%, ADR {adr_10:.1f}%)"
 
             elif "Sustained Momentum" in strategy or "Momentum Leaders" in strategy:
-                # Criterios oficiales Momentum Leaders (Liquid Sustained Price Momentum & RS):
-                # 1. Liquidez Institucional ($Vol >= $8M o Vol >= 100k o en benchmark)
-                cond_liquid = (dollar_vol_avg_20 >= 8.0) or (dollar_vol_m >= 8.0) or (last_vol >= 100_000) or (t in MOMENTUM_LEADERS_187_TICKERS)
-                # 2. Tendencia Sostenida sobre Medias (SMA 50 / 200)
-                cond_trend = (current_price >= sma_50 * 0.95) or (current_price >= sma_200 * 0.95) or (dist_high_52w >= -25.0) or (t in MOMENTUM_LEADERS_187_TICKERS)
-                # 3. Momentum Sostenido (Retorno 3M / 6M superior o cercanía a máximos)
-                cond_mom = (roc_3m >= 5.0) or (roc_6m >= 10.0) or (roc_1m >= 0.0) or (dist_high_52w >= -20.0) or (t in MOMENTUM_LEADERS_187_TICKERS)
+                cond_liquid = (dollar_vol_avg_20 >= 10.0)
+                cond_trend = (current_price > sma_50 > sma_200) and (current_price >= ema_21 * 0.97)
+                cond_mom = (roc_3m >= 18.0) and (roc_6m >= 25.0) and (roc_1m >= 0.0) and (dist_high_52w >= -18.0)
                 if cond_liquid and cond_trend and cond_mom:
                     matched = True
-                    pattern_name = f"Momentum Leader (3M {roc_3m:+.1f}%)"
+                    pattern_name = f"Sustained Momentum (3M {roc_3m:+.1f}%, 6M {roc_6m:+.1f}%)"
 
             elif "Stage 2" in strategy or "Weinstein" in strategy or "Stage Analysis" in strategy:
-                # Criterios oficiales Stan Weinstein Stage 2 / 2A Early Markup & Leaders:
-                # 1. Alta Liquidez Institucional ($Vol >= $15M-$20M o Vol >= 150k o en benchmark)
-                cond_liquid = (dollar_vol_avg_20 >= 15.0) or (dollar_vol_m >= 15.0) or (last_vol >= 150_000) or (t in STAGE2_LEADERS_417_TICKERS)
-                # 2. Estructura Weinstein Etapa 2 / 2A: Precio sobre SMA 50 / 200 o pullback ordenado
-                cond_stage2 = (current_price >= sma_50 * 0.97) or (current_price >= sma_200 * 0.96) or (dist_high_52w >= -25.0) or (t in STAGE2_LEADERS_417_TICKERS)
-                # 3. Impulso y Fuerza Relativa: Cerca de máximos de 52s (<30%) o 3M positivo
-                cond_rs = (dist_high_52w >= -30.0) or (roc_3m >= 0.0) or (t in STAGE2_LEADERS_417_TICKERS)
+                sma50_prev20 = float(close.rolling(50).mean().iloc[-20]) if len(df) >= 70 else sma_50 * 0.98
+                sma200_prev20 = float(close.rolling(200).mean().iloc[-20]) if len(df) >= 220 else sma_200 * 0.99
+                cond_liquid = (dollar_vol_avg_20 >= 12.0)
+                cond_stage2 = (current_price > sma_50 > sma_200) and (sma_50 > sma50_prev20) and (sma_200 >= sma200_prev20)
+                cond_rs = (dist_high_52w >= -18.0) and (roc_3m >= 10.0) and (current_price >= ema_21 * 0.97)
                 if cond_liquid and cond_stage2 and cond_rs:
                     matched = True
-                    stage_label = "Etapa 2A (Early Markup)" if dist_high_52w >= -15.0 else "Etapa 2 (Advancing)"
-                    pattern_name = f"Weinstein {stage_label}"
+                    stage_label = "Etapa 2A (Early Markup)" if (dist_high_52w >= -10.0 and rvol_20 >= 1.1) else "Etapa 2 (Advancing)"
+                    pattern_name = f"Weinstein {stage_label} (3M {roc_3m:+.1f}%)"
 
             elif "CANSLIM" in strategy or "High RS" in strategy:
-                # Criterios oficiales CANSLIM® True Market Leaders (Deepvue / William O'Neil):
-                # 1. Precio >= $10.00 (elimina chicharros)
-                cond_price = (current_price >= 10.0) or (t in CANSLIM_OFFICIAL_36_TICKERS)
-                # 2. Liquidez Institucional ($Vol >= $5M o Vol >= 100k o en benchmark)
-                cond_liquid = (dollar_vol_avg_20 >= 5.0) or (dollar_vol_m >= 5.0) or (last_vol >= 100_000) or (t in CANSLIM_OFFICIAL_36_TICKERS) or (t in CANSLIM_HIGH_RS_137_TICKERS)
-                # 3. Nuevo Máximo / Fuerza Relativa (N / L): Dentro de 20% de máximos anuales o 3M positivo
-                cond_rs = (dist_high_52w >= -20.0) or (roc_3m >= 0.0) or (t in CANSLIM_OFFICIAL_36_TICKERS) or (t in CANSLIM_HIGH_RS_137_TICKERS)
-                # 4. Tendencia de Mercado (M): Etapa 2 alcista (SMA 50 > SMA 200 y sobre SMA 200)
-                cond_trend = (current_price >= sma_50 * 0.95) or (current_price >= sma_200) or (dist_high_52w >= -20.0) or (t in CANSLIM_OFFICIAL_36_TICKERS) or (t in CANSLIM_HIGH_RS_137_TICKERS)
-                if cond_price and cond_liquid and cond_rs and cond_trend:
+                is_high_rs_variant = ("High RS" in strategy)
+                min_3m_req = 20.0 if is_high_rs_variant else 15.0
+                cond_price = (current_price >= 12.0)
+                cond_liquid = (dollar_vol_avg_20 >= 12.0)
+                cond_trend = (current_price > sma_50 > sma_200) and (current_price >= sma_20 * 0.98)
+                cond_rs = (dist_high_52w >= -15.0) and (roc_3m >= min_3m_req) and (roc_6m >= 20.0) and (52.0 <= rsi <= 82.0)
+                if cond_price and cond_liquid and cond_trend and cond_rs:
                     matched = True
-                    pattern_name = f"CANSLIM Leader ({dist_high_52w:.1f}% máx, 3M {roc_3m:+.1f}%)"
+                    pattern_name = f"CANSLIM Leader ({dist_high_52w:+.1f}% 52w, 3M {roc_3m:+.1f}%)"
 
             elif "Leaders" in strategy or "TML" in strategy:
-                # True Market Leaders: Etapa 2 + Cerca de máximos de 52s (< 15%) + Momentum
-                cond_trend = (current_price > sma_50) and (sma_50 > sma_200)
-                cond_high = dist_high_52w >= -15.0
-                cond_momentum = current_price >= sma_20
-                cond_rsi = 50 <= rsi <= 78
-                if cond_trend and cond_high and cond_momentum and cond_rsi:
+                cond_trend = (current_price > sma_20 > sma_50 > sma_200)
+                cond_high = (dist_high_52w >= -12.0)
+                cond_mom = (roc_3m >= 15.0) and (dollar_vol_avg_20 >= 15.0) and (55.0 <= rsi <= 80.0)
+                if cond_trend and cond_high and cond_mom:
                     matched = True
-                    pattern_name = f"TML Leader ({dist_high_52w:.1f}% máx)"
+                    pattern_name = f"True Market Leader ({dist_high_52w:+.1f}% 52w, 3M {roc_3m:+.1f}%)"
                     
             elif "Episodic" in strategy or "EP" in strategy:
-                # Qullamaggie's Episodic Pivot (EP):
-                # Busca un salto violento en el precio (+8% o gap +5%) con volumen explosivo
-                # ocurrido en las últimas 10 sesiones o hoy, manteniendo estructura alcista.
-                recent_10 = df.tail(10)
+                # Qullamaggie Episodic Pivot (EP) real en las últimas 5 sesiones:
+                # Gap >= +5% o Ganancia Diaria >= +8% con RVOL >= 2.0x y $Vol >= $8M, sosteniendo el mínimo de la vela EP
+                recent_6 = df.tail(6)
                 ep_found = False
                 ep_date_str = ""
                 ep_gain_val = 0.0
                 ep_rvol_val = 0.0
                 
-                for idx in range(1, len(recent_10)):
-                    bar = recent_10.iloc[idx]
-                    prev_bar = recent_10.iloc[idx-1]
-                    b_gain = ((bar['Close'] - prev_bar['Close']) / prev_bar['Close']) * 100
-                    b_gap = ((bar['Open'] - prev_bar['Close']) / prev_bar['Close']) * 100
-                    b_vol = bar['Volume']
+                for idx in range(1, len(recent_6)):
+                    bar = recent_6.iloc[idx]
+                    prev_bar = recent_6.iloc[idx - 1]
+                    b_gain = ((bar['Close'] - prev_bar['Close']) / (prev_bar['Close'] + 1e-9)) * 100.0
+                    b_gap = ((bar['Open'] - prev_bar['Close']) / (prev_bar['Close'] + 1e-9)) * 100.0
+                    b_vol = float(bar['Volume'])
                     b_rvol = b_vol / (vol_avg_20 + 1e-9)
+                    b_dvol_m = (b_vol * float(bar['Close'])) / 1_000_000.0
+                    candle_spread = float(bar['High'] - bar['Low'])
+                    b_cr = ((float(bar['Close'] - bar['Low'])) / (candle_spread if candle_spread > 0 else 1.0)) * 100.0
                     
-                    # Salto de alta convicción (Estándar Deepvue / Qullamaggie):
-                    # Ganancia >= 7.5% o Gap >= 4.0%, cerrando sobre el máximo previo, con volumen explosivo o $Vol
-                    closed_above_prev_high = bar['Close'] > prev_bar['High']
-                    candle_spread = bar['High'] - bar['Low']
-                    b_cr = ((bar['Close'] - bar['Low']) / (candle_spread if candle_spread > 0 else 1.0)) * 100.0
-                    
-                    if (b_gain >= 7.5 or b_gap >= 4.0) and (b_rvol >= 1.05 or b_vol >= 400_000 or (b_vol * bar['Close']) >= 2_000_000) and (closed_above_prev_high or b_cr >= 40.0):
+                    if (b_gain >= 8.0 or b_gap >= 5.0) and (b_rvol >= 2.0) and (b_dvol_m >= 5.0) and (b_cr >= 50.0) and (current_price >= float(bar['Low']) * 0.99):
                         ep_found = True
-                        ep_date_str = bar.name.strftime('%Y-%m-%d')
+                        ep_date_str = str(bar.name)[:10]
                         ep_gain_val = b_gain
                         ep_rvol_val = b_rvol
 
-                if ep_found or (t in EPISODIC_PIVOT_18_TICKERS):
+                if ep_found:
                     matched = True
-                    ep_text = f"EP {ep_date_str} (+{ep_gain_val:.1f}%, {ep_rvol_val:.1f}x)" if ep_found else f"EP Setup (+{change_pct:.1f}%)"
-                    pattern_name = ep_text
+                    pattern_name = f"Episodic Pivot {ep_date_str} (+{ep_gain_val:.1f}%, RVOL {ep_rvol_val:.1f}x)"
 
             elif "Pocket Pivot" in strategy:
-                # Criterios cuantitativos oficiales Pocket Pivots (Gil Morales & Chris Kacher / Deepvue):
-                # 1. Día alcista (Up Day): Sesión positiva con cierre sobre el cierre anterior
-                is_up_day = (change_pct > 0.0) or (current_price >= prev_close) or (t in POCKET_PIVOTS_45_TICKERS)
-                
-                # 2. Regla de Volumen Morales & Kacher:
-                # El volumen de hoy supera el volumen de cualquier día bajista de las 10 sesiones previas
+                # Pocket Pivot real (Gil Morales & Chris Kacher) HOY:
+                # Día alcista (Close > Close ayer, DCR >= 50%) cuyo volumen supera el máximo volumen bajista de las 10 sesiones previas
+                is_up_day = (change_pct >= 0.5) and (current_price > open_price if 'open_price' in locals() else True) and (pos_in_range >= 50.0)
                 recent_10 = df.iloc[-11:-1] if len(df) >= 11 else df.iloc[:-1]
-                if len(recent_10) > 0:
+                if len(recent_10) >= 5:
                     down_mask = (recent_10['Close'] < recent_10['Close'].shift(1)) | (recent_10['Close'] < recent_10['Open'])
                     down_vols = recent_10.loc[down_mask, 'Volume']
                     max_down_vol = float(down_vols.max()) if not down_vols.empty and not np.isnan(down_vols.max()) else 0.0
                 else:
                     max_down_vol = 0.0
 
-                is_pocket_vol = (last_vol > max_down_vol) or (max_down_vol == 0.0) or (t in POCKET_PIVOTS_45_TICKERS)
-                pocket_ratio = last_vol / (max_down_vol + 1e-9) if max_down_vol > 0 else 1.5
+                is_pocket_vol = (max_down_vol > 0.0) and (last_vol > max_down_vol) and (rvol_20 >= 1.05)
+                dist_sma50_pct = ((current_price - sma_50) / (sma_50 + 1e-9)) * 100.0
+                # Debe ocurrir dentro o saliendo de la base (cerca de EMA 21 / SMA 50, no sobre-extendida)
+                cond_base = (current_price >= sma_50 * 0.98) and (sma_50 >= sma_200 * 0.98) and (-2.0 <= dist_sma50_pct <= 12.0) and (dist_high_52w >= -22.0)
+                cond_liquid = (dollar_vol_avg_20 >= 5.0)
 
-                # 3. Tendencia o Base Constructiva ("within a base or an uptrend"):
-                # Precio cotizando constructivamente sobre o cerca de SMA 10/20/50 o en base (<35% de máximos)
-                cond_trend = (current_price >= sma_50 * 0.94) or (current_price >= sma_20 * 0.96) or (current_price >= sma_200 * 0.94) or (dist_high_52w >= -35.0) or (t in POCKET_PIVOTS_45_TICKERS)
-                
-                # 4. Liquidez Institucional ($Vol >= $2M o Vol >= 50k o en benchmark)
-                cond_liquid = (dollar_vol_avg_20 >= 2.0) or (dollar_vol_m >= 2.0) or (last_vol >= 50_000) or (t in POCKET_PIVOTS_45_TICKERS)
-
-                if is_up_day and is_pocket_vol and cond_trend and cond_liquid:
+                if is_up_day and is_pocket_vol and cond_base and cond_liquid:
                     matched = True
-                    pattern_name = f"Pocket Pivot ({pocket_ratio:.1f}x vs Máx Down Vol)"
+                    pocket_ratio = last_vol / (max_down_vol + 1e-9)
+                    pattern_name = f"Pocket Pivot Hoy ({pocket_ratio:.2f}x vs Máx Vol Bajista 10d)"
 
             elif "IPO Last 1 Year" in strategy or "Ameet Rai: IPO" in strategy:
-                # Criterios cuantitativos oficiales Ameet Rai: IPO Last 1 Year (Weekend Routine) - Deepvue:
-                # 1. Antigüedad de IPO: debut en el último año (len(df) <= 260 sesiones o en benchmark):
-                is_recent_ipo = (len(df) <= 260) or (t in AMEET_RAI_IPO_1YR_189_TICKERS)
-                
-                # 2. Evaluación de Soporte Institucional (Risk-On vs Risk-Off Health Gauge):
-                is_supported = (current_price >= ema_21 * 0.95) or (current_price >= sma_20 * 0.95) or (dist_high_52w >= -25.0) or (t in AMEET_RAI_IPO_1YR_189_TICKERS)
-                
-                # 3. Precio y Liquidez Operable:
-                cond_price = (current_price >= 1.0) or (t in AMEET_RAI_IPO_1YR_189_TICKERS)
-                cond_liquid = (dollar_vol_avg_20 >= 0.5) or (dollar_vol_m >= 0.5) or (last_vol >= 10_000) or (t in AMEET_RAI_IPO_1YR_189_TICKERS)
-                
-                if is_recent_ipo and is_supported and cond_price and cond_liquid:
+                # Empresas con <= 250 barras (~1 año desde debut en bolsa) en tendencia alcista sobre EMA 21 / SMA 20
+                is_recent_ipo = (10 <= len(df) <= 245)
+                is_supported = (current_price > ema_21) and (current_price > sma_20) and (dist_high_52w >= -22.0)
+                cond_liquid = (dollar_vol_avg_20 >= 2.0) and (current_price >= 5.0)
+                if is_recent_ipo and is_supported and cond_liquid:
                     matched = True
-                    support_label = "Risk-On Soporte 🟢" if (current_price >= ema_21 * 0.98) else "Consolidando Base"
-                    bars_cnt = len(df)
-                    pattern_name = f"IPO 1-Year ({bars_cnt}d, {support_label})"
+                    pattern_name = f"IPO Reciente ({len(df)} sesiones, {dist_high_52w:+.1f}% de Máx)"
 
             elif "HV Edge" in strategy or "Ameet Rai: HV Edge" in strategy:
-                # Criterios cuantitativos oficiales Ameet Rai: HV Edge (Daily Routine) - Deepvue:
-                # 1. Identificar HV Edge por 3 vías (1Y, Desde IPO, o Desde Últimos Earnings ~63 sesiones):
+                # HV Edge en la sesión actual (o ayer): Mayor volumen en 1 año o en 63 sesiones (post-earnings) con cierre alcista
                 is_hv_edge = False
-                hv_type = "HV Event"
+                hv_type = ""
                 hv_ratio = 1.0
-                
-                if len(df) >= 2:
-                    v_1y_max = float(df['Volume'].tail(252).iloc[:-1].max()) if len(df) >= 3 else 0.0
-                    v_ipo_max = float(df['Volume'].iloc[1:-1].max()) if len(df) > 3 else float(df['Volume'].iloc[:-1].max())
-                    v_earn_max = float(df['Volume'].tail(63).iloc[:-1].max()) if len(df) >= 3 else 0.0
-                    
-                    if last_vol >= v_1y_max and v_1y_max > 0:
+                if len(df) >= 65:
+                    v_1y_max = float(df['Volume'].tail(252).iloc[:-1].max())
+                    v_earn_max = float(df['Volume'].tail(63).iloc[:-1].max())
+                    if last_vol >= v_1y_max and v_1y_max > 0 and change_pct > 0.0 and pos_in_range >= 45.0:
                         is_hv_edge = True
-                        hv_type = "Récord 1 Año"
+                        hv_type = "Récord Vol 1 Año"
                         hv_ratio = last_vol / (v_1y_max + 1e-9)
-                    elif last_vol >= v_ipo_max and v_ipo_max > 0:
+                    elif last_vol >= v_earn_max and v_earn_max > 0 and change_pct >= 1.5 and pos_in_range >= 50.0 and rvol_20 >= 2.0:
                         is_hv_edge = True
-                        hv_type = "Récord IPO"
-                        hv_ratio = last_vol / (v_ipo_max + 1e-9)
-                    elif last_vol >= v_earn_max and v_earn_max > 0:
-                        is_hv_edge = True
-                        hv_type = "Récord Post-Earnings"
+                        hv_type = "Récord Vol 63d (Trimestral)"
                         hv_ratio = last_vol / (v_earn_max + 1e-9)
-                        
-                cond_hv = is_hv_edge or (t in AMEET_RAI_HV_EDGE_45_TICKERS)
-                
-                # 2. Precio base y Liquidez ($Vol >= $1M o Vol >= 25k o en benchmark):
-                cond_price = (current_price >= 1.0) or (t in AMEET_RAI_HV_EDGE_45_TICKERS)
-                cond_liquid = (dollar_vol_avg_20 >= 1.0) or (dollar_vol_m >= 1.0) or (last_vol >= 25_000) or (t in AMEET_RAI_HV_EDGE_45_TICKERS)
-                
-                if cond_hv and cond_price and cond_liquid:
+                if is_hv_edge and dollar_vol_avg_20 >= 5.0 and current_price >= 5.0:
                     matched = True
-                    pattern_name = f"HV Edge ({hv_type}, {hv_ratio:.1f}x)"
+                    pattern_name = f"HV Edge ({hv_type}, {hv_ratio:.2f}x, RVOL {rvol_20:.1f}x)"
 
             elif "High Tight Flag" in strategy or "HTF" in strategy:
-                # Criterios cuantitativos oficiales Ameet Rai: High Tight Flags (Weekend Routine) - Deepvue:
-                # 1. Carrera de al menos 100% en las últimas 20 sesiones (Mástil HTF):
-                if len(df) >= 20:
-                    recent_20 = df.tail(20)
-                    min_20 = float(recent_20['Low'].min())
-                    max_20 = float(recent_20['High'].max())
-                    run_pct_20 = ((max_20 - min_20) / (min_20 + 1e-9)) * 100.0
-                    flag_depth = ((current_price - max_20) / (max_20 + 1e-9)) * 100.0
+                # High Tight Flag (HTF): Subida >= +80% en las últimas 40 sesiones y consolidación alta con retroceso <= 20%
+                if len(df) >= 40:
+                    recent_40 = df.tail(40)
+                    min_idx = recent_40['Low'].idxmin()
+                    after_min = recent_40.loc[min_idx:]
+                    min_40 = float(recent_40['Low'].min())
+                    max_after = float(after_min['High'].max())
+                    run_pct = ((max_after - min_40) / (min_40 + 1e-9)) * 100.0
+                    flag_depth = ((current_price - max_after) / (max_after + 1e-9)) * 100.0
                 else:
-                    run_pct_20 = 100.0
-                    flag_depth = 0.0
-                    
-                cond_run = (run_pct_20 >= 80.0) or (t in AMEET_RAI_HTF_12_TICKERS)
-                
-                # 2. Consolidación Estrecha y Alta (Bandera HTF: retroceso < 25-30% desde el pico):
-                cond_flag = (flag_depth >= -30.0) or (t in AMEET_RAI_HTF_12_TICKERS)
-                
-                # 3. Precio y Liquidez Operable ($Vol >= $1M o Vol >= 20k o en benchmark):
-                cond_price = (current_price >= 1.0) or (t in AMEET_RAI_HTF_12_TICKERS)
-                cond_liquid = (dollar_vol_avg_20 >= 1.0) or (dollar_vol_m >= 1.0) or (last_vol >= 20_000) or (t in AMEET_RAI_HTF_12_TICKERS)
-                
-                if cond_run and cond_flag and cond_price and cond_liquid:
+                    run_pct = 0.0
+                    flag_depth = -50.0
+                cond_htf = (run_pct >= 80.0) and (-20.0 <= flag_depth <= 0.0) and (current_price > ema_21 * 0.96) and (dollar_vol_avg_20 >= 3.0) and (current_price >= 4.0)
+                if cond_htf:
                     matched = True
-                    pattern_name = f"High Tight Flag (+{run_pct_20:.0f}% en 20d, Flag {flag_depth:+.1f}%)"
+                    pattern_name = f"High Tight Flag (Mástil +{run_pct:.0f}%, Flag {flag_depth:+.1f}%)"
 
             elif "Daily Liquidity" in strategy:
-                # Criterios cuantitativos oficiales Ameet Rai: Daily Liquidity (Daily Routine) - Deepvue:
-                # 1. Volumen Diario > 8 Millones de acciones (o promedio > 8M o en benchmark):
-                cond_vol_8m = (last_vol >= 8_000_000) or (vol_avg_20 >= 8_000_000) or (t in AMEET_RAI_DAILY_LIQUIDITY_296_TICKERS)
-                
-                # 2. Filtro de precio base: Precio >= $2.00
-                cond_price = (current_price >= 2.0) or (t in AMEET_RAI_DAILY_LIQUIDITY_296_TICKERS)
-                
-                # 3. Flujo Institucional Activo ($Vol >= $15M diarios):
-                cond_dollar_vol = (dollar_vol_m >= 15.0) or (dollar_vol_avg_20 >= 15.0) or (t in AMEET_RAI_DAILY_LIQUIDITY_296_TICKERS)
-                
-                if cond_vol_8m and cond_price and cond_dollar_vol:
+                cond_vol_8m = (last_vol >= 8_000_000) and (dollar_vol_m >= 50.0) and (current_price >= 5.0) and (change_pct > 0.0) and (current_price > sma_50)
+                if cond_vol_8m:
                     matched = True
-                    pattern_name = f"Daily Liquidity ({last_vol/1_000_000:.1f}M vol, ${dollar_vol_m:.0f}M $Vol)"
+                    pattern_name = f"Daily Liquidity ({last_vol/1_000_000:.1f}M acciones, ${dollar_vol_m:.0f}M $Vol)"
 
             elif "RS Days" in strategy or "Ameet Rai" in strategy:
-                # Criterios cuantitativos oficiales Ameet Rai: 62.5% RS Days (Corrections) - Deepvue:
-                # 1. Filtro de precio base: Precio >= $3.00
-                cond_price = (current_price >= 3.0) or (t in AMEET_RAI_RS_DAYS_191_TICKERS)
-                
-                # 2. Liquidez Institucional ($Vol >= $3M-$5M o Vol >= 100k o en benchmark):
-                cond_liquid = (dollar_vol_avg_20 >= 3.0) or (dollar_vol_m >= 3.0) or (last_vol >= 100_000) or (t in AMEET_RAI_RS_DAYS_191_TICKERS)
-                
-                # 3. RS Days en al menos 62.5% de sesiones en cualquier ventana de 5 a 60 días:
-                best_rs_ratio = 0.0
-                best_win = 20
-                if len(df) >= 6:
-                    ret_series = df['Close'].pct_change().dropna()
-                    windows = [w for w in [5, 8, 10, 15, 20, 30, 40, 60] if w <= len(ret_series)]
-                    for w in windows:
-                        sub_ret = ret_series.tail(w)
-                        rs_days_cnt = sum(1 for r in sub_ret if r >= 0.0)
-                        ratio = rs_days_cnt / float(w)
-                        if ratio > best_rs_ratio:
-                            best_rs_ratio = ratio
-                            best_win = w
-                            
-                cond_rs_days = (best_rs_ratio >= 0.625) or (t in AMEET_RAI_RS_DAYS_191_TICKERS)
-                
-                # 4. Fase de Fuerza Relativa (Relative Strength Phase):
-                # Cotizando sobre SMA 50 o SMA 200, o dentro de 25% de máximos anuales:
-                cond_rs_phase = (current_price >= sma_50 * 0.95) or (current_price >= sma_200 * 0.95) or (dist_high_52w >= -25.0) or (t in AMEET_RAI_RS_DAYS_191_TICKERS)
-                
-                if cond_price and cond_liquid and cond_rs_days and cond_rs_phase:
+                # Al menos 62.5% de sesiones positivas en las últimas 20 sesiones (>= 13 de 20 días en verde) en Etapa 2
+                if len(df) >= 22:
+                    ret_20 = df['Close'].pct_change().tail(20)
+                    up_days_20 = int((ret_20 > 0.0).sum())
+                    rs_ratio_20 = up_days_20 / 20.0
+                else:
+                    up_days_20 = 0
+                    rs_ratio_20 = 0.0
+                cond_rs_days = (rs_ratio_20 >= 0.65) and (current_price > sma_50 > sma_200) and (dist_high_52w >= -18.0) and (roc_1m >= 5.0) and (dollar_vol_avg_20 >= 8.0)
+                if cond_rs_days:
                     matched = True
-                    disp_ratio = best_rs_ratio * 100 if best_rs_ratio > 0 else 62.5
-                    pattern_name = f"Ameet Rai RS ({best_win}d al {disp_ratio:.0f}% RS Days)"
+                    pattern_name = f"RS Days ({up_days_20}/20 días alcistas = {rs_ratio_20*100:.0f}%)"
 
             elif "Weekly Strength" in strategy:
-                # Criterios cuantitativos oficiales Weekly Strength (Deepvue):
-                # 1. Cierre cerca de máximos semanales (últimas 5 sesiones):
-                if len(df) >= 5:
+                if len(df) >= 6:
                     w_high = float(df['High'].tail(5).max())
                     w_low = float(df['Low'].tail(5).min())
-                    w_range = w_high - w_low
-                    pos_week = ((current_price - w_low) / (w_range + 1e-9)) * 100.0
-                    dist_w_high = ((current_price - w_high) / (w_high + 1e-9)) * 100.0
+                    pos_week = ((current_price - w_low) / (w_high - w_low + 1e-9)) * 100.0
                 else:
-                    pos_week = 75.0
-                    dist_w_high = 0.0
-                    
-                cond_weekly_high = (pos_week >= 65.0) or (dist_w_high >= -3.5) or (t in WEEKLY_STRENGTH_399_TICKERS)
-                
-                # 2. Sosteniéndose sobre medias móviles clave (EMA 21, SMA 50, SMA 200):
-                cond_above_mas = (current_price >= ema_21 * 0.97) and (current_price >= sma_50 * 0.95) or (current_price >= sma_200 * 0.95) or (t in WEEKLY_STRENGTH_399_TICKERS)
-                
-                # 3. Fuerza Relativa de Medio Plazo (RS 1M / 3M & Proximidad a Máximos 52s):
-                cond_rs_med = (dist_high_52w >= -25.0) or (roc_3m >= 2.0) or (roc_1m >= 0.0) or (t in WEEKLY_STRENGTH_399_TICKERS)
-                
-                # 4. Liquidez Institucional ($Vol >= $5M o Vol >= 100k o en benchmark):
-                cond_liquid = (dollar_vol_avg_20 >= 5.0) or (dollar_vol_m >= 5.0) or (last_vol >= 100_000) or (t in WEEKLY_STRENGTH_399_TICKERS)
-                
-                if cond_weekly_high and cond_above_mas and cond_rs_med and cond_liquid:
+                    pos_week = 0.0
+                cond_wk = (pos_week >= 75.0) and (roc_1w >= 2.0) and (current_price > ema_21 > sma_50 > sma_200) and (dist_high_52w >= -15.0) and (dollar_vol_avg_20 >= 10.0)
+                if cond_wk:
                     matched = True
-                    pattern_name = f"Weekly Strength (Rango Semanal {pos_week:.0f}%, 3M {roc_3m:+.1f}%)"
+                    pattern_name = f"Weekly Strength (Rango 5d {pos_week:.0f}%, Semanal {roc_1w:+.1f}%)"
 
             elif "Power 21" in strategy:
-                # Criterios cuantitativos oficiales Power 21 (Deepvue / 21 EMA Pullback & Absolute Strength):
-                # 1. Proximidad y Estabilidad en la 21 EMA:
-                # El precio cotiza en zona de prueba/soporte de la 21-day EMA (-3.5% <= dist <= +4.0%):
-                cond_ema21 = (abs(dist_ema21_pct) <= 4.0) or (current_price >= ema_21 * 0.96 and current_price <= ema_21 * 1.05) or (t in POWER_21_69_TICKERS)
-                
-                # 2. Alta Liquidez Institucional ($Vol >= $5M-$10M o Vol >= 100k o en benchmark):
-                cond_liquid = (dollar_vol_avg_20 >= 5.0) or (dollar_vol_m >= 5.0) or (last_vol >= 100_000) or (t in POWER_21_69_TICKERS)
-                
-                # 3. Fuerza Absoluta (Absolute Strength - AS) y Momentum Previo:
-                # Retorno 3M positivo o dentro de 25% de máximos anuales o sobre SMA 50:
-                cond_as = (dist_high_52w >= -25.0) or (roc_3m >= 3.0) or (current_price >= sma_50 * 0.95) or (t in POWER_21_69_TICKERS)
-                
-                if cond_ema21 and cond_liquid and cond_as:
+                # Pullback ordenado a la 21 EMA en líderes con fuerte avance previo (ROC 3M >= 15%)
+                low_today = float(df['Low'].iloc[-1])
+                touched_ema21 = (low_today <= ema_21 * 1.02) and (current_price >= ema_21 * 0.99) and (abs(dist_ema21_pct) <= 2.5)
+                cond_leader = (current_price > sma_50 > sma_200) and (roc_3m >= 15.0) and (dist_high_52w >= -18.0) and (dollar_vol_avg_20 >= 10.0)
+                if touched_ema21 and cond_leader:
                     matched = True
-                    pattern_name = f"Power 21 (EMA21 {dist_ema21_pct:+.1f}%, AS {roc_3m:+.1f}%)"
+                    pattern_name = f"Power 21 Pullback (Dist EMA21 {dist_ema21_pct:+.1f}%, 3M {roc_3m:+.1f}%)"
 
             elif "Volume Dry Up" in strategy:
-                # Criterios cuantitativos oficiales Volume Dry Up (Deepvue / VDU & RMV Tight):
-                # 1. Trading sobre la media móvil de 50 sesiones (Price >= SMA 50):
-                cond_above_sma50 = (current_price >= sma_50 * 0.98) or (t in VOLUME_DRY_UP_160_TICKERS)
-                
-                # 2. Contracción de Volumen (Volume Dry Up / Secado):
-                # Volumen actual inferior a la media de 20 sesiones (RVOL < 0.85 o secado < 0.75x):
-                is_vol_dry = (last_vol <= vol_avg_20 * 0.85) or (rvol <= 0.85) or (vol_dryup <= 0.75) or (t in VOLUME_DRY_UP_160_TICKERS)
-                
-                # 3. Compresión de Rango RMV (Indicador RMV Deepvue: Lookback 15, Tight <= 10, Nivel 1 <= 15):
-                if len(df) >= 15:
-                    high_15 = float(df['High'].tail(15).max())
-                    low_15 = float(df['Low'].tail(15).min())
-                    rmv_15 = ((high_15 - low_15) / (low_15 + 1e-9)) * 100.0
-                else:
-                    rmv_15 = 10.0
-                    
-                cond_rmv = (rmv_15 <= 15.0) or (dist_high_52w >= -25.0) or (t in VOLUME_DRY_UP_160_TICKERS)
-                
-                # 4. Liquidez Institucional ($Vol >= $3M o Vol >= 50k o en benchmark):
-                cond_liquid = (dollar_vol_avg_20 >= 3.0) or (dollar_vol_m >= 3.0) or (last_vol >= 50_000) or (t in VOLUME_DRY_UP_160_TICKERS)
-                
-                if cond_above_sma50 and is_vol_dry and cond_rmv and cond_liquid:
+                # Secado estricto de volumen sobre SMA 50 (RVOL <= 0.65x y RMV_15 <= 12%)
+                cond_vdu = (current_price > sma_50 > sma_200) and (rvol_20 <= 0.65) and (vol_dryup <= 0.85) and (rmv_15 <= 12.0) and (dist_high_52w >= -20.0) and (dollar_vol_avg_20 >= 6.0)
+                if cond_vdu:
                     matched = True
-                    rmv_tag = "Tight 🟢" if rmv_15 <= 10.0 else f"RMV {rmv_15:.1f}%"
-                    pattern_name = f"Volume Dry Up (RVOL {rvol:.2f}x, {rmv_tag})"
+                    pattern_name = f"Volume Dry Up (RVOL {rvol_20:.2f}x, RMV {rmv_15:.1f}%)"
 
             elif "Tight Range" in strategy:
-                # Criterios cuantitativos oficiales Tight Range (Deepvue / Minervini Coiling):
-                # 1. Volatilidad de Rango a 15 días (RMV - Range Volatility) < 10.0%
-                if len(df) >= 15:
-                    high_15 = float(df['High'].tail(15).max())
-                    low_15 = float(df['Low'].tail(15).min())
-                    rmv_15 = ((high_15 - low_15) / (low_15 + 1e-9)) * 100.0
-                else:
-                    rmv_15 = 12.0
-                    
-                cond_rmv = (rmv_15 <= 10.0) or (t in TIGHT_RANGE_26_TICKERS)
-                
-                # 2. Variación de Precio a 5 días entre -4.0% y +4.0% O Double Inside Days:
-                if len(df) >= 6:
-                    chg_5d = abs(((current_price - float(df['Close'].iloc[-6])) / float(df['Close'].iloc[-6])) * 100.0)
-                else:
-                    chg_5d = abs(change_pct)
-                    
+                is_inside_day = False
                 is_double_inside = False
                 if len(df) >= 4:
                     h1, l1 = float(df['High'].iloc[-1]), float(df['Low'].iloc[-1])
                     h2, l2 = float(df['High'].iloc[-2]), float(df['Low'].iloc[-2])
                     h3, l3 = float(df['High'].iloc[-3]), float(df['Low'].iloc[-3])
-                    if (h1 <= h2 and l1 >= l2) and (h2 <= h3 and l2 >= l3):
-                        is_double_inside = True
-                        
-                cond_tight_5d = (chg_5d <= 4.0) or is_double_inside or (t in TIGHT_RANGE_26_TICKERS)
-                
-                # 3. Proximidad a Medias Móviles Clave (SMA 50 y SMA 200):
-                dist_sma50_pct = abs((current_price - sma_50) / (sma_50 + 1e-9)) * 100.0
-                dist_sma200_pct = abs((current_price - sma_200) / (sma_200 + 1e-9)) * 100.0
-                cond_ma_close = (dist_sma50_pct <= 10.0 and dist_sma200_pct <= 20.0) or (current_price >= sma_50 * 0.92) or (t in TIGHT_RANGE_26_TICKERS)
-                
-                # 4. Liquidez Institucional / Cap ($Vol >= $3M o Vol >= 50k o en benchmark)
-                cond_liquid = (dollar_vol_avg_20 >= 3.0) or (dollar_vol_m >= 3.0) or (last_vol >= 50_000) or (t in TIGHT_RANGE_26_TICKERS)
-                
-                if cond_rmv and cond_tight_5d and cond_ma_close and cond_liquid:
+                    is_inside_day = (h1 <= h2 and l1 >= l2)
+                    is_double_inside = is_inside_day and (h2 <= h3 and l2 >= l3)
+                cond_tight = (rmv_15 <= 9.5) and (abs(roc_1w) <= 3.0 or is_inside_day) and (current_price > sma_50 > sma_200) and (dist_high_52w >= -18.0) and (dollar_vol_avg_20 >= 6.0)
+                if cond_tight:
                     matched = True
-                    setup_tag = "Double Inside Days" if is_double_inside else f"5d Chg {chg_5d:.1f}%"
-                    pattern_name = f"Tight Range (RMV {rmv_15:.1f}%, {setup_tag})"
+                    tag_in = "Double Inside Day" if is_double_inside else ("Inside Day" if is_inside_day else f"5d {roc_1w:+.1f}%")
+                    pattern_name = f"Tight Range (RMV {rmv_15:.1f}%, {tag_in})"
 
             elif "Up on Volume" in strategy:
-                # Up on Volume en sesión actual
-                cond_up_today = (change_pct >= 1.0 and pos_in_range >= 45.0 and rvol >= 0.95)
-                
-                # Up on Volume en sesión anterior reciente
-                prev_bar = df.iloc[-2]
-                prev_prev = df.iloc[-3] if len(df) >= 3 else prev_bar
-                prev_chg = ((prev_bar['Close'] - prev_prev['Close']) / prev_prev['Close']) * 100
-                prev_spread = prev_bar['High'] - prev_bar['Low']
-                prev_pos = ((prev_bar['Close'] - prev_bar['Low']) / (prev_spread + 1e-9)) * 100
-                prev_rvol = prev_bar['Volume'] / (vol_avg_20 + 1e-9)
-                cond_up_prev = (prev_chg >= 1.5 and prev_pos >= 50.0 and prev_rvol >= 1.0)
-                
-                if cond_up_today or cond_up_prev or (t in UP_ON_VOLUME_64_TICKERS and pos_in_range >= 30.0):
+                cond_uov = (change_pct >= 2.5) and (pos_in_range >= 65.0) and (rvol_20 >= 1.5) and (current_price > sma_50) and (dollar_vol_avg_20 >= 5.0)
+                if cond_uov:
                     matched = True
-                    act_chg = change_pct if cond_up_today else prev_chg
-                    act_pos = pos_in_range if cond_up_today else prev_pos
-                    pattern_name = f"Up on Vol (+{act_chg:.1f}%, Rango {act_pos:.0f}%)"
+                    pattern_name = f"Up on Volume (+{change_pct:.1f}%, RVOL {rvol_20:.2f}x, DCR {pos_in_range:.0f}%)"
 
             elif "Ants" in strategy:
-                # David Ryan's ANTS: al menos 4-5 días de acumulación en 15 sesiones y cerca de máximos
-                recent_15 = df.tail(15)
-                acc_days = 0
-                for i in range(1, len(recent_15)):
-                    curr_bar = recent_15.iloc[i]
-                    prev_bar = recent_15.iloc[i-1]
-                    is_up_day = curr_bar['Close'] > prev_bar['Close']
-                    if is_up_day:
-                        v_gt_prev = curr_bar['Volume'] > prev_bar['Volume']
-                        v_gt_sma = (curr_bar['Volume'] > vol_avg_20) or (curr_bar['Volume'] > vol_avg_50)
-                        if v_gt_prev or v_gt_sma:
-                            acc_days += 1
-                            
-                high_20d = float(df['High'].tail(20).max())
-                dist_20d = ((current_price - high_20d) / high_20d) * 100
-                near_highs = (dist_high_52w >= -25.0) or (dist_20d >= -5.0)
-                
-                if (acc_days >= 4 and near_highs) or (t in ANTS_3_TICKERS):
+                # David Ryan's ANTS oficial: >= 11 días alcistas de las últimas 15 sesiones, avance >= +12% en 15d y expansión de volumen
+                if len(df) >= 16:
+                    ret_15 = df['Close'].pct_change().tail(15)
+                    up_15 = int((ret_15 > 0.0).sum())
+                    gain_15 = float(((current_price - float(df['Close'].iloc[-16])) / float(df['Close'].iloc[-16])) * 100.0)
+                else:
+                    up_15 = 0
+                    gain_15 = 0.0
+                cond_ants = (up_15 >= 11) and (gain_15 >= 12.0) and (vol_5d >= vol_avg_20) and (current_price > sma_50) and (dist_high_52w >= -20.0) and (dollar_vol_avg_20 >= 4.0)
+                if cond_ants:
                     matched = True
-                    disp_days = acc_days if acc_days > 0 else 5
-                    pattern_name = f"ANTS ({disp_days}/15 acumulación)"
+                    pattern_name = f"David Ryan ANTS ({up_15}/15 días verdes, +{gain_15:.1f}% en 15d)"
 
             elif strategy == "Pullback a SMA 20/50":
-                cond_uptrend = sma_50 > sma_200
-                near_sma20 = abs((current_price - sma_20) / sma_20) <= 0.02
-                near_sma50 = abs((current_price - sma_50) / sma_50) <= 0.025
-                cond_rsi = 40 <= rsi <= 60
-                if cond_uptrend and (near_sma20 or near_sma50) and cond_rsi:
+                cond_uptrend = (current_price > sma_200) and (sma_50 > sma_200) and (roc_3m >= 8.0)
+                near_sma20 = abs((current_price - sma_20) / (sma_20 + 1e-9)) <= 0.015 and (current_price >= sma_20 * 0.99)
+                near_sma50 = abs((current_price - sma_50) / (sma_50 + 1e-9)) <= 0.02 and (current_price >= sma_50 * 0.99)
+                cond_rsi = 42.0 <= rsi <= 62.0
+                if cond_uptrend and (near_sma20 or near_sma50) and cond_rsi and dollar_vol_avg_20 >= 5.0:
                     matched = True
                     target = "SMA 20" if near_sma20 else "SMA 50"
-                    pattern_name = f"Rebote Potencial ({target})"
+                    pattern_name = f"Pullback Institucional a {target} (RSI {rsi:.0f})"
                     
             elif strategy == "Ruptura de Resistencia (Breakout)":
-                recent_high_20 = float(df['High'].tail(20).iloc[:-1].max())
-                cond_break = current_price >= recent_high_20
-                cond_rvol = rvol >= 1.2
+                recent_high_20 = float(df['High'].tail(21).iloc[:-1].max()) if len(df) >= 21 else day_high
+                prev_c_20 = float(df['Close'].iloc[-2])
+                cond_break = (current_price > recent_high_20) and (prev_c_20 <= recent_high_20 * 1.005)
+                cond_rvol = (rvol_20 >= 1.3) and (pos_in_range >= 60.0) and (current_price > sma_50 > sma_200) and (dollar_vol_avg_20 >= 5.0)
                 if cond_break and cond_rvol:
                     matched = True
-                    pattern_name = "Ruptura 20d con Volumen"
+                    pattern_name = f"Breakout 20d (${recent_high_20:.2f}, RVOL {rvol_20:.2f}x)"
                     
             elif "Pure Momentum" in strategy:
-                # Criterios oficiales Deepvue Pure Momentum (20d $Vol > $7M & 10d ADR > 3%):
-                # 1. 20-day Average Dollar Volume > $7M (con tolerancia >= $5M o en benchmark)
-                cond_dollar_vol = (dollar_vol_avg_20 >= 5.0) or (dollar_vol_m >= 5.0) or (t in PURE_MOMENTUM_231_TICKERS)
-                # 2. 10-day Average Daily Range (ADR) > 3.0% (con tolerancia >= 2.8% o en benchmark)
-                cond_adr = (adr_10 >= 2.8) or (t in PURE_MOMENTUM_231_TICKERS)
-                # 3. Fuerza Absoluta (AS 1M > 95 / 3M > 93) o estructura de alta velocidad
-                cond_momentum = (roc_1m >= 10.0) or (roc_3m >= 20.0) or (current_price >= sma_50 * 0.95) or (dist_high_52w >= -25.0) or (t in PURE_MOMENTUM_231_TICKERS)
-                
+                cond_dollar_vol = (dollar_vol_avg_20 >= 7.0)
+                cond_adr = (adr_10 >= 3.2)
+                cond_momentum = (roc_1m >= 12.0 or roc_3m >= 25.0) and (current_price > ema_21 > sma_50) and (dist_high_52w >= -18.0)
                 if cond_dollar_vol and cond_adr and cond_momentum:
                     matched = True
-                    pattern_name = f"Pure Mom (ADR {adr_10:.1f}%, 1M {roc_1m:+.1f}%)"
+                    pattern_name = f"Pure Momentum (ADR {adr_10:.1f}%, 1M {roc_1m:+.1f}%, 3M {roc_3m:+.1f}%)"
 
             elif "Pre Market" in strategy or "Gap Ups" in strategy:
-                # Criterios cuantitativos de Pre-Market Movers & Gap Ups (Reverse Engineered):
                 open_price = float(df['Open'].iloc[-1])
-                gap_pct = ((open_price - prev_close) / prev_close) * 100 if prev_close > 0 else 0.0
-                # 1. Precio actual o apertura >= $3.00
-                cond_price = (current_price >= 3.0) or (open_price >= 3.0)
-                # 2. Gap Up >= +0.5% OR Ganancia intradía >= +1.0% OR Rango superior >= 30% OR RVOL >= 1.1x OR en benchmark
-                cond_gap_or_up = (gap_pct >= 0.5) or (change_pct >= 1.0) or (pos_in_range >= 30.0) or (rvol >= 1.1) or (t in PRE_MARKET_MOVERS_TICKERS)
-                # 3. Liquidez institucional ($Vol >= $1.5M o Vol >= 150k o en benchmark)
-                cond_liquid = (dollar_vol_avg_20 >= 1.5) or (dollar_vol_m >= 1.5) or (last_vol >= 150_000) or (t in PRE_MARKET_MOVERS_TICKERS)
+                gap_pct = ((open_price - prev_close) / (prev_close + 1e-9)) * 100.0
+                cond_price = (current_price >= 5.0)
+                cond_gap_or_up = (gap_pct >= 2.0 and change_pct >= 1.5) or (change_pct >= 4.0 and rvol_20 >= 1.3)
+                cond_liquid = (dollar_vol_avg_20 >= 5.0) or (dollar_vol_m >= 5.0)
                 if cond_price and cond_gap_or_up and cond_liquid:
                     matched = True
-                    gap_label = f"Gap {gap_pct:+.1f}%" if abs(gap_pct) >= 1.0 else f"Chg {change_pct:+.1f}%"
-                    pattern_name = f"Pre-Mkt Mover ({gap_label})"
+                    gap_label = f"Gap {gap_pct:+.1f}%" if abs(gap_pct) >= 1.5 else f"Impulso {change_pct:+.1f}%"
+                    pattern_name = f"Gap & Go ({gap_label}, RVOL {rvol_20:.2f}x)"
 
             elif "Post Market" in strategy or "After Hours" in strategy:
-                # Criterios oficiales Post-Market Movers & After-Hours Reactions:
-                # 1. Precio >= $5.00 (filtra penny stocks sub-$5)
-                cond_price = (current_price >= 5.0) or (t in POST_MARKET_MOVERS_TICKERS)
-                # 2. Reacción After-Hours > 2% en cualquier dirección (ganancia o caída por earnings/noticias)
-                cond_move = (abs(change_pct) >= 2.0) or (pos_in_range >= 75.0) or (pos_in_range <= 25.0) or (t in POST_MARKET_MOVERS_TICKERS)
-                # 3. Liquidez Institucional: Market Cap > $500M o $Vol >= $10M
-                cond_liquid = (dollar_vol_avg_20 >= 10.0) or (dollar_vol_m >= 10.0) or (last_vol >= 150_000) or (t in POST_MARKET_MOVERS_TICKERS)
+                cond_price = (current_price >= 5.0)
+                cond_move = (abs(change_pct) >= 3.0) and (rvol_20 >= 1.2)
+                cond_liquid = (dollar_vol_avg_20 >= 10.0) or (dollar_vol_m >= 10.0)
                 if cond_price and cond_move and cond_liquid:
                     matched = True
                     move_type = "Reacción Alcista" if change_pct >= 0 else "Reacción Bajista"
-                    pattern_name = f"Post-Mkt {move_type} ({change_pct:+.1f}%)"
-
-            elif "Pivot Breakout" in strategy or "Daily Pivot" in strategy:
-                # Daily Pivot Breakout Strategy Indicator (L=5, R=5, Lookback=100, ROC(100)>=30%, RVOL(20)>1.0x, EMA(100) Slope(100)>=20%)
-                piv_eval = evaluate_daily_pivot_breakout(df, params=pivot_params)
-                if piv_eval.get("valid") and piv_eval.get("matched"):
-                    matched = True
-                    rvol = piv_eval["rvol_val"]
-                    pattern_name = f"{piv_eval['setup_status']} • ROC {piv_eval['roc_val']:+.1f}% • Slope {piv_eval['ema_slope_pct']:+.1f}%"
+                    pattern_name = f"After-Hours / Earnings {move_type} ({change_pct:+.1f}%, RVOL {rvol_20:.2f}x)"
                     
             if matched:
                 open_price_val = float(df['Open'].iloc[-1])
-                gap_val = ((open_price_val - prev_close) / prev_close) * 100 if prev_close > 0 else 0.0
+                gap_val = ((open_price_val - prev_close) / (prev_close + 1e-9)) * 100.0
                 row_dict = {
                     "Ticker": t,
                     "Precio": round(current_price, 2),
@@ -1337,10 +1235,14 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
         return pd.DataFrame()
         
     df_res = pd.DataFrame(results)
-    if ("Pre Market" in strategy or "Post Market" in strategy or "Gap" in strategy or "Gapper" in strategy) and "Cambio %" in df_res.columns:
+    if ("Pivot Breakout" in strategy or "Daily Pivot" in strategy) and "ROC (100d) %" in df_res.columns:
+        return df_res.sort_values(by=["RVOL", "ROC (100d) %"], ascending=[False, False]).reset_index(drop=True)
+    if ("Pre Market" in strategy or "Post Market" in strategy or "Gap" in strategy or "Gapper" in strategy or "Up on Volume" in strategy or "Episodic" in strategy) and "Cambio %" in df_res.columns:
         return df_res.sort_values(by="Cambio %", ascending=False).reset_index(drop=True)
     if "Pure Momentum" in strategy and "ADR (10s) %" in df_res.columns:
         return df_res.sort_values(by="ADR (10s) %", ascending=False).reset_index(drop=True)
+    if ("HV Edge" in strategy or "Highest Volume" in strategy or "Pocket Pivot" in strategy) and "RVOL" in df_res.columns:
+        return df_res.sort_values(by="RVOL", ascending=False).reset_index(drop=True)
     return df_res.sort_values(by="Dist_Max52w(%)", ascending=False).reset_index(drop=True)
 
 def run_daytrade_scanner(tickers: list[str], strategy: str, min_gap: float = 2.0, 
@@ -1440,11 +1342,11 @@ def run_daytrade_scanner(tickers: list[str], strategy: str, min_gap: float = 2.0
                     matched = True
                     pattern_name = "Presion Compradora en Maximos"
             elif "Pre Market" in strategy or "Gap Ups" in strategy:
-                if (current_price >= 3.0 and (gap_pct >= 1.0 or pos_in_range >= 40.0)) or (t in PRE_MARKET_MOVERS_TICKERS):
+                if (current_price >= 3.0 and (gap_pct >= 1.0 or pos_in_range >= 40.0)) :
                     matched = True
                     pattern_name = f"Pre-Mkt Gapper ({gap_pct:+.1f}%)"
             elif "Post Market" in strategy or "After Hours" in strategy:
-                if (current_price >= 3.0 and (abs(gap_pct) >= 1.5 or abs(change_pct) >= 1.5)) or (t in POST_MARKET_MOVERS_TICKERS):
+                if (current_price >= 3.0 and (abs(gap_pct) >= 1.5 or abs(change_pct) >= 1.5)) :
                     matched = True
                     pattern_name = f"Post-Mkt Mover ({gap_pct:+.1f}%)"
                     

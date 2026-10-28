@@ -2661,164 +2661,69 @@ elif nav_view == "⚡ Screener Cuantitativo":
         radar_count_now = active_radar_data.get("count", len(active_radar_data.get("tickers", [])))
         radar_src_now = active_radar_data.get("source", "Screener")
 
-        is_pre_or_post = ("Pre Market" in selected_screener_name or "Post Market" in selected_screener_name or "Top Gappers" in selected_screener_name)
-        default_idx = 1 if is_pre_or_post else 0
+        full_mkt_cnt = len(getattr(engine, 'FULL_US_MARKET_TICKERS', eu.US_BROAD_MARKET_TICKERS))
 
         universe_options = [
-            f"📐 Daily Pivot Breakout Strategy ({len(getattr(engine, 'DAILY_PIVOT_BREAKOUT_TICKERS', []))} líderes)",
-            f"🌱 Ameet Rai: IPO Last 1 Year ({len(getattr(eu, 'AMEET_RAI_IPO_1YR_189', getattr(engine, 'AMEET_RAI_IPO_1YR_189_TICKERS', [])))} acciones)",
-            f"⚡ Ameet Rai: HV Edge ({len(getattr(eu, 'AMEET_RAI_HV_EDGE_45', getattr(engine, 'AMEET_RAI_HV_EDGE_45_TICKERS', [])))} acciones)",
-            f"🌆 Post Market Movers ({len(getattr(engine, 'POST_MARKET_MOVERS_21_TICKERS', engine.POST_MARKET_MOVERS_TICKERS))} acciones)",
-            f"🚩 Ameet Rai: High Tight Flags ({len(getattr(eu, 'AMEET_RAI_HTF_12', getattr(engine, 'AMEET_RAI_HTF_12_TICKERS', [])))} acciones)",
-            f"💧 Ameet Rai: Daily Liquidity ({len(getattr(eu, 'AMEET_RAI_DAILY_LIQUIDITY_296', getattr(engine, 'AMEET_RAI_DAILY_LIQUIDITY_296_TICKERS', [])))} acciones)",
-            f"🛡️ Ameet Rai: 62.5% RS Days ({len(getattr(eu, 'AMEET_RAI_RS_DAYS_191', getattr(engine, 'AMEET_RAI_RS_DAYS_191_TICKERS', [])))} acciones)",
-            f"🔥 Highest Volume IPO ({len(getattr(engine, 'HV_IPO_7_TICKERS', getattr(engine, 'HVE_7_TICKERS', [])))} acciones)",
-            f"📅 Weekly Strength ({len(getattr(eu, 'WEEKLY_STRENGTH_399', getattr(engine, 'WEEKLY_STRENGTH_399_TICKERS', [])))} acciones)",
-            f"⚡ Power 21 ({len(getattr(eu, 'POWER_21_69', getattr(engine, 'POWER_21_69_TICKERS', [])))} acciones)",
-            f"💧 Volume Dry Up ({len(getattr(eu, 'VOLUME_DRY_UP_160', getattr(engine, 'VOLUME_DRY_UP_160_TICKERS', [])))} acciones)",
-            f"🌐 Deepvue Universe ({len(getattr(eu, 'DEEPVUE_UNIVERSE_752', getattr(engine, 'DEEPVUE_UNIVERSE_752_TICKERS', [])))} acciones líquidas)",
-            f"🚀 Momentum Leaders ({len(getattr(eu, 'MOMENTUM_LEADERS_186', getattr(engine, 'MOMENTUM_LEADERS_186_TICKERS', [])))} acciones)",
-            f"💎 Liquid Leaders ({len(getattr(engine, 'LIQUID_LEADERS_187_TICKERS', []))} acciones)",
-            f"🎯 Tight Range ({len(getattr(engine, 'TIGHT_RANGE_26_TICKERS', []))} acciones)",
-            f"🎯 Pocket Pivots ({len(getattr(engine, 'POCKET_PIVOTS_45_TICKERS', []))} acciones)",
-            "🤖 Líderes Autónomos TradingVolt (260 generados algorítmicamente)",
-            "📡 Mercado en Vivo: Top Pre-Market & Movers (+350 en vivo)",
-            f"🎯 Radar Activo Compartido ({radar_count_now} activos de {radar_src_now})",
-            f"🇺🇸 US Broad Liquid Market ({len(eu.US_BROAD_MARKET_TICKERS):,} acciones)",
+            f"🌎 Mercado Completo EE.UU. (S&P 1500 + NDX + Momentum / {full_mkt_cnt:,} acciones)",
+            "📡 Mercado en Vivo: Top Gappers, Movers & Momentum (+950 activos en juego)",
+            f"🇺🇸 S&P 1500 + Nasdaq 100 Broad Market ({len(eu.US_BROAD_MARKET_TICKERS):,} acciones)",
+            f"🚀 High Momentum & Growth Universe ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones)",
             f"🏆 S&P 500 Completo ({len(eu.SP500_COMPLETE_TICKERS)} acciones)",
             f"💻 Nasdaq 100 Completo ({len(eu.NASDAQ100_COMPLETE_TICKERS)} acciones)",
             f"🏢 S&P 400 Mid-Cap Growth ({len(eu.SP400_MIDCAP_TICKERS)} acciones)",
             f"⚡ S&P 600 Small-Cap Momentum ({len(eu.SP600_SMALLCAP_TICKERS)} acciones)",
-            f"🚀 High Momentum Basket ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones)",
-            "✏️ Personalizado (Escribir tickers)",
-            f"🧪 Canasta Benchmark Auditoría Deepvue ({num_benchmark} activos)",
-            f"🌐 True Market Leaders Oficiales Auditoría ({len(engine.TML_331_TICKERS)} acciones)"
+            f"🎯 Radar Activo Compartido ({radar_count_now} activos de {radar_src_now})",
+            "✏️ Personalizado (Escribir tickers)"
         ]
 
         selected_universe_option = st.selectbox(
             "Seleccionar Universo:",
             universe_options,
-            index=default_idx,
+            index=0,
             label_visibility="collapsed"
         )
 
-    # Determinar ticker list a escanear
-    if "Daily Pivot Breakout" in selected_universe_option:
-        ticker_list = getattr(engine, 'DAILY_PIVOT_BREAKOUT_TICKERS', ["INTC", "NVDA", "PLTR", "APP", "RDDT", "ALAB", "HOOD"])
-        universe_label = f"📐 Daily Pivot Breakout Leaders ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Líderes Autónomos TradingVolt" in selected_universe_option:
-        ticker_list = get_autonomous_market_leaders(top_n=260)
-        universe_label = f"🤖 Líderes Autónomos TradingVolt ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    # Determinar ticker list a escanear (Por defecto SIEMPRE el Mercado Completo EE.UU.)
+    if "Mercado Completo EE.UU." in selected_universe_option:
+        ticker_list = getattr(engine, 'FULL_US_MARKET_TICKERS', eu.US_BROAD_MARKET_TICKERS)
+        universe_label = f"🌎 Mercado Completo EE.UU. ({len(ticker_list):,} activos)"
+        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
     elif "Mercado en Vivo" in selected_universe_option:
         ticker_list = "LIVE_MOVERS"
-        universe_label = "📡 Mercado en Vivo (Top Gappers & Movers en Tiempo Real)"
-        ticker_count_display = "EN VIVO (~350+)"
-    elif "Radar Activo Compartido" in selected_universe_option:
-        ticker_list = are.get_active_radar_tickers(max_items=120) if are else ["NVDA", "PLTR", "TSLA"]
-        universe_label = f"🎯 Radar Activo Compartido ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Deepvue Universe" in selected_universe_option:
-        ticker_list = getattr(eu, 'DEEPVUE_UNIVERSE_752', getattr(engine, 'DEEPVUE_UNIVERSE_752_TICKERS', []))
-        universe_label = f"🌐 Deepvue Universe ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Momentum Leaders" in selected_universe_option:
-        ticker_list = getattr(eu, 'MOMENTUM_LEADERS_186', getattr(engine, 'MOMENTUM_LEADERS_186_TICKERS', []))
-        universe_label = f"🚀 Momentum Leaders ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Post Market" in selected_universe_option:
-        ticker_list = getattr(engine, 'POST_MARKET_MOVERS_21_TICKERS', engine.POST_MARKET_MOVERS_TICKERS)
-        universe_label = f"🌆 Post Market Movers ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Highest Volume" in selected_universe_option or "HVE" in selected_universe_option or "IPO" in selected_universe_option:
-        ticker_list = getattr(engine, 'HV_IPO_7_TICKERS', getattr(engine, 'HVE_7_TICKERS', []))
-        universe_label = f"🔥 Highest Volume IPO ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "IPO Last 1 Year" in selected_universe_option:
-        ticker_list = getattr(eu, 'AMEET_RAI_IPO_1YR_189', getattr(engine, 'AMEET_RAI_IPO_1YR_189_TICKERS', []))
-        universe_label = f"🌱 Ameet Rai: IPO Last 1 Year ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "HV Edge" in selected_universe_option:
-        ticker_list = getattr(eu, 'AMEET_RAI_HV_EDGE_45', getattr(engine, 'AMEET_RAI_HV_EDGE_45_TICKERS', []))
-        universe_label = f"⚡ Ameet Rai: HV Edge ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "High Tight Flag" in selected_universe_option or "HTF" in selected_universe_option:
-        ticker_list = getattr(eu, 'AMEET_RAI_HTF_12', getattr(engine, 'AMEET_RAI_HTF_12_TICKERS', []))
-        universe_label = f"🚩 Ameet Rai: High Tight Flags ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Daily Liquidity" in selected_universe_option:
-        ticker_list = getattr(eu, 'AMEET_RAI_DAILY_LIQUIDITY_296', getattr(engine, 'AMEET_RAI_DAILY_LIQUIDITY_296_TICKERS', []))
-        universe_label = f"💧 Ameet Rai: Daily Liquidity ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Ameet Rai" in selected_universe_option or "RS Days" in selected_universe_option:
-        ticker_list = getattr(eu, 'AMEET_RAI_RS_DAYS_191', getattr(engine, 'AMEET_RAI_RS_DAYS_191_TICKERS', []))
-        universe_label = f"🛡️ Ameet Rai: 62.5% RS Days ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Weekly Strength" in selected_universe_option:
-        ticker_list = getattr(eu, 'WEEKLY_STRENGTH_399', getattr(engine, 'WEEKLY_STRENGTH_399_TICKERS', []))
-        universe_label = f"📅 Weekly Strength ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Power 21" in selected_universe_option:
-        ticker_list = getattr(eu, 'POWER_21_69', getattr(engine, 'POWER_21_69_TICKERS', []))
-        universe_label = f"⚡ Power 21 ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Volume Dry Up" in selected_universe_option:
-        ticker_list = getattr(eu, 'VOLUME_DRY_UP_160', getattr(engine, 'VOLUME_DRY_UP_160_TICKERS', []))
-        universe_label = f"💧 Volume Dry Up ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Tight Range" in selected_universe_option:
-        ticker_list = getattr(engine, 'TIGHT_RANGE_26_TICKERS', [])
-        universe_label = f"🎯 Tight Range ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Pocket Pivots" in selected_universe_option:
-        ticker_list = getattr(engine, 'POCKET_PIVOTS_45_TICKERS', [])
-        universe_label = f"🎯 Pocket Pivots ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "US Broad Liquid Market" in selected_universe_option:
+        universe_label = "📡 Mercado en Vivo (Top Gappers, Movers & Momentum en Tiempo Real)"
+        ticker_count_display = "EN VIVO (~950+)"
+    elif "S&P 1500 + Nasdaq 100" in selected_universe_option or "US Broad" in selected_universe_option:
         ticker_list = eu.US_BROAD_MARKET_TICKERS
-        universe_label = f"US Broad Liquid Market ({len(ticker_list)} activos)"
+        universe_label = f"🇺🇸 S&P 1500 + Nasdaq 100 ({len(ticker_list):,} activos)"
+        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
+    elif "High Momentum" in selected_universe_option:
+        ticker_list = eu.HIGH_MOMENTUM_EXPANDED_TICKERS
+        universe_label = f"🚀 High Momentum & Growth ({len(ticker_list)} activos)"
         ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "S&P 500 Completo" in selected_universe_option:
         ticker_list = eu.SP500_COMPLETE_TICKERS
-        universe_label = f"S&P 500 Completo ({len(ticker_list)} activos)"
+        universe_label = f"🏆 S&P 500 Completo ({len(ticker_list)} activos)"
         ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "Nasdaq 100 Completo" in selected_universe_option:
         ticker_list = eu.NASDAQ100_COMPLETE_TICKERS
-        universe_label = f"Nasdaq 100 Completo ({len(ticker_list)} activos)"
+        universe_label = f"💻 Nasdaq 100 Completo ({len(ticker_list)} activos)"
         ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "S&P 400" in selected_universe_option:
         ticker_list = eu.SP400_MIDCAP_TICKERS
-        universe_label = f"S&P 400 Mid-Cap ({len(ticker_list)} activos)"
+        universe_label = f"🏢 S&P 400 Mid-Cap ({len(ticker_list)} activos)"
         ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "S&P 600" in selected_universe_option:
         ticker_list = eu.SP600_SMALLCAP_TICKERS
-        universe_label = f"S&P 600 Small-Cap ({len(ticker_list)} activos)"
+        universe_label = f"⚡ S&P 600 Small-Cap ({len(ticker_list)} activos)"
         ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "High Momentum Basket" in selected_universe_option:
-        ticker_list = eu.HIGH_MOMENTUM_EXPANDED_TICKERS
-        universe_label = f"High Momentum Basket ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Liquid Leaders" in selected_universe_option:
-        ticker_list = getattr(engine, 'LIQUID_LEADERS_187_TICKERS', [])
-        universe_label = f"Liquid Leaders ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS" 
-    elif "True Market Leaders" in selected_universe_option:
-        ticker_list = engine.TML_331_TICKERS
-        universe_label = f"True Market Leaders ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Pure Momentum Basket" in selected_universe_option:
-        ticker_list = engine.PURE_MOMENTUM_231_TICKERS
-        universe_label = f"Pure Momentum Basket ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Canasta Benchmark Oficial" in selected_universe_option:
-        ticker_list = current_screener["benchmark_tickers"]
-        universe_label = f"Canasta Benchmark Oficial TradingVolt ({len(ticker_list)} activos)"
+    elif "Radar Activo Compartido" in selected_universe_option:
+        ticker_list = are.get_active_radar_tickers(max_items=200) if are else ["NVDA", "PLTR", "TSLA"]
+        universe_label = f"🎯 Radar Activo Compartido ({len(ticker_list)} activos)"
         ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     else:
         custom_input = st.text_input(
             "Ingresa tickers separados por coma:",
-            value="NVDA, TSLA, AAPL, AMD, PLTR, MSTR, COIN, SMCI"
+            value="INTC, NVDA, TSLA, AAPL, AMD, PLTR, MSTR, COIN, SMCI"
         )
         ticker_list = [t.strip().upper() for t in custom_input.split(",") if t.strip()]
         universe_label = f"Personalizado ({len(ticker_list)} activos)"
@@ -2884,24 +2789,31 @@ elif nav_view == "⚡ Screener Cuantitativo":
             with r2_c5:
                 piv_min_slope = st.number_input("Min EMA Slope %", min_value=0.0, max_value=150.0, value=20.0, step=1.0, help="La EMA debe tener una inclinación positiva mínima del 20% para que el breakout sea válido.")
 
-            # Fila 3 (idéntica a la captura): Enable Momentum Candle Colors | Pivot High (───) | 20% Trailing Stop (•••••••) | Entry Signals | Modo Escaneo
-            r3_c1, r3_c2, r3_c3, r3_c4, r3_c5 = st.columns([1.1, 0.9, 1.0, 0.9, 1.5])
+            # Fila 3: Enable Momentum Candle Colors | Pivot High (───) | 20% Trailing Stop (•••••••) | Ventana Ruptura | Modo de Señal
+            r3_c1, r3_c2, r3_c3, r3_c4, r3_c5, r3_c6 = st.columns([1.0, 0.85, 0.95, 0.8, 0.75, 1.45])
             with r3_c1:
-                piv_mom_colors = st.checkbox("Enable Momentum Candle Colors", value=True, help="Colorea las velas según el momentum (como sobre INTC).")
+                piv_mom_colors = st.checkbox("Momentum Candle Colors", value=True, help="Colorea las velas según el momentum (como sobre INTC).")
             with r3_c2:
-                piv_show_ph = st.checkbox("Pivot High (─── Verde)", value=True, help="Dibuja la línea horizontal verde continua de los Pivot Highs confirmados.")
+                piv_show_ph = st.checkbox("Pivot High (───)", value=True, help="Dibuja la línea horizontal verde continua de los Pivot Highs confirmados.")
             with r3_c3:
-                piv_show_trail = st.checkbox("20% Trailing Stop (•••••••)", value=True, help="Dibuja el 20% Trailing Stop en puntos azules desde la señal de entrada.")
+                piv_show_trail = st.checkbox("20% Trailing Stop (•••)", value=True, help="Dibuja el 20% Trailing Stop en puntos azules desde la señal de entrada.")
             with r3_c4:
-                piv_show_entry = st.checkbox("Entry Signals (Breakout)", value=True, help="Muestra las etiquetas de entrada en Breakout y salida por Trailing Stop.")
+                piv_show_entry = st.checkbox("Entry Signals", value=True, help="Muestra las etiquetas de entrada en Breakout y salida por Trailing Stop.")
             with r3_c5:
+                piv_bk_win = st.selectbox("Ruptura en:", ["Último 1 día (Hoy)", "Últimos 2 días", "Últimos 3 días"], index=1, help="Filtra únicamente acciones que hayan cruzado sobre el Pivot High en los últimos 1, 2 o 3 días.")
+            with r3_c6:
                 piv_mode = st.selectbox(
-                    "Modo de Escaneo",
-                    ["🔥 Breakout Estricto (Sobre Pivote + RVOL > 1x)", "🎯 Breakout + En Zona de Pivote (-3.5% a +8%)"],
+                    "Modo de Señal",
+                    [
+                        "🔥 Solo Breakouts Recientes (Cruza Pivote + RVOL > 1x)",
+                        "🎯 Breakouts + Acechando Pivote (< 3.5% bajo Pivote)",
+                        "📈 Breakouts + En Trade Activo (< 15d desde Entry)"
+                    ],
                     index=0,
-                    label_visibility="collapsed"
+                    help="El modo estricto exige cruce reciente sobre un Pivot High intacto con volumen > media 20d."
                 )
 
+            bk_days_val = 1 if "1 día" in piv_bk_win else (2 if "2 días" in piv_bk_win else 3)
             pivot_params_active = {
                 "left_strength": int(piv_left),
                 "right_strength": int(piv_right),
@@ -2919,7 +2831,9 @@ elif nav_view == "⚡ Screener Cuantitativo":
                 "show_trailing_stop": bool(piv_show_trail),
                 "show_entry_signals": bool(piv_show_entry),
                 "min_rvol": 1.0,
-                "include_near_pivot": ("Zona de Pivote" in piv_mode),
+                "breakout_window_days": bk_days_val,
+                "include_near_pivot": ("Acechando Pivote" in piv_mode),
+                "include_active_trade": ("En Trade Activo" in piv_mode),
             }
             st.session_state["pivot_strategy_params"] = pivot_params_active
 
@@ -2936,19 +2850,24 @@ elif nav_view == "⚡ Screener Cuantitativo":
                 )
                 st.code(pine_code_str, language="javascript")
 
-    # Botón principal de escaneo
+    # Botón principal de escaneo + Opción de refresco forzado de cotizaciones
     st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
-    btn_scan = st.button(
-        f"⚡ EJECUTAR ESCANEO INSTITUCIONAL ({ticker_count_display})",
-        type="primary",
-        use_container_width=True
-    )
+    col_b_scan, col_b_ref = st.columns([4.2, 1.0])
+    with col_b_scan:
+        btn_scan = st.button(
+            f"⚡ EJECUTAR ESCANEO EN MERCADO ({ticker_count_display})",
+            type="primary",
+            use_container_width=True
+        )
+    with col_b_ref:
+        force_fresh_mkt = st.checkbox("🔄 Datos frescos", value=False, help="Marca esta casilla si quieres forzar una nueva descarga desde Yahoo/Alpaca ignorando la caché rápida de 5 minutos.")
 
     # Si se pulsa el botón o ya tenemos resultados en sesión
-    scan_state_key = f"scan_results_{selected_screener_name}_{selected_universe_option}"
+    piv_key_suffix = f"_{pivot_params_active['breakout_window_days']}_{pivot_params_active['include_near_pivot']}_{pivot_params_active['include_active_trade']}_{pivot_params_active['min_roc_pct']}_{pivot_params_active['min_ema_slope_pct']}" if pivot_params_active else ""
+    scan_state_key = f"scan_results_{selected_screener_name}_{selected_universe_option}{piv_key_suffix}"
 
     if btn_scan:
-        with st.spinner(f"Escaneando {ticker_count_display} con {strategy} vía {provider_str}..."):
+        with st.spinner(f"Escaneando en tiempo real {ticker_count_display} con {strategy} vía {provider_str}..."):
             start_t = datetime.now()
             if is_daytrade:
                 results_df = engine.run_daytrade_scanner(
@@ -2965,7 +2884,8 @@ elif nav_view == "⚡ Screener Cuantitativo":
                     provider=provider_str,
                     alpaca_key=alpaca_key,
                     alpaca_secret=alpaca_secret,
-                    pivot_params=pivot_params_active
+                    pivot_params=pivot_params_active,
+                    force_refresh=bool(force_fresh_mkt)
                 )
             duration = (datetime.now() - start_t).total_seconds()
             st.session_state[scan_state_key] = (results_df, duration)

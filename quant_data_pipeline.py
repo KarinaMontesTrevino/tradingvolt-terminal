@@ -332,13 +332,23 @@ def get_updated_filters_catalog(session_state: Optional[Any] = None) -> Dict[str
     ]
 
     for f_title, f_tickers, f_cat in official_filters:
-        # Si el filtro fue re-ejecutado y guardado en disco, usar su lista más reciente
+        # Si el filtro fue ejecutado en vivo en el Screener (coincidencia exacta o por prefijo), usar los resultados en vivo del mercado
+        matched_saved = None
         if f_title in saved_runs and saved_runs[f_title].get("tickers"):
-            t_list = saved_runs[f_title]["tickers"]
-            upd = saved_runs[f_title].get("updated_at", "Actualizado")
+            matched_saved = saved_runs[f_title]
+        else:
+            base_prefix = f_title.split("(")[0].strip()
+            for sk, sv in saved_runs.items():
+                if (base_prefix in sk or sk in f_title) and sv.get("tickers"):
+                    matched_saved = sv
+                    break
+
+        if matched_saved:
+            t_list = matched_saved["tickers"]
+            upd = f"En Vivo ({matched_saved.get('updated_at', 'Hoy')})"
         else:
             t_list = list(f_tickers) if f_tickers else []
-            upd = "Lista Calibrada Activa"
+            upd = "Referencia Inicial"
 
         # Limpiar símbolos especiales de índices internos (ej. SA40MA-NYSE) para descargas limpias
         clean_list = [
