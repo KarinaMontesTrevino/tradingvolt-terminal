@@ -1,0 +1,11 @@
+streamlit
+plotly
+yfinance
+pandas
+numpy
+requests
+beautifulsoup4
+lxml
+scipy
+alpaca-py
+pytz

@@ -1,0 +1,11 @@
+# Claves privadas locales (en la nube usa Streamlit Secrets)
+config.json
+.streamlit/secrets.toml
+
+# Caché cuantitativa y compilados de Python
+__pycache__/
+*.py[cod]
+*$py.class
+.quant_cache/
+*.log
+.DS_Store
