@@ -21,7 +21,12 @@ from expanded_universes import (
     NASDAQ100_COMPLETE_TICKERS,
     SP400_MIDCAP_TICKERS,
     SP600_SMALLCAP_TICKERS,
+    SP1500_COMPLETE_TICKERS,
+    DOW30_COMPLETE_TICKERS,
+    RUSSELL2000_COMPLETE_TICKERS,
+    NASDAQ_COMPOSITE_COMPLETE_TICKERS,
     US_BROAD_MARKET_TICKERS,
+    US_MASTER_TOTAL_MARKET_TICKERS,
     HIGH_MOMENTUM_EXPANDED_TICKERS,
     fetch_live_market_movers,
     get_premarket_top_gappers
@@ -167,6 +172,11 @@ UNIVERSES = {
     "🎯 Pocket Pivots (45 acciones)": POCKET_PIVOTS_45_TICKERS,
     "📡 Mercado en Vivo: Top Pre-Market & Movers (+350 en vivo)": "LIVE_MOVERS",
     "🤖 Líderes Autónomos TradingVolt (260 líderes algorítmicos)": "AUTONOMOUS_LEADERS",
+    "🌎 Master US Total Market (~3,500+ acciones consolidadas)": US_MASTER_TOTAL_MARKET_TICKERS,
+    "🇺🇸 S&P 1500 Composite (1,506 acciones)": SP1500_COMPLETE_TICKERS,
+    "🏛️ Dow Jones 30 Completo (30 acciones)": DOW30_COMPLETE_TICKERS,
+    "🐻 Russell 2000 Completo (~2,075 acciones)": RUSSELL2000_COMPLETE_TICKERS,
+    "🌐 Nasdaq Composite Líquido (~3,258 acciones)": NASDAQ_COMPOSITE_COMPLETE_TICKERS,
     "🇺🇸 US Broad Liquid Market (S&P 1500 + NDX / 1,718 acciones)": US_BROAD_MARKET_TICKERS,
     "🏆 S&P 500 Completo (503 acciones)": SP500_COMPLETE_TICKERS,
     "💻 Nasdaq 100 Completo (103 acciones)": NASDAQ100_COMPLETE_TICKERS,
@@ -200,7 +210,12 @@ DAILY_PIVOT_BREAKOUT_TICKERS = UNIVERSES["📐 Daily Pivot Breakout Strategy (42
 
 # Universo Maestro de Mercado Completo EE.UU. (S&P 500 + S&P 400 + S&P 600 + Nasdaq 100 + High Momentum + Deepvue 752 + TML)
 FULL_US_MARKET_TICKERS = sorted(list(set(
-    US_BROAD_MARKET_TICKERS
+    SP1500_COMPLETE_TICKERS
+    + DOW30_COMPLETE_TICKERS
+    + NASDAQ100_COMPLETE_TICKERS
+    + RUSSELL2000_COMPLETE_TICKERS
+    + NASDAQ_COMPOSITE_COMPLETE_TICKERS
+    + US_BROAD_MARKET_TICKERS
     + HIGH_MOMENTUM_EXPANDED_TICKERS
     + DEEPVUE_UNIVERSE_752_TICKERS
     + TML_331_TICKERS

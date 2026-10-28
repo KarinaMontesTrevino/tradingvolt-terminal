@@ -2662,16 +2662,23 @@ elif nav_view == "⚡ Screener Cuantitativo":
         radar_src_now = active_radar_data.get("source", "Screener")
 
         full_mkt_cnt = len(getattr(engine, 'FULL_US_MARKET_TICKERS', eu.US_BROAD_MARKET_TICKERS))
+        sp1500_cnt = len(getattr(eu, 'SP1500_COMPLETE_TICKERS', [])) or 1506
+        r2k_cnt = len(getattr(eu, 'RUSSELL2000_COMPLETE_TICKERS', [])) or 2075
+        nasdaq_comp_cnt = len(getattr(eu, 'NASDAQ_COMPOSITE_COMPLETE_TICKERS', [])) or 3258
+        dow30_cnt = len(getattr(eu, 'DOW30_COMPLETE_TICKERS', [])) or 30
 
         universe_options = [
-            f"🌎 Mercado Completo EE.UU. (S&P 1500 + NDX + Momentum / {full_mkt_cnt:,} acciones)",
-            "📡 Mercado en Vivo: Top Gappers, Movers & Momentum (+950 activos en juego)",
-            f"🇺🇸 S&P 1500 + Nasdaq 100 Broad Market ({len(eu.US_BROAD_MARKET_TICKERS):,} acciones)",
-            f"🚀 High Momentum & Growth Universe ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones)",
+            f"🌎 Todo el Mercado EE.UU. (S&P 1500 + Russell 2000 + Nasdaq Comp + Dow 30 / {full_mkt_cnt:,} acciones)",
+            f"🐻 Russell 2000 Completo ({r2k_cnt:,} small-caps)",
+            f"🌐 Nasdaq Composite Líquido ({nasdaq_comp_cnt:,} acciones)",
+            f"🇺🇸 S&P 1500 Composite ({sp1500_cnt:,} acciones)",
+            f"🏛️ Dow Jones 30 ({dow30_cnt} blue-chips)",
             f"🏆 S&P 500 Completo ({len(eu.SP500_COMPLETE_TICKERS)} acciones)",
             f"💻 Nasdaq 100 Completo ({len(eu.NASDAQ100_COMPLETE_TICKERS)} acciones)",
             f"🏢 S&P 400 Mid-Cap Growth ({len(eu.SP400_MIDCAP_TICKERS)} acciones)",
             f"⚡ S&P 600 Small-Cap Momentum ({len(eu.SP600_SMALLCAP_TICKERS)} acciones)",
+            f"🚀 High Momentum & Growth Universe ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones)",
+            "📡 Mercado en Vivo: Top Gappers, Movers & Momentum (+950 activos en juego)",
             f"🎯 Radar Activo Compartido ({radar_count_now} activos de {radar_src_now})",
             "✏️ Personalizado (Escribir tickers)"
         ]
@@ -2684,22 +2691,30 @@ elif nav_view == "⚡ Screener Cuantitativo":
         )
 
     # Determinar ticker list a escanear (Por defecto SIEMPRE el Mercado Completo EE.UU.)
-    if "Mercado Completo EE.UU." in selected_universe_option:
+    if "Todo el Mercado" in selected_universe_option or "Mercado Completo" in selected_universe_option:
         ticker_list = getattr(engine, 'FULL_US_MARKET_TICKERS', eu.US_BROAD_MARKET_TICKERS)
-        universe_label = f"🌎 Mercado Completo EE.UU. ({len(ticker_list):,} activos)"
+        universe_label = f"🌎 Todo el Mercado EE.UU. ({len(ticker_list):,} activos)"
         ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
+    elif "Russell 2000" in selected_universe_option:
+        ticker_list = getattr(eu, 'RUSSELL2000_COMPLETE_TICKERS', [])
+        universe_label = f"🐻 Russell 2000 ({len(ticker_list):,} activos)"
+        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
+    elif "Nasdaq Composite" in selected_universe_option:
+        ticker_list = getattr(eu, 'NASDAQ_COMPOSITE_COMPLETE_TICKERS', [])
+        universe_label = f"🌐 Nasdaq Composite ({len(ticker_list):,} activos)"
+        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
+    elif "S&P 1500" in selected_universe_option:
+        ticker_list = getattr(eu, 'SP1500_COMPLETE_TICKERS', [])
+        universe_label = f"🇺🇸 S&P 1500 Composite ({len(ticker_list):,} activos)"
+        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
+    elif "Dow Jones" in selected_universe_option or "Dow 30" in selected_universe_option:
+        ticker_list = getattr(eu, 'DOW30_COMPLETE_TICKERS', [])
+        universe_label = f"🏛️ Dow Jones 30 ({len(ticker_list)} activos)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "Mercado en Vivo" in selected_universe_option:
         ticker_list = "LIVE_MOVERS"
         universe_label = "📡 Mercado en Vivo (Top Gappers, Movers & Momentum en Tiempo Real)"
         ticker_count_display = "EN VIVO (~950+)"
-    elif "S&P 1500 + Nasdaq 100" in selected_universe_option or "US Broad" in selected_universe_option:
-        ticker_list = eu.US_BROAD_MARKET_TICKERS
-        universe_label = f"🇺🇸 S&P 1500 + Nasdaq 100 ({len(ticker_list):,} activos)"
-        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
-    elif "High Momentum" in selected_universe_option:
-        ticker_list = eu.HIGH_MOMENTUM_EXPANDED_TICKERS
-        universe_label = f"🚀 High Momentum & Growth ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "S&P 500 Completo" in selected_universe_option:
         ticker_list = eu.SP500_COMPLETE_TICKERS
         universe_label = f"🏆 S&P 500 Completo ({len(ticker_list)} activos)"
@@ -2715,6 +2730,10 @@ elif nav_view == "⚡ Screener Cuantitativo":
     elif "S&P 600" in selected_universe_option:
         ticker_list = eu.SP600_SMALLCAP_TICKERS
         universe_label = f"⚡ S&P 600 Small-Cap ({len(ticker_list)} activos)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    elif "High Momentum" in selected_universe_option:
+        ticker_list = eu.HIGH_MOMENTUM_EXPANDED_TICKERS
+        universe_label = f"🚀 High Momentum & Growth ({len(ticker_list)} activos)"
         ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "Radar Activo Compartido" in selected_universe_option:
         ticker_list = are.get_active_radar_tickers(max_items=200) if are else ["NVDA", "PLTR", "TSLA"]
