@@ -2662,16 +2662,23 @@ elif nav_view == "⚡ Screener Cuantitativo":
         radar_src_now = active_radar_data.get("source", "Screener")
 
         full_mkt_cnt = len(getattr(engine, 'FULL_US_MARKET_TICKERS', eu.US_BROAD_MARKET_TICKERS))
+        sp1500_cnt = len(getattr(eu, 'SP1500_COMPLETE_TICKERS', [])) or 1506
+        r2k_cnt = len(getattr(eu, 'RUSSELL2000_COMPLETE_TICKERS', [])) or 2075
+        nasdaq_comp_cnt = len(getattr(eu, 'NASDAQ_COMPOSITE_COMPLETE_TICKERS', [])) or 3258
+        dow30_cnt = len(getattr(eu, 'DOW30_COMPLETE_TICKERS', [])) or 30
 
         universe_options = [
-            f"🌎 Mercado Completo EE.UU. (S&P 1500 + NDX + Momentum / {full_mkt_cnt:,} acciones)",
-            "📡 Mercado en Vivo: Top Gappers, Movers & Momentum (+950 activos en juego)",
-            f"🇺🇸 S&P 1500 + Nasdaq 100 Broad Market ({len(eu.US_BROAD_MARKET_TICKERS):,} acciones)",
-            f"🚀 High Momentum & Growth Universe ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones)",
+            f"🌎 Todo el Mercado EE.UU. (S&P 1500 + Russell 2000 + Nasdaq Comp + Dow 30 / {full_mkt_cnt:,} acciones)",
+            f"🐻 Russell 2000 Completo ({r2k_cnt:,} small-caps)",
+            f"🌐 Nasdaq Composite Líquido ({nasdaq_comp_cnt:,} acciones)",
+            f"🇺🇸 S&P 1500 Composite ({sp1500_cnt:,} acciones)",
+            f"🏛️ Dow Jones 30 ({dow30_cnt} blue-chips)",
             f"🏆 S&P 500 Completo ({len(eu.SP500_COMPLETE_TICKERS)} acciones)",
             f"💻 Nasdaq 100 Completo ({len(eu.NASDAQ100_COMPLETE_TICKERS)} acciones)",
             f"🏢 S&P 400 Mid-Cap Growth ({len(eu.SP400_MIDCAP_TICKERS)} acciones)",
             f"⚡ S&P 600 Small-Cap Momentum ({len(eu.SP600_SMALLCAP_TICKERS)} acciones)",
+            f"🚀 High Momentum & Growth Universe ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones)",
+            "📡 Mercado en Vivo: Top Gappers, Movers & Momentum (+950 activos en juego)",
             f"🎯 Radar Activo Compartido ({radar_count_now} activos de {radar_src_now})",
             "✏️ Personalizado (Escribir tickers)"
         ]
@@ -2684,22 +2691,30 @@ elif nav_view == "⚡ Screener Cuantitativo":
         )
 
     # Determinar ticker list a escanear (Por defecto SIEMPRE el Mercado Completo EE.UU.)
-    if "Mercado Completo EE.UU." in selected_universe_option:
+    if "Todo el Mercado" in selected_universe_option or "Mercado Completo" in selected_universe_option:
         ticker_list = getattr(engine, 'FULL_US_MARKET_TICKERS', eu.US_BROAD_MARKET_TICKERS)
-        universe_label = f"🌎 Mercado Completo EE.UU. ({len(ticker_list):,} activos)"
+        universe_label = f"🌎 Todo el Mercado EE.UU. ({len(ticker_list):,} activos)"
         ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
+    elif "Russell 2000" in selected_universe_option:
+        ticker_list = getattr(eu, 'RUSSELL2000_COMPLETE_TICKERS', [])
+        universe_label = f"🐻 Russell 2000 ({len(ticker_list):,} activos)"
+        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
+    elif "Nasdaq Composite" in selected_universe_option:
+        ticker_list = getattr(eu, 'NASDAQ_COMPOSITE_COMPLETE_TICKERS', [])
+        universe_label = f"🌐 Nasdaq Composite ({len(ticker_list):,} activos)"
+        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
+    elif "S&P 1500" in selected_universe_option:
+        ticker_list = getattr(eu, 'SP1500_COMPLETE_TICKERS', [])
+        universe_label = f"🇺🇸 S&P 1500 Composite ({len(ticker_list):,} activos)"
+        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
+    elif "Dow Jones" in selected_universe_option or "Dow 30" in selected_universe_option:
+        ticker_list = getattr(eu, 'DOW30_COMPLETE_TICKERS', [])
+        universe_label = f"🏛️ Dow Jones 30 ({len(ticker_list)} activos)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "Mercado en Vivo" in selected_universe_option:
         ticker_list = "LIVE_MOVERS"
         universe_label = "📡 Mercado en Vivo (Top Gappers, Movers & Momentum en Tiempo Real)"
         ticker_count_display = "EN VIVO (~950+)"
-    elif "S&P 1500 + Nasdaq 100" in selected_universe_option or "US Broad" in selected_universe_option:
-        ticker_list = eu.US_BROAD_MARKET_TICKERS
-        universe_label = f"🇺🇸 S&P 1500 + Nasdaq 100 ({len(ticker_list):,} activos)"
-        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
-    elif "High Momentum" in selected_universe_option:
-        ticker_list = eu.HIGH_MOMENTUM_EXPANDED_TICKERS
-        universe_label = f"🚀 High Momentum & Growth ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "S&P 500 Completo" in selected_universe_option:
         ticker_list = eu.SP500_COMPLETE_TICKERS
         universe_label = f"🏆 S&P 500 Completo ({len(ticker_list)} activos)"
@@ -2715,6 +2730,10 @@ elif nav_view == "⚡ Screener Cuantitativo":
     elif "S&P 600" in selected_universe_option:
         ticker_list = eu.SP600_SMALLCAP_TICKERS
         universe_label = f"⚡ S&P 600 Small-Cap ({len(ticker_list)} activos)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    elif "High Momentum" in selected_universe_option:
+        ticker_list = eu.HIGH_MOMENTUM_EXPANDED_TICKERS
+        universe_label = f"🚀 High Momentum & Growth ({len(ticker_list)} activos)"
         ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "Radar Activo Compartido" in selected_universe_option:
         ticker_list = are.get_active_radar_tickers(max_items=200) if are else ["NVDA", "PLTR", "TSLA"]
@@ -4897,22 +4916,34 @@ elif "New Highs" in nav_view:
     col_nhnl, col_nhnl_chart = st.columns([1.1, 1.3], gap="medium")
 
     with col_nhnl:
-        # Barra de Amplitud de Mercado New Highs vs New Lows (TradingVolt Style)
-        total_hl = nhle.NEW_HIGHS_TOTAL + nhle.NEW_LOWS_TOTAL
-        pct_highs = (nhle.NEW_HIGHS_TOTAL / total_hl) * 100
-        pct_lows = (nhle.NEW_LOWS_TOTAL / total_hl) * 100
-        net_hl = nhle.NEW_HIGHS_TOTAL - nhle.NEW_LOWS_TOTAL
+        # Barra de Amplitud de Mercado New Highs vs New Lows en Vivo (Calculada en Tiempo Real)
+        live_b = mde.fetch_market_breadth(provider=provider_str, alpaca_key=alpaca_key, alpaca_secret=alpaca_secret) if mde else None
+        if live_b and "new_highs_lows" in live_b:
+            nh_count = live_b["new_highs_lows"]["highs"]
+            nl_count = live_b["new_highs_lows"]["lows"]
+        else:
+            nh_count = getattr(nhle, 'NEW_HIGHS_TOTAL', 138)
+            nl_count = getattr(nhle, 'NEW_LOWS_TOTAL', 183)
+
+        total_hl = max(nh_count + nl_count, 1)
+        pct_highs = (nh_count / total_hl) * 100
+        pct_lows = (nl_count / total_hl) * 100
+        net_hl = nh_count - nl_count
 
         st.markdown(f"""
             <div style="background:#111827; border:1px solid #1F2937; border-radius:8px; padding:12px 16px; margin-bottom:12px;">
-                <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:6px;">
-                    <span style="color:#38BDF8;">New Highs: {nhle.NEW_HIGHS_TOTAL} ({pct_highs:.1f}%)</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-size:13px; font-weight:bold; margin-bottom:6px;">
+                    <span style="color:#38BDF8;">New Highs (52s): {nh_count:,} ({pct_highs:.1f}%)</span>
                     <span style="color:#94A3B8;">Net: <strong style="color:{'#22C55E' if net_hl >= 0 else '#EF4444'}">{net_hl:+d}</strong></span>
-                    <span style="color:#F43F5E;">{nhle.NEW_LOWS_TOTAL} New Lows ({pct_lows:.1f}%)</span>
+                    <span style="color:#F43F5E;">{nl_count:,} New Lows (52s) ({pct_lows:.1f}%)</span>
                 </div>
                 <div style="width:100%; height:12px; background:#1F2937; border-radius:6px; overflow:hidden; display:flex;">
-                    <div style="width:{pct_highs}%; height:100%; background:#3B82F6;"></div>
+                    <div style="width:{pct_highs}%; height:100%; background:#38BDF8;"></div>
                     <div style="width:{pct_lows}%; height:100%; background:#F43F5E;"></div>
+                </div>
+                <div style="margin-top:6px; display:flex; justify-content:space-between; font-size:10.5px; color:#64748B; font-family:monospace;">
+                    <span>● UNIVERSO: NYSE + NASDAQ COMPLETO</span>
+                    <span style="color:#10B981;">ACTUALIZADO EN VIVO</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)

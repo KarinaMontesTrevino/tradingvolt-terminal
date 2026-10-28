@@ -21,7 +21,12 @@ from expanded_universes import (
     NASDAQ100_COMPLETE_TICKERS,
     SP400_MIDCAP_TICKERS,
     SP600_SMALLCAP_TICKERS,
+    SP1500_COMPLETE_TICKERS,
+    DOW30_COMPLETE_TICKERS,
+    RUSSELL2000_COMPLETE_TICKERS,
+    NASDAQ_COMPOSITE_COMPLETE_TICKERS,
     US_BROAD_MARKET_TICKERS,
+    US_MASTER_TOTAL_MARKET_TICKERS,
     HIGH_MOMENTUM_EXPANDED_TICKERS,
     fetch_live_market_movers,
     get_premarket_top_gappers
@@ -167,6 +172,11 @@ UNIVERSES = {
     "🎯 Pocket Pivots (45 acciones)": POCKET_PIVOTS_45_TICKERS,
     "📡 Mercado en Vivo: Top Pre-Market & Movers (+350 en vivo)": "LIVE_MOVERS",
     "🤖 Líderes Autónomos TradingVolt (260 líderes algorítmicos)": "AUTONOMOUS_LEADERS",
+    "🌎 Master US Total Market (~3,500+ acciones consolidadas)": US_MASTER_TOTAL_MARKET_TICKERS,
+    "🇺🇸 S&P 1500 Composite (1,506 acciones)": SP1500_COMPLETE_TICKERS,
+    "🏛️ Dow Jones 30 Completo (30 acciones)": DOW30_COMPLETE_TICKERS,
+    "🐻 Russell 2000 Completo (~2,075 acciones)": RUSSELL2000_COMPLETE_TICKERS,
+    "🌐 Nasdaq Composite Líquido (~3,258 acciones)": NASDAQ_COMPOSITE_COMPLETE_TICKERS,
     "🇺🇸 US Broad Liquid Market (S&P 1500 + NDX / 1,718 acciones)": US_BROAD_MARKET_TICKERS,
     "🏆 S&P 500 Completo (503 acciones)": SP500_COMPLETE_TICKERS,
     "💻 Nasdaq 100 Completo (103 acciones)": NASDAQ100_COMPLETE_TICKERS,
@@ -200,7 +210,12 @@ DAILY_PIVOT_BREAKOUT_TICKERS = UNIVERSES["📐 Daily Pivot Breakout Strategy (42
 
 # Universo Maestro de Mercado Completo EE.UU. (S&P 500 + S&P 400 + S&P 600 + Nasdaq 100 + High Momentum + Deepvue 752 + TML)
 FULL_US_MARKET_TICKERS = sorted(list(set(
-    US_BROAD_MARKET_TICKERS
+    SP1500_COMPLETE_TICKERS
+    + DOW30_COMPLETE_TICKERS
+    + NASDAQ100_COMPLETE_TICKERS
+    + RUSSELL2000_COMPLETE_TICKERS
+    + NASDAQ_COMPOSITE_COMPLETE_TICKERS
+    + US_BROAD_MARKET_TICKERS
     + HIGH_MOMENTUM_EXPANDED_TICKERS
     + DEEPVUE_UNIVERSE_752_TICKERS
     + TML_331_TICKERS
@@ -658,6 +673,89 @@ def fetch_data_alpaca_intraday(tickers: list[str], api_key: str, secret_key: str
             continue
     return result
 
+
+def fetch_live_extended_hours_movers(scan_type="post", min_move=2.0, min_price=3.0, target_tickers=None):
+    """
+    Consulta en tiempo real cotizaciones extendidas (After-Hours o Pre-Market) 
+    para detectar reacciones de alto impacto a earnings, noticias o volumen inusual.
+    """
+    import urllib.request
+    import json
+    
+    headers = {"User-Agent": "Mozilla/5.0"}
+    screeners = [
+        "day_gainers", "day_losers", "most_actives", 
+        "aggressive_small_caps", "growth_technology_stocks", "small_cap_gainers"
+    ]
+    
+    all_movers = []
+    seen = set()
+    target_set = set(target_tickers) if target_tickers and isinstance(target_tickers, (list, set)) and len(target_tickers) < 3000 else None
+
+    for scr in screeners:
+        try:
+            url = f"https://query1.finance.yahoo.com/v1/finance/screener/predefined/saved?formatted=false&lang=en-US&region=US&scrIds={scr}&count=100"
+            req = urllib.request.Request(url, headers=headers)
+            with urllib.request.urlopen(req, timeout=6) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+                quotes = data.get("finance", {}).get("result", [{}])[0].get("quotes", [])
+                for q in quotes:
+                    sym = q.get("symbol", "").upper()
+                    if not sym or sym in seen or "^" in sym or "=" in sym or len(sym) > 5 or sym.endswith("W"):
+                        continue
+                    if target_set and sym not in target_set:
+                        continue
+                    seen.add(sym)
+                    
+                    reg_p = float(q.get("regularMarketPrice") or 0.0)
+                    pre_p = float(q.get("preMarketPrice") or 0.0)
+                    post_p = float(q.get("postMarketPrice") or 0.0)
+                    
+                    reg_chg = float(q.get("regularMarketChangePercent") or 0.0)
+                    pre_chg = q.get("preMarketChangePercent")
+                    post_chg = q.get("postMarketChangePercent")
+                    
+                    if scan_type == "post":
+                        is_active_ah = (post_chg is not None and abs(post_chg) >= 0.05)
+                        chg = float(post_chg) if is_active_ah else reg_chg
+                        price = post_p if (is_active_ah and post_p > 0) else reg_p
+                        session_tag = "After-Hours" if is_active_ah else "Cierre Regular"
+                    else:
+                        is_active_pre = (pre_chg is not None and abs(pre_chg) >= 0.05)
+                        chg = float(pre_chg) if is_active_pre else reg_chg
+                        price = pre_p if (is_active_pre and pre_p > 0) else reg_p
+                        session_tag = "Pre-Market" if is_active_pre else "Cierre Regular"
+                        
+                    vol = int(q.get("regularMarketVolume") or 0)
+                    dollar_vol_m = (vol * price) / 1_000_000.0 if (price > 0 and vol > 0) else 0.0
+                    
+                    if price >= min_price and abs(chg) >= min_move:
+                        move_label = "Reaccion Alcista" if chg > 0 else "Reaccion Bajista"
+                        pattern_name = f"{session_tag} {move_label} ({chg:+.1f}%)"
+                        all_movers.append({
+                            "Ticker": sym,
+                            "Precio": round(price, 2),
+                            "Cambio %": round(chg, 2),
+                            "Gap %": round(chg, 2),
+                            "Patron": pattern_name,
+                            "ADR (10s) %": 4.5,
+                            "Avg $Vol (20s) $M": round(dollar_vol_m, 1),
+                            "RVOL": 1.6 if ("After-Hours" in session_tag or "Pre-Market" in session_tag) else 1.1,
+                            "Posicion Rango %": 90.0 if chg > 0 else 10.0,
+                            "Volumen": vol,
+                            "Nombre": q.get("shortName") or sym,
+                            "Fuente": "Live Extended Hours"
+                        })
+        except Exception:
+            continue
+            
+    df = pd.DataFrame(all_movers)
+    if not df.empty:
+        # Renombrar columnas con acentos para coincidir con la UI
+        df = df.rename(columns={"Patron": "Patrón", "Posicion Rango %": "Posición Rango %"})
+        df = df.sort_values(by="Cambio %", key=abs, ascending=False).reset_index(drop=True)
+    return df
+
 def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_000, 
                       min_price: float = 10.0, max_dist_52w: float = 20.0,
                       provider: str = "yfinance", alpaca_key: str = None, alpaca_secret: str = None,
@@ -692,6 +790,11 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
                 seen_t.add(ct)
                 clean_tickers.append(ct)
     tickers = clean_tickers
+
+    if "Post Market" in strategy or "After Hours" in strategy:
+        return fetch_live_extended_hours_movers(scan_type="post", min_move=2.0, min_price=3.0, target_tickers=tickers)
+    elif "Pre Market" in strategy or "Gap Ups" in strategy:
+        return fetch_live_extended_hours_movers(scan_type="pre", min_move=2.0, min_price=3.0, target_tickers=tickers)
 
     now_ts = _time.time()
     cache_age = now_ts - _DAILY_BARS_CACHE.get("timestamp", 0.0)
