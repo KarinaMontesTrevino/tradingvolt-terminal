@@ -1,0 +1,461 @@
+%PDF-1.4
+%ту╧╙
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [6 0 R 8 0 R 10 0 R] /Count 3 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 841.89 595.28] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 7 0 R >>
+endobj
+7 0 obj
+<< /Length 14002 >>
+stream
+0.60 w 0.043 0.059 0.098 rg 0.00 0.00 841.89 595.28 re f
+0.80 w 0.059 0.090 0.165 rg 0.196 0.255 0.333 RG 24.00 533.28 793.89 44.00 re B
+0.60 w 0.000 0.940 1.000 rg 24.00 533.28 5.00 44.00 re f
+BT /F2 8.5 Tf 0.220 0.740 0.970 rg 38.00 562.28 Td (TRADINGVOLT INSTITUTIONAL QUANT DESK  |  DOCUMENTACION TECNICA OFICIAL) Tj ET
+BT /F2 14.0 Tf 1.000 1.000 1.000 rg 38.00 546.28 Td (Catalogo Maestro de los 28 Filtros Cuantitativos \(Reverse Engineering & Parametros Exactos\)) Tj ET
+BT /F3 8.5 Tf 0.580 0.640 0.720 rg 666.89 560.28 Td (VERSION: v2.5 Quant Pipeline) Tj ET
+BT /F3 8.5 Tf 0.000 1.000 0.530 rg 666.89 546.28 Td (PAGINA 1 DE 3  |  OCT 2026) Tj ET
+0.60 w 0.067 0.094 0.153 rg 0.120 0.160 0.230 RG 24.00 510.28 793.89 17.00 re B
+0.60 w 0.063 0.725 0.506 rg 24.00 510.28 4.00 17.00 re f
+BT /F2 9.2 Tf 0.970 0.980 0.990 rg 34.00 515.28 Td (1. UNIVERSOS MAESTROS & LIDERES INSTITUCIONALES \(DEEPVUE CORE\)) Tj ET
+0.50 w 0.118 0.161 0.231 rg 0.200 0.250 0.330 RG 24.00 492.28 793.89 16.00 re B
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 29.00 496.78 Td (#) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 48.00 496.78 Td (FILTRO CUANTITATIVO) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 162.00 496.78 Td (ORIGEN / POOL) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 252.00 496.78 Td (OBJETIVO ESTRATEGICO / QUE BUSCA) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 446.00 496.78 Td (METRICAS, PARAMETROS & REGLAS EXACTAS DE FILTRADO) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 458.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 478.28 Td (01) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 478.28 Td (Deepvue Universe) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 478.28 Td (Deepvue \(752\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 481.78 Td (Piscina maestra institucional de) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 472.28 Td (alta liquidez en los grupos de) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 462.78 Td (industria lideres a 1, 3 y 12M.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 481.78 Td (* $Vol Promedio 20d >= $20M diarios \(o Volumen >= 200,000 acciones\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 472.28 Td (* Precio de Cierre >= $10.00 \(elimina penny stocks e iliquidas\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 462.78 Td (* Fuerza Relativa RS 1M > 45, Dist Max 52s >= -30% y Close >= 0.90 * SMA 200) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 425.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 444.78 Td (02) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 444.78 Td (Liquid Leaders) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 444.78 Td (Deepvue \(187\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 448.28 Td (Acciones ultra-liquidas en Etapa 2) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 438.78 Td (con Fuerza Relativa superior para) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 429.28 Td (absorcion institucional.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 448.28 Td (* $Vol Promedio 20d >= $15M - $20M diarios \(o Volumen >= 200,000\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 438.78 Td (* Estructura Alcista: Close >= 0.95 * SMA 50 o Close >= 0.95 * SMA 200) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 429.28 Td (* Dist Max 52s >= -25% y ROC 3M >= +3.0% \(o ROC 1M >= 0.0%\)) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 391.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 411.28 Td (03) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 411.28 Td (Pure Momentum) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 411.28 Td (TradingVolt \(231\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 414.78 Td (Acciones de alta velocidad diaria) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 405.28 Td (\(ADR elevado\) y gran liquidez para) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 395.78 Td (swing agil.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 414.78 Td (* $Vol Promedio 20d >= $7.0M diarios \(tolerancia operativa >= $5.0M\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 405.28 Td (* Rango Diario Promedio ADR\(10d\) > 3.0% \(tolerancia >= 2.8%\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 395.78 Td (* Fuerza Absoluta: AS 1M > 95 o AS 3M > 93 \(ROC 1M >= +10% o ROC 3M >= +20%\)) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 358.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 377.78 Td (04) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 377.78 Td (Sustained Momentum) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 377.78 Td (Deepvue \(186\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 381.28 Td (Lideres liquidos con persistencia de) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 371.78 Td (tendencia en 3 y 6 meses sobre) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 362.28 Td (medias clave.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 381.28 Td (* $Vol Promedio 20d >= $8M - $10M diarios \(o Volumen >= 100,000\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 371.78 Td (* Momentum Sostenido: ROC 3M >= +5.0% o ROC 6M >= +10.0% \(RS Rating > 90\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 362.28 Td (* Estructura: Close >= 0.95 * SMA 50/200 y Dist Max 52s >= -20%) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 324.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 344.28 Td (05) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 344.28 Td (Weekly Strength) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 344.28 Td (Deepvue \(399\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 347.78 Td (Acumulacion institucional sostenida) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 338.28 Td (de viernes a viernes cerrando en) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 328.78 Td (maximos semanales.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 347.78 Td (* Posicion Rango Semanal \(5d\) >= 65% - 70% \(o a <= 3.5% del maximo semanal\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 338.28 Td (* Sostenida sobre EMA 21 \(>= 0.97 * EMA 21\) y sobre SMA 50 / SMA 200) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 328.78 Td (* Liquidez $Vol 20d >= $5M, Dist Max 52s >= -25% y ROC 3M >= +2.0%) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 291.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 310.78 Td (06) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 310.78 Td (Power 21) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 310.78 Td (Deepvue \(69\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 314.28 Td (Lideres realizando pullback ordenado) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 304.78 Td (o consolidando pegados a la media) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 295.28 Td (exponencial 21 EMA.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 314.28 Td (* Proximidad a 21-Day EMA: Distancia entre -3.5% y +4.0%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 304.78 Td (* Fuerza Absoluta Previa: ROC 3M >= +3.0%, Close >= 0.95*SMA50 y Dist Max 52s >= -25%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 295.28 Td (* Liquidez Institucional: $Vol 20d >= $5M - $10M diarios) Tj ET
+0.60 w 0.067 0.094 0.153 rg 0.120 0.160 0.230 RG 24.00 268.28 793.89 17.00 re B
+0.60 w 0.063 0.725 0.506 rg 24.00 268.28 4.00 17.00 re f
+BT /F2 9.2 Tf 0.970 0.980 0.990 rg 34.00 273.28 Td (2. SUITE INSTITUCIONAL DE AMEET RAI \(RUTINAS DIARIAS & FIN DE SEMANA\)) Tj ET
+0.50 w 0.118 0.161 0.231 rg 0.200 0.250 0.330 RG 24.00 250.28 793.89 16.00 re B
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 29.00 254.78 Td (#) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 48.00 254.78 Td (FILTRO CUANTITATIVO) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 162.00 254.78 Td (ORIGEN / POOL) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 252.00 254.78 Td (OBJETIVO ESTRATEGICO / QUE BUSCA) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 446.00 254.78 Td (METRICAS, PARAMETROS & REGLAS EXACTAS DE FILTRADO) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 216.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 236.28 Td (07) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 236.28 Td (Ameet Rai: IPO 1 Yr) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 236.28 Td (Ameet Rai \(189\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 239.78 Td (Barometro macro Risk-On / Risk-Off) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 230.28 Td (sobre todas las empresas salidas a) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 220.78 Td (bolsa en el ultimo ano.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 239.78 Td (* Antiguedad de Cotizacion <= 260 sesiones bursatiles \(<= 1 ano desde debut IPO\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 230.28 Td (* Soporte Institucional \(Risk-On\): Close >= 0.95*EMA21 o SMA20 \(Dist Max 52s >= -25%\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 220.78 Td (* Filtro Base: Precio >= $1.00 y Liquidez $Vol 20d >= $0.5M) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 183.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 202.78 Td (08) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 202.78 Td (Ameet Rai: HV Edge) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 202.78 Td (Ameet Rai \(45\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 206.28 Td (Detecta el dia exacto de acumulacion) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 196.78 Td (institucional masiva bajo 3 hitos de) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 187.28 Td (volumen record.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 206.28 Td (* Firma HV Edge \(Cumplir 1 de 3\): 1\) Vol Hoy >= Maximo Volumen en 1 Ano \(252 sesiones\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 196.78 Td (* 2\) Vol Hoy >= Max Vol desde IPO  |  3\) Vol Hoy >= Max Vol desde Earnings \(63 sesiones\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 187.28 Td (* Filtro Base: Precio >= $1.00 y Liquidez $Vol 20d >= $1.0M) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 149.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 169.28 Td (09) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 169.28 Td (Ameet Rai: HTF Flags) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 169.28 Td (Ameet Rai \(12\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 172.78 Td (El patron mas explosivo: duplicacion) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 163.28 Td (rapida de precio seguida de bandera) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 153.78 Td (estrecha y alta.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 172.78 Td (* Mastil Explosivo \(20 sesiones\): Subida \(\(Max20 - Min20\) / Min20\) >= +80% a +100%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 163.28 Td (* Consolidacion de Bandera \(Flag Depth\): Retroceso desde el pico <= 25% - 30%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 153.78 Td (* Filtro Base: Precio >= $1.00 y Liquidez $Vol 20d >= $1.0M) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 116.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 135.78 Td (10) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 135.78 Td (Ameet Rai: Daily Liq.) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 135.78 Td (Ameet Rai \(296\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 139.28 Td (Radar diario de ultra-liquidez para) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 129.78 Td (rastrear flujos de fondos pesados y) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 120.28 Td (rotacion temprana.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 139.28 Td (* Volumen Fisico de la Sesion >= 8,000,000 de acciones \(o Media 20d >= 8,000,000\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 129.78 Td (* Flujo Institucional en Dolares: $Vol >= $15,000,000 diarios) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 120.28 Td (* Filtro de Precio Base: Close >= $2.00) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 82.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 102.28 Td (11) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 102.28 Td (Ameet Rai: 62.5% RS) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 102.28 Td (Ameet Rai \(191\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 105.78 Td (Lideres resilientes que acumulan) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 96.28 Td (sesiones positivas mientras el) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 86.78 Td (mercado general corrige.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 105.78 Td (* Ratio Sesiones Positivas \(RS Days\) >= 62.5% en ventanas de 5, 8, 10, 15, 20, 30, 40 o 60d) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 96.28 Td (* En Fase de Fuerza Relativa: Close >= 0.95 * SMA 50/200 o Dist Max 52s >= -25%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 86.78 Td (* Filtro Base: Precio >= $3.00 y Liquidez $Vol 20d >= $3.0M) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 49.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 68.78 Td (12) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 68.78 Td (Highest Volume IPO) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 68.78 Td (Deepvue \(7\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 72.28 Td (Nuevas emisiones que rompen record) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 62.78 Td (absoluto de volumen desde su debut) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 53.28 Td (con cierre fuerte.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 72.28 Td (* Volumen Hoy >= Maximo Volumen historico desde el dia posterior al estreno IPO) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 62.78 Td (* Daily Closing Range \(DCR\) > 40% con variacion diaria positiva \(Chg Today > 0%\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 53.28 Td (* Liquidez Promedio: $Vol 20d > $3,000,000 diarios) Tj ET
+0.60 w 0.120 0.160 0.230 rg 24.00 23.40 793.89 0.60 re f
+BT /F1 7.5 Tf 0.400 0.450 0.530 rg 24.00 12.00 Td (TradingVolt Institutional Terminal & Market Desk  Х  Especificacion Matematica de Escaneres y Motores Cuantitativos) Tj ET
+BT /F3 7.5 Tf 0.220 0.740 0.970 rg 711.89 12.00 Td (Pagina 1 / 3) Tj ET
+endstream
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 841.89 595.28] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 9 0 R >>
+endobj
+9 0 obj
+<< /Length 12128 >>
+stream
+0.60 w 0.043 0.059 0.098 rg 0.00 0.00 841.89 595.28 re f
+0.80 w 0.059 0.090 0.165 rg 0.196 0.255 0.333 RG 24.00 533.28 793.89 44.00 re B
+0.60 w 0.000 0.940 1.000 rg 24.00 533.28 5.00 44.00 re f
+BT /F2 8.5 Tf 0.220 0.740 0.970 rg 38.00 562.28 Td (TRADINGVOLT INSTITUTIONAL QUANT DESK  |  DOCUMENTACION TECNICA OFICIAL) Tj ET
+BT /F2 14.0 Tf 1.000 1.000 1.000 rg 38.00 546.28 Td (Catalogo Maestro de los 28 Filtros Cuantitativos \(Reverse Engineering & Parametros Exactos\)) Tj ET
+BT /F3 8.5 Tf 0.580 0.640 0.720 rg 666.89 560.28 Td (VERSION: v2.5 Quant Pipeline) Tj ET
+BT /F3 8.5 Tf 0.000 1.000 0.530 rg 666.89 546.28 Td (PAGINA 2 DE 3  |  OCT 2026) Tj ET
+0.60 w 0.067 0.094 0.153 rg 0.120 0.160 0.230 RG 24.00 510.28 793.89 17.00 re B
+0.60 w 0.063 0.725 0.506 rg 24.00 510.28 4.00 17.00 re f
+BT /F2 9.2 Tf 0.970 0.980 0.990 rg 34.00 515.28 Td (3. COMPRESION DE VOLATILIDAD, VCP & SECADO DE VOLUMEN \(MINERVINI / DEEPVUE\)) Tj ET
+0.50 w 0.118 0.161 0.231 rg 0.200 0.250 0.330 RG 24.00 492.28 793.89 16.00 re B
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 29.00 496.78 Td (#) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 48.00 496.78 Td (FILTRO CUANTITATIVO) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 162.00 496.78 Td (ORIGEN / POOL) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 252.00 496.78 Td (OBJETIVO ESTRATEGICO / QUE BUSCA) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 446.00 496.78 Td (METRICAS, PARAMETROS & REGLAS EXACTAS DE FILTRADO) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 458.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 478.28 Td (13) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 478.28 Td (Minervini VCP Pattern) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 478.28 Td (M. Minervini \(43\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 481.78 Td (Contraccion progresiva de) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 472.28 Td (volatilidad \(VCP\) en el lado derecho) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 462.78 Td (de la base con secado de oferta.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 481.78 Td (* Secado de Volumen en consolidacion: Media Vol\(5d\) / Media Vol\(50d\) <= 1.35x) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 472.28 Td (* Estructura Etapa 2: Close >= 0.95 * SMA 50/200 y Dist Max 52s >= -20%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 462.78 Td (* Liquidez Institucional: $Vol 20d >= $10,000,000 diarios \(o Vol >= 100k\)) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 425.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 444.78 Td (14) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 444.78 Td (Minervini Stage 2) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 444.78 Td (M. Minervini) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 448.28 Td (Plantilla clasica Trend Template de) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 438.78 Td (Mark Minervini en Etapa 2 de) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 429.28 Td (aceleracion alcista.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 448.28 Td (* Alineacion Estructural de Medias: Close > SMA 50 > SMA 200) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 438.78 Td (* Proximidad a Techo y Suelo Anual: Dist Max 52s >= -20% y Dist Min 52s >= +20%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 429.28 Td (* Momentum Controlado sin Agotamiento: 50 <= RSI\(14\) <= 78) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 391.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 411.28 Td (15) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 411.28 Td (Volume Dry Up \(VDU\)) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 411.28 Td (Deepvue \(160\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 414.78 Td (Agotamiento de presion vendedora) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 405.28 Td (sobre la SMA 50 con compresion en el) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 395.78 Td (indicador RMV.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 414.78 Td (* Soporte Institucional: Close >= 0.98 * SMA 50) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 405.28 Td (* Secado de Volumen: RVOL 20d <= 0.85x \(o Vol 5d / Vol 50d <= 0.75x\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 395.78 Td (* Indicador RMV\(15d\) <= 15.0% \(<= 10.0% = Tight Verde\) y Liquidez $Vol 20d >= $3.0M) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 358.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 377.78 Td (16) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 377.78 Td (Tight Range \(Coiling\)) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 377.78 Td (Deepvue \(26\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 381.28 Td (Compresion extrema de precio y) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 371.78 Td (volatilidad a 15 dias o patron) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 362.28 Td (Double Inside Days.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 381.28 Td (* Volatilidad de Rango 15d: RMV\(15\) = \(\(High15 - Low15\) / Low15\) * 100 <= 10.0%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 371.78 Td (* Cambio 5d |Chg 5d| <= 4.0% O patron Double Inside Days \(H0<=H1<=H2 y L0>=L1>=L2\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 362.28 Td (* Proximidad a Medias: Dist SMA50 <= 10%, Dist SMA200 <= 20% y $Vol 20d >= $3.0M) Tj ET
+0.60 w 0.067 0.094 0.153 rg 0.120 0.160 0.230 RG 24.00 335.28 793.89 17.00 re B
+0.60 w 0.063 0.725 0.506 rg 24.00 335.28 4.00 17.00 re f
+BT /F2 9.2 Tf 0.970 0.980 0.990 rg 34.00 340.28 Td (4. METODOLOGIA CANSLIM, STAN WEINSTEIN & ACUMULACION TEMPRANA) Tj ET
+0.50 w 0.118 0.161 0.231 rg 0.200 0.250 0.330 RG 24.00 317.28 793.89 16.00 re B
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 29.00 321.78 Td (#) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 48.00 321.78 Td (FILTRO CUANTITATIVO) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 162.00 321.78 Td (ORIGEN / POOL) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 252.00 321.78 Td (OBJETIVO ESTRATEGICO / QUE BUSCA) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 446.00 321.78 Td (METRICAS, PARAMETROS & REGLAS EXACTAS DE FILTRADO) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 283.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 303.28 Td (17) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 303.28 Td (CANSLIM Official) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 303.28 Td (W. O'Neil \(36\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 306.78 Td (Verdaderos lideres de mercado) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 297.28 Td (combinando fortaleza en maximos y) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 287.78 Td (patrocinio institucional.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 306.78 Td (* Precio >= $10.00 y Liquidez Institucional $Vol 20d >= $5,000,000) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 297.28 Td (* Nuevos Maximos & Liderazgo \(N / L\): Dist Max 52s >= -15% a -20% y ROC 3M > 0%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 287.78 Td (* Direccion de Mercado \(M\): Etapa 2 Alcista \(Close >= SMA 50 > SMA 200\)) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 250.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 269.78 Td (18) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 269.78 Td (CANSLIM High RS) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 269.78 Td (W. O'Neil \(137\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 273.28 Td (Lideres de Tecnologia y Consumo) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 263.78 Td (Discrecional con maxima Fuerza) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 254.28 Td (Relativa IBD ponderada.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 273.28 Td (* Fuerza Relativa IBD Ponderada: 0.40*\(3M\) + 0.20*\(6M\) + 0.20*\(9M\) + 0.20*\(12M\) -> RS > 85) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 263.78 Td (* Liquidez Institucional: $Vol 20d >= $15,000,000 y Precio >= $10.00) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 254.28 Td (* Estructura Alcista sostenida sobre SMA 50 y SMA 200) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 216.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 236.28 Td (19) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 236.28 Td (True Market Leaders) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 236.28 Td (TML / BO60 \(331\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 239.78 Td (Universo TML y detector de rupturas) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 230.28 Td (de bases de 60 dias \(BO60\) en zona) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 220.78 Td (de compra O'Neil.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 239.78 Td (* Pivote BO60: Superacion del maximo de 60 sesiones con volumen RVOL >= 1.25x) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 230.28 Td (* Zona de Compra O'Neil: Entre 0.0% y +5.0% sobre el pivote \(> +5% = Extendida\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 220.78 Td (* Rating Acumulacion/Distribucion Chaikin \(13 semanas\): Ratio Pos/Neg >= 1.45 = A+) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 183.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 202.78 Td (20) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 202.78 Td (Weinstein Stage 2/2A) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 202.78 Td (S. Weinstein \(417\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 206.28 Td (Acciones saliendo de Etapa 1 \(Base\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 196.78 Td (hacia Etapa 2A \(Early Markup\) y) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 187.28 Td (Etapa 2 alcista.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 206.28 Td (* Regla Weinstein: Close >= 0.97 * SMA 50 y >= 0.96 * SMA 200 con pendiente positiva) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 196.78 Td (* Sub-etapa: Dist Max 52s >= -15% = Etapa 2A \(Early Markup\); hasta -30% = Etapa 2) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 187.28 Td (* Liquidez Institucional: $Vol 20d >= $15M - $20M y Fuerza Relativa RS > 85) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 149.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 169.28 Td (21) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 169.28 Td (Pocket Pivots) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 169.28 Td (Morales/Kacher \(45\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 172.78 Td (Compra institucional encubierta) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 163.28 Td (dentro de la base antes del breakout) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 153.78 Td (convencional.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 172.78 Td (* Dia Alcista \(Up Day\): Close Hoy > Close Ayer) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 163.28 Td (* Regla Pocket Pivot: Vol Hoy > Max\(Volumen de cualquier dia bajista en las 10 sesiones previas\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 153.78 Td (* Contexto Constructivo: Sobre/cerca de SMA 20/50, Dist Max 52s >= -35% y $Vol >= $2.0M) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 116.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 135.78 Td (22) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 135.78 Td (David Ryan: Ants) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 135.78 Td (David Ryan \(3+\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 139.28 Td (Acumulacion institucional) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 129.78 Td (persistente durante 3 semanas) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 120.28 Td (consecutivas \(15 barras\).) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 139.28 Td (* Frecuencia Acumulacion: >= 4 a 5 dias alcistas en 15 sesiones con Vol > Vol Previo o > SMA20/50) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 129.78 Td (* Ubicacion de Precio: A menos de 5% del maximo de 20d o dentro del 25% del maximo anual) Tj ET
+0.60 w 0.120 0.160 0.230 rg 24.00 23.40 793.89 0.60 re f
+BT /F1 7.5 Tf 0.400 0.450 0.530 rg 24.00 12.00 Td (TradingVolt Institutional Terminal & Market Desk  Х  Especificacion Matematica de Escaneres y Motores Cuantitativos) Tj ET
+BT /F3 7.5 Tf 0.220 0.740 0.970 rg 711.89 12.00 Td (Pagina 2 / 3) Tj ET
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 841.89 595.28] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 11 0 R >>
+endobj
+11 0 obj
+<< /Length 11965 >>
+stream
+0.60 w 0.043 0.059 0.098 rg 0.00 0.00 841.89 595.28 re f
+0.80 w 0.059 0.090 0.165 rg 0.196 0.255 0.333 RG 24.00 533.28 793.89 44.00 re B
+0.60 w 0.000 0.940 1.000 rg 24.00 533.28 5.00 44.00 re f
+BT /F2 8.5 Tf 0.220 0.740 0.970 rg 38.00 562.28 Td (TRADINGVOLT INSTITUTIONAL QUANT DESK  |  DOCUMENTACION TECNICA OFICIAL) Tj ET
+BT /F2 14.0 Tf 1.000 1.000 1.000 rg 38.00 546.28 Td (Catalogo Maestro de los 28 Filtros Cuantitativos \(Reverse Engineering & Parametros Exactos\)) Tj ET
+BT /F3 8.5 Tf 0.580 0.640 0.720 rg 666.89 560.28 Td (VERSION: v2.5 Quant Pipeline) Tj ET
+BT /F3 8.5 Tf 0.000 1.000 0.530 rg 666.89 546.28 Td (PAGINA 3 DE 3  |  OCT 2026) Tj ET
+0.60 w 0.067 0.094 0.153 rg 0.120 0.160 0.230 RG 24.00 510.28 793.89 17.00 re B
+0.60 w 0.063 0.725 0.506 rg 24.00 510.28 4.00 17.00 re f
+BT /F2 9.2 Tf 0.970 0.980 0.990 rg 34.00 515.28 Td (5. CATALIZADORES EXPLOSIVOS, INTRADIA, PRE/POST-MARKET & SWING TACTICO) Tj ET
+0.50 w 0.118 0.161 0.231 rg 0.200 0.250 0.330 RG 24.00 492.28 793.89 16.00 re B
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 29.00 496.78 Td (#) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 48.00 496.78 Td (FILTRO CUANTITATIVO) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 162.00 496.78 Td (ORIGEN / POOL) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 252.00 496.78 Td (OBJETIVO ESTRATEGICO / QUE BUSCA) Tj ET
+BT /F2 8.0 Tf 0.220 0.740 0.970 rg 446.00 496.78 Td (METRICAS, PARAMETROS & REGLAS EXACTAS DE FILTRADO) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 458.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 478.28 Td (23) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 478.28 Td (Episodic Pivot \(EP\)) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 478.28 Td (Qullamaggie \(18\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 481.78 Td (Reacciones explosivas a) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 472.28 Td (earnings/catalizadores que inician) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 462.78 Td (una nueva tendencia institucional.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 481.78 Td (* Salto en Ventana de 10 Sesiones: Ganancia Diaria >= +7.5% \(+8%\) O Gap Apertura >= +4% \(+5%\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 472.28 Td (* Explosion de Volumen: RVOL 20d >= 1.05x - 1.2x o Volumen >= 400k - 500k \(o $Vol >= $2M\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 462.78 Td (* Confirmacion de Vela: Close > High Previo o Daily Closing Range \(DCR\) >= 40%) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 425.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 444.78 Td (24) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 444.78 Td (Up on Volume) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 444.78 Td (Deepvue \(64\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 448.28 Td (Sesiones de expansion alcista con) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 438.78 Td (volumen institucional y cierre en la) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 429.28 Td (mitad superior.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 448.28 Td (* Avance Diario: Chg Today >= +1.0% \(o >= +1.5% en la sesion previa\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 438.78 Td (* Calidad de Cierre \(DCR\): Posicion en Rango Diario >= 45% - 50%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 429.28 Td (* Participacion Institucional: RVOL 20d >= 0.95x - 1.0x) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 391.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 411.28 Td (25) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 411.28 Td (Pre-Market & Gap Ups) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 411.28 Td (TradingVolt Live) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 414.78 Td (Acciones en juego antes de la) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 405.28 Td (apertura con gap alcista y liquidez) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 395.78 Td (para operativa ORB.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 414.78 Td (* Precio >= $3.00 - $5.00 con Gap Apertura >= +0.5% a +2.0% \(o Chg Today >= +1.0%\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 405.28 Td (* Actividad Relativa: RVOL >= 1.1x o Posicion en Rango >= 30%) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 395.78 Td (* Liquidez Institucional: $Vol 20d > $10M \(tolerancia >= $1.5M\) o Market Cap > $500M) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 358.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 377.78 Td (26) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 377.78 Td (Post-Market Movers) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 377.78 Td (Deepvue \(21\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 381.28 Td (Reacciones inmediatas after-hours) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 371.78 Td (\(16:00-20:00 ET\) a reportes de) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 362.28 Td (Earnings o noticias.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 381.28 Td (* Precio de Cierre >= $5.00) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 371.78 Td (* Magnitud After-Hours: |Movimiento| >= 2.0% en cualquier direccion \(>= +2% o <= -2%\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 362.28 Td (* Liquidez Institucional: $Vol 20d >= $10,000,000 diarios o Market Cap > $500M) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 324.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 344.28 Td (27) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 344.28 Td (Pullback & Breakout 20d) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 344.28 Td (TradingVolt Core) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 347.78 Td (Configuraciones clasicas de rebote) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 338.28 Td (en media movil \(SMA 20/50\) y ruptura) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 328.78 Td (de 20 sesiones.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 347.78 Td (* Pullback SMA 20/50: SMA50 > SMA200, distancia a SMA20 <= 2.0% \(o SMA50 <= 2.5%\) y RSI 40-60) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 338.28 Td (* Breakout 20d: Close Hoy >= Max\(High ultimas 20 sesiones\) confirmado con RVOL >= 1.2x) Tj ET
+0.40 w 0.047 0.071 0.125 rg 0.118 0.161 0.231 RG 24.00 291.28 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 310.78 Td (28) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 310.78 Td (Top Gappers & Maximos) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 310.78 Td (DayTrade 5-Min) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 314.28 Td (Escaneres intradia sobre velas de 5) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 304.78 Td (minutos para capturar momentum) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 295.28 Td (direccional en vivo.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 314.28 Td (* Top Gappers & RVOL: Precio >= $5.00, |Gap| >= 2.0% y RVOL\(5m vs 30 barras\) >= 1.5x) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 304.78 Td (* Impulso en Maximos: Gap > 0%, RVOL >= 1.2x-1.5x y en el Top 15% del rango intradia \(>= 85%\)) Tj ET
+0.40 w 0.059 0.090 0.165 rg 0.118 0.161 0.231 RG 24.00 257.78 793.89 33.50 re B
+BT /F3 8.8 Tf 0.220 0.740 0.970 rg 29.00 277.28 Td (29) Tj ET
+BT /F2 8.6 Tf 1.000 1.000 1.000 rg 48.00 277.28 Td (Daily Pivot Breakout) Tj ET
+BT /F3 7.6 Tf 0.980 0.750 0.140 rg 162.00 277.28 Td (Pivot Strategy \(42\)) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 280.78 Td (Breakouts de pivotes confirmados) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 271.28 Td (\(5L/5R, Lookback 100\) con ROC, RVOL) Tj ET
+BT /F1 7.5 Tf 0.880 0.910 0.940 rg 252.00 261.78 Td (y pendiente EMA 100.) Tj ET
+BT /F1 7.4 Tf 0.000 1.000 0.530 rg 446.00 280.78 Td (* Pivote Confirmado: Left Strength = 5, Right Strength = 5 en Pivot Lookback = 100 velas) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 271.28 Td (* Momentum & Volumen: ROC\(100d\) >= +30% y RVOL\(20d\) > 1.0x \(Volumen > Promedio 20d\)) Tj ET
+BT /F1 7.4 Tf 0.940 0.960 0.980 rg 446.00 261.78 Td (* Tendencia: EMA\(100\) con EMA Slope Lookback\(100d, Smooth=1\) >= +20% + Momentum Candle Colors) Tj ET
+0.60 w 0.067 0.094 0.153 rg 0.120 0.160 0.230 RG 24.00 234.78 793.89 17.00 re B
+0.60 w 0.220 0.740 0.970 rg 24.00 234.78 4.00 17.00 re f
+BT /F2 9.2 Tf 0.970 0.980 0.990 rg 34.00 239.78 Td (6. FORMULARIO MATEMATICO DE INDICADORES BASE DEL MOTOR) Tj ET
+0.50 w 0.059 0.090 0.165 rg 0.150 0.220 0.320 RG 24.00 183.78 390.94 46.00 re B
+0.60 w 0.220 0.740 0.970 rg 24.00 183.78 3.00 46.00 re f
+BT /F2 8.5 Tf 0.220 0.740 0.970 rg 34.00 217.78 Td (ADR 10d \(Average Daily Range %\)) Tj ET
+0.40 w 0.030 0.050 0.080 rg 0.120 0.180 0.260 RG 34.00 199.78 370.94 14.00 re B
+BT /F3 8.0 Tf 0.000 1.000 0.530 rg 39.00 203.78 Td (ADR_10 = \( Mean_10d\( High / Low \) - 1.0 \) * 100) Tj ET
+BT /F1 7.6 Tf 0.800 0.840 0.900 rg 34.00 189.78 Td (Umbral Pure Momentum: > 3.0% \(ideal 3.5% a 8.0%\)) Tj ET
+0.50 w 0.059 0.090 0.165 rg 0.150 0.220 0.320 RG 426.94 183.78 390.94 46.00 re B
+0.60 w 0.220 0.740 0.970 rg 426.94 183.78 3.00 46.00 re f
+BT /F2 8.5 Tf 0.220 0.740 0.970 rg 436.94 217.78 Td (RMV 15d \(Range Volatility Deepvue\)) Tj ET
+0.40 w 0.030 0.050 0.080 rg 0.120 0.180 0.260 RG 436.94 199.78 370.94 14.00 re B
+BT /F3 8.0 Tf 0.000 1.000 0.530 rg 441.94 203.78 Td (RMV_15 = \( \(Max\(High,15\) - Min\(Low,15\)\) / Min\(Low,15\) \) * 100) Tj ET
+BT /F1 7.6 Tf 0.800 0.840 0.900 rg 436.94 189.78 Td (Zonas: <= 10% \(Tight Verde / Compresion\) | 10%-15% \(Nivel 1\)) Tj ET
+0.50 w 0.059 0.090 0.165 rg 0.150 0.220 0.320 RG 24.00 130.78 390.94 46.00 re B
+0.60 w 0.220 0.740 0.970 rg 24.00 130.78 3.00 46.00 re f
+BT /F2 8.5 Tf 0.220 0.740 0.970 rg 34.00 164.78 Td (DCR \(Daily Closing Range %\)) Tj ET
+0.40 w 0.030 0.050 0.080 rg 0.120 0.180 0.260 RG 34.00 146.78 370.94 14.00 re B
+BT /F3 8.0 Tf 0.000 1.000 0.530 rg 39.00 150.78 Td (DCR = \( \(Close - Low\) / \(High - Low\) \) * 100) Tj ET
+BT /F1 7.6 Tf 0.800 0.840 0.900 rg 34.00 136.78 Td (Mide la fortaleza del cierre dentro de la vela diaria \(0% a 100%\)) Tj ET
+0.50 w 0.059 0.090 0.165 rg 0.150 0.220 0.320 RG 426.94 130.78 390.94 46.00 re B
+0.60 w 0.220 0.740 0.970 rg 426.94 130.78 3.00 46.00 re f
+BT /F2 8.5 Tf 0.220 0.740 0.970 rg 436.94 164.78 Td (RVOL Intradia Ajustado por Sesion) Tj ET
+0.40 w 0.030 0.050 0.080 rg 0.120 0.180 0.260 RG 436.94 146.78 370.94 14.00 re B
+BT /F3 8.0 Tf 0.000 1.000 0.530 rg 441.94 150.78 Td (RVOL_Proj = \( Vol_Hoy / Fraccion_Sesion \) / SMA\(Vol, 20d\)) Tj ET
+BT /F1 7.6 Tf 0.800 0.840 0.900 rg 436.94 136.78 Td (Ajusta el volumen acumulado segun los minutos transcurridos \(9:30-16:00 ET\)) Tj ET
+0.50 w 0.059 0.090 0.165 rg 0.150 0.220 0.320 RG 24.00 77.78 390.94 46.00 re B
+0.60 w 0.220 0.740 0.970 rg 24.00 77.78 3.00 46.00 re f
+BT /F2 8.5 Tf 0.220 0.740 0.970 rg 34.00 111.78 Td (IBD Relative Strength Ponderado) Tj ET
+0.40 w 0.030 0.050 0.080 rg 0.120 0.180 0.260 RG 34.00 93.78 370.94 14.00 re B
+BT /F3 8.0 Tf 0.000 1.000 0.530 rg 39.00 97.78 Td (RS_Raw = 0.40*\(3M\) + 0.20*\(6M\) + 0.20*\(9M\) + 0.20*\(12M\)) Tj ET
+BT /F1 7.6 Tf 0.800 0.840 0.900 rg 34.00 83.78 Td (Escala percentil 1 a 99; lideres institucionales operan con RS >= 85) Tj ET
+0.50 w 0.059 0.090 0.165 rg 0.150 0.220 0.320 RG 426.94 77.78 390.94 46.00 re B
+0.60 w 0.220 0.740 0.970 rg 426.94 77.78 3.00 46.00 re f
+BT /F2 8.5 Tf 0.220 0.740 0.970 rg 436.94 111.78 Td (Dealer Gamma Exposure \(GEX CBOE\)) Tj ET
+0.40 w 0.030 0.050 0.080 rg 0.120 0.180 0.260 RG 436.94 93.78 370.94 14.00 re B
+BT /F3 8.0 Tf 0.000 1.000 0.530 rg 441.94 97.78 Td (GEX_$M = Sign * Gamma_BS * OI * 100 * Spot^2 * 0.01 / 1e6) Tj ET
+BT /F1 7.6 Tf 0.800 0.840 0.900 rg 436.94 83.78 Td (Net GEX > 0: Long Gamma \(Rango\) | Net GEX < 0: Short Gamma \(Volatilidad\)) Tj ET
+0.60 w 0.120 0.160 0.230 rg 24.00 23.40 793.89 0.60 re f
+BT /F1 7.5 Tf 0.400 0.450 0.530 rg 24.00 12.00 Td (TradingVolt Institutional Terminal & Market Desk  Х  Especificacion Matematica de Escaneres y Motores Cuantitativos) Tj ET
+BT /F3 7.5 Tf 0.220 0.740 0.970 rg 711.89 12.00 Td (Pagina 3 / 3) Tj ET
+endstream
+endobj
+xref
+0 12
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000134 00000 n 
+0000000231 00000 n 
+0000000333 00000 n 
+0000000433 00000 n 
+0000000585 00000 n 
+0000014640 00000 n 
+0000014792 00000 n 
+0000026973 00000 n 
+0000027127 00000 n 
+trailer
+<< /Size 12 /Root 1 0 R >>
+startxref
+39146
+%%EOF
