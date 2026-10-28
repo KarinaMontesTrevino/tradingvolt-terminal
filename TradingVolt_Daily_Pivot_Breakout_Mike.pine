@@ -1,0 +1,105 @@
+// This Pine Script™ code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © TradingVolt Institutional Quant Desk (Replica of Daily Pivot Breakout Strategy Indicator by Mike)
+//@version=5
+indicator(title="TradingVolt • Daily Pivot Breakout Strategy Indicator [by Mike]", shorttitle="TV • Pivot Breakout", overlay=true, max_lines_count=500, max_labels_count=500)
+
+// ============================================================================
+// 1. INPUTS (EXACT PARAMETERS FROM MIKE'S DIALOG)
+// ============================================================================
+grp_piv = "1. Pivot & Momentum Parameters (Fila 1)"
+left_strength = input.int(5, "Left Strength", minval=1, maxval=50, group=grp_piv)
+right_strength = input.int(5, "Right Strength", minval=1, maxval=50, group=grp_piv)
+pivot_lookback = input.int(100, "Pivot Lookback", minval=10, maxval=500, group=grp_piv)
+roc_period = input.int(100, "ROC Period (days)", minval=5, maxval=500, group=grp_piv)
+min_roc_pct = input.float(30.0, "Minimum ROC (%)", minval=0.0, maxval=500.0, step=1.0, group=grp_piv)
+
+grp_ema = "2. Volume & Trend Slope Parameters (Fila 2)"
+rvol_period = input.int(20, "RVOL Period (days)", minval=5, maxval=200, group=grp_ema)
+ema_length = input.int(100, "EMA Length", minval=5, maxval=500, group=grp_ema)
+ema_slope_lookback = input.int(100, "EMA Slope Lookback", minval=5, maxval=500, group=grp_ema)
+ema_smooth_length = input.int(1, "EMA Smooth Length", minval=1, maxval=50, group=grp_ema)
+min_ema_slope_pct = input.float(20.0, "Min EMA Slope %", minval=-50.0, maxval=500.0, step=1.0, group=grp_ema)
+
+grp_vis = "3. Visuals, Trailing Stop & Signals (Fila 3)"
+enable_mom_colors = input.bool(true, "Enable Momentum Candle Colors", group=grp_vis)
+show_pivot_high = input.bool(true, "Show Pivot High (─── Green Line)", group=grp_vis)
+show_trailing_stop = input.bool(true, "Show 20% Trailing Stop (••••••• Blue Dots)", group=grp_vis)
+trailing_stop_pct = input.float(20.0, "Trailing Stop (%)", minval=1.0, maxval=50.0, step=0.5, group=grp_vis)
+show_entry_signals = input.bool(true, "Show Entry Signals (Breakout)", group=grp_vis)
+show_ema_line = input.bool(true, "Show EMA 100 Trend Line", group=grp_vis)
+
+// ============================================================================
+// 2. CORE QUANT CALCULATIONS (ROC, RVOL, EMA & EMA SLOPE)
+// ============================================================================
+roc_val = ((close - close[roc_period]) / nz(close[roc_period], close)) * 100.0
+vol_avg = ta.sma(volume[1], rvol_period)
+rvol_val = volume / math.max(vol_avg, 1.0)
+
+ema_raw = ta.ema(close, ema_length)
+ema_main = ema_smooth_length > 1 ? ta.ema(ema_raw, ema_smooth_length) : ema_raw
+ema_past = nz(ema_main[ema_slope_lookback], ema_main)
+ema_slope_pct = ((ema_main - ema_past) / math.max(ema_past, 0.0001)) * 100.0
+
+cond_momentum = roc_val >= min_roc_pct
+cond_slope = (ema_slope_pct >= min_ema_slope_pct) and (close > ema_main)
+cond_rvol = rvol_val > 1.0
+
+// ============================================================================
+// 3. CONFIRMED PIVOT HIGH (5L / 5R) WITHIN PIVOT LOOKBACK (100)
+// ============================================================================
+ph = ta.pivothigh(high, left_strength, right_strength)
+
+var float active_pivot = na
+var int active_pivot_bar = na
+var bool active_pivot_broken = false
+
+if not na(ph)
+    active_pivot := ph
+    active_pivot_bar := bar_index - right_strength
+    active_pivot_broken := false
+
+// Invalidate pivot if older than pivot_lookback bars
+if not na(active_pivot_bar) and (bar_index - active_pivot_bar > pivot_lookback)
+    active_pivot := na
+    active_pivot_bar := na
+    active_pivot_broken := false
+
+// ============================================================================
+// 4. ENTRY SIGNALS & 20% TRAILING STOP STATE MACHINE
+// ============================================================================
+var bool in_trade = false
+var float peak_since_entry = na
+var float trailing_stop = na
+
+cross_over_pivot = not na(active_pivot) and not active_pivot_broken and (close > active_pivot) and (close[1] <= active_pivot * 1.005)
+entry_signal = cross_over_pivot and cond_momentum and cond_slope and cond_rvol
+
+if not na(active_pivot) and close > active_pivot
+    active_pivot_broken := true
+
+if entry_signal
+    in_trade := true
+    peak_since_entry := math.max(high, close)
+    trailing_stop := peak_since_entry * (1.0 - trailing_stop_pct / 100.0)
+else if in_trade
+    peak_since_entry := math.max(nz(peak_since_entry, high), math.max(high, close))
+    trailing_stop := peak_since_entry * (1.0 - trailing_stop_pct / 100.0)
+
+exit_signal = in_trade and not entry_signal and (close < trailing_stop)
+if exit_signal
+    in_trade := false
+    peak_since_entry := na
+    trailing_stop := na
+
+// ============================================================================
+// 5. PLOTS, MOMENTUM CANDLE COLORS & SIGNALS
+// ============================================================================
+mom_candle_color = entry_signal ? color.new(#00FF87, 0) : (cond_momentum and cond_slope ? color.new(#00F0FF, 0) : ((roc_val >= min_roc_pct * 0.5 or ema_slope_pct >= min_ema_slope_pct * 0.5) and close > ema_main ? color.new(#FFD600, 0) : (close > ema_main ? color.new(#B388FF, 15) : na)))
+barcolor(enable_mom_colors ? mom_candle_color : na, title="Momentum Candle Colors")
+
+plot(show_pivot_high and not active_pivot_broken ? active_pivot : na, title="Pivot High (───)", color=color.new(#10B981, 0), linewidth=2, style=plot.style_linebr)
+plot(show_trailing_stop and in_trade ? trailing_stop : na, title="20% Trailing Stop (•••••••)", color=color.new(#38BDF8, 0), linewidth=3, style=plot.style_circles)
+plot(show_ema_line ? ema_main : na, title="EMA 100", color=color.new(#FF9100, 20), linewidth=2)
+
+plotshape(show_entry_signals and entry_signal, title="Entry Signal (Breakout)", style=shape.triangleup, location=location.belowbar, color=color.new(#00FF87, 0), size=size.small, text="Breakout", textcolor=color.new(#00FF87, 0))
+plotshape(show_entry_signals and exit_signal, title="20% Trailing Stop Exit", style=shape.xcross, location=location.abovebar, color=color.new(#FF2E63, 0), size=size.small, text="Stop 20%", textcolor=color.new(#FF2E63, 0))

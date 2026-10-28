@@ -1,3 +1,21 @@
+import sys
+import subprocess
+
+# Auto-instalador de respaldo para Streamlit Community Cloud si falta requirements.txt en la raíz
+for _mod, _pkg in [
+    ("plotly", "plotly"),
+    ("yfinance", "yfinance"),
+    ("scipy", "scipy"),
+    ("bs4", "beautifulsoup4"),
+    ("lxml", "lxml"),
+    ("alpaca", "alpaca-py"),
+    ("pytz", "pytz"),
+]:
+    try:
+        __import__(_mod)
+    except ImportError:
+        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", _pkg])
+
 import streamlit as st
 import pandas as pd
 import numpy as np
