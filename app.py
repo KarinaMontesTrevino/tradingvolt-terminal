@@ -169,6 +169,16 @@ try:
     importlib.reload(dbe)
 except ImportError:
     dbe = None
+try:
+    import daily_snapshot_engine as dse
+    importlib.reload(dse)
+except ImportError:
+    dse = None
+try:
+    import cross_reference_engine as cre
+    importlib.reload(cre)
+except ImportError:
+    cre = None
 import urllib.parse
 import streamlit.components.v1 as components
 
@@ -1206,6 +1216,7 @@ with st.sidebar:
         "🧠 Resumen Diario 360° (En Vivo)",
         "📰 Top Stories & Breaking News Desk",
         "⚡ Screener Cuantitativo",
+        "📊 Matriz de Convicción Cruzada",
         "🚀 Terminal CANSLIM Líderes (BO60)",
         "🎯 Quant Options & GEX Desk",
         "🕵️‍♂️ Dark Pool & Off-Exchange Tape",
@@ -1236,6 +1247,37 @@ with st.sidebar:
     )
 
     st.divider()
+
+    with st.expander("📸 Snapshots Diarios Oficiales", expanded=True):
+        st.caption("Extracción oficial 3 veces al día estilo Bloomberg EQS / Finviz:")
+        snap_cols = st.columns(3)
+        with snap_cols[0]:
+            if st.button("🌅 PRE", use_container_width=True, help="Snapshot Pre-Market (8:30 AM EST)"):
+                st.session_state["active_snapshot_type"] = "PRE"
+                if dse:
+                    s = dse.get_latest_snapshot("PRE")
+                    st.toast(f"🌅 PRE Cargado: {s.get('count', 0)} activos")
+        with snap_cols[1]:
+            if st.button("🔔 OPEN", use_container_width=True, help="Snapshot Apertura (10:15 AM EST)"):
+                st.session_state["active_snapshot_type"] = "OPEN"
+                if dse:
+                    s = dse.get_latest_snapshot("OPEN")
+                    st.toast(f"🔔 OPEN Cargado: {s.get('count', 0)} activos")
+        with snap_cols[2]:
+            if st.button("🌙 CLOSE", use_container_width=True, help="Snapshot Cierre (4:15 PM EST)"):
+                st.session_state["active_snapshot_type"] = "CLOSE"
+                if dse:
+                    s = dse.get_latest_snapshot("CLOSE")
+                    st.toast(f"🌙 CLOSE Cargado: {s.get('count', 0)} activos")
+        
+        cur_snap = st.session_state.get("active_snapshot_type", "OPEN")
+        if dse:
+            info = dse.get_snapshot_status(cur_snap)
+            st.markdown(f"<div style='font-size:11px; color:#38BDF8; margin-top:4px;'>Activo: <strong>{cur_snap}</strong> ({info.get('count', 0)} candidatos) • {info.get('time', 'Hoy')}</div>", unsafe_allow_html=True)
+            if st.button("⚡ Forzar Recálculo Snapshot", key="btn_force_snap_sb", use_container_width=True):
+                with st.spinner(f"Generando {cur_snap}..."):
+                    dse.generate_master_snapshot(cur_snap, force_refresh=True)
+                    st.rerun()
 
     show_ticker_tape = st.toggle("📻 Ticker Tape en Vivo", value=True, key="tog_ticker_tape_banner", help="Cinta animada continua con cotizaciones en tiempo real de Índices, Futuros, Commodities, Ganadores y Perdedores")
 
@@ -2689,6 +2731,9 @@ elif nav_view == "⚡ Screener Cuantitativo":
         dow30_cnt = len(getattr(eu, 'DOW30_COMPLETE_TICKERS', [])) or 30
 
         universe_options = [
+            "🔔 Snapshot Oficial OPEN (Apertura 10:15 AM - Sub-Segundo <0.05s)",
+            "🌅 Snapshot Oficial PRE (Pre-Market 8:30 AM - Sub-Segundo <0.05s)",
+            "🌙 Snapshot Oficial CLOSE (Cierre 4:15 PM - Sub-Segundo <0.05s)",
             f"🚀 High Momentum & Leaders Universe ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones - Rápido 5-8s)",
             f"🇺🇸 S&P 1500 Composite ({sp1500_cnt:,} acciones - Líquidas 15-20s)",
             f"🏆 S&P 500 Completo ({len(eu.SP500_COMPLETE_TICKERS)} acciones)",
@@ -2712,7 +2757,22 @@ elif nav_view == "⚡ Screener Cuantitativo":
         )
 
     # Determinar ticker list a escanear (Por defecto SIEMPRE el Mercado Completo EE.UU.)
-    if "Todo el Mercado" in selected_universe_option or "Mercado Completo" in selected_universe_option:
+    if "Snapshot Oficial OPEN" in selected_universe_option:
+        snap_open = dse.get_latest_snapshot("OPEN") if dse else {}
+        ticker_list = [c["symbol"] for c in snap_open.get("candidates", [])] or ["ADT", "BHC", "GKOS", "PRCH"]
+        universe_label = f"🔔 Snapshot Oficial OPEN ({len(ticker_list)} activos pre-calculados)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    elif "Snapshot Oficial PRE" in selected_universe_option:
+        snap_pre = dse.get_latest_snapshot("PRE") if dse else {}
+        ticker_list = [c["symbol"] for c in snap_pre.get("candidates", [])] or ["NVDA", "TSLA", "PLTR"]
+        universe_label = f"🌅 Snapshot Oficial PRE ({len(ticker_list)} activos pre-calculados)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    elif "Snapshot Oficial CLOSE" in selected_universe_option:
+        snap_close = dse.get_latest_snapshot("CLOSE") if dse else {}
+        ticker_list = [c["symbol"] for c in snap_close.get("candidates", [])] or ["NVDA", "AAPL", "MSFT"]
+        universe_label = f"🌙 Snapshot Oficial CLOSE ({len(ticker_list)} activos pre-calculados)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    elif "Todo el Mercado" in selected_universe_option or "Mercado Completo" in selected_universe_option:
         ticker_list = getattr(engine, 'FULL_US_MARKET_TICKERS', eu.US_BROAD_MARKET_TICKERS)
         universe_label = f"🌎 Todo el Mercado EE.UU. ({len(ticker_list):,} activos)"
         ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
@@ -3108,6 +3168,152 @@ elif nav_view == "⚡ Screener Cuantitativo":
 # -----------------------------------------------------------------------------
 # VISTA 3: TERMINAL CANSLIM LÍDERES • BREAKOUT DESK (BO60)
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# VISTA: 📊 MATRIZ DE CONVICCIÓN CRUZADA (BLOOMBERG EQS / DEEPVUE MULTI-DESK)
+# -----------------------------------------------------------------------------
+elif "Convicción Cruzada" in nav_view or "Matriz de Convicción" in nav_view:
+    st.markdown("""
+        <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(168, 85, 247, 0.12)); border: 1px solid rgba(14, 165, 233, 0.4); border-radius: 12px; padding: 18px 24px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 style="margin: 0; font-size: 24px; font-weight: 800; color: #FFFFFF; letter-spacing: -0.5px;">
+                        📊 TRADINGVOLT • MATRIZ INSTITUCIONAL DE CONVICCIÓN CRUZADA
+                    </h2>
+                    <p style="margin: 5px 0 0 0; font-size: 13px; color: #94A3B8;">
+                        Fusión algorítmica multidimensional: Screener Cuantitativo (Breakouts/Pivotes) + Fuerza Relativa Intradía (RS/DCR) + Whale Flow Opciones (UOA Calls/Puts) + Dark Pool Tape (Off-Exchange) + Earnings Desk.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <span style="background: rgba(0, 255, 135, 0.15); border: 1px solid #00FF87; color: #00FF87; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">● CROSS-DESK RADAR ACTIVE</span>
+                    <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38BDF8; color: #38BDF8; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">INSTITUTIONAL GRADE</span>
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # Controles superiores
+    col_c1, col_c2, col_c3, col_c4 = st.columns([1.6, 1.4, 1.2, 0.8])
+    with col_c1:
+        sel_snap_type = st.selectbox(
+            "Snapshot / Fuente de Datos:",
+            ["🔔 Apertura (10:15 AM EST)", "🌅 Pre-Market (8:30 AM EST)", "🌙 Cierre (4:15 PM EST)", "🎯 Radar Activo Compartido"],
+            index=0,
+            key="matrix_snap_sel"
+        )
+        snap_code = "OPEN" if "Apertura" in sel_snap_type else ("PRE" if "Pre-Market" in sel_snap_type else ("CLOSE" if "Cierre" in sel_snap_type else "RADAR"))
+    with col_c2:
+        sel_tier = st.selectbox(
+            "Filtro de Convicción:",
+            ["⭐ Todos los Niveles", "🚀 Solo Máxima Convicción (Score ≥ 88)", "🔥 Alta Convicción (Score ≥ 75)", "⚡ Convicción Moderada (Score ≥ 60)"],
+            index=0,
+            key="matrix_tier_sel"
+        )
+    with col_c3:
+        min_p_slider = st.number_input("Precio Mínimo ($):", min_value=1.0, max_value=2000.0, value=5.0, step=1.0, key="matrix_p_min")
+    with col_c4:
+        st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
+        btn_refresh_matrix = st.button("🔄 Recalcular", key="btn_refresh_matrix_desk", use_container_width=True)
+
+    # Generar o cargar matriz cruzada
+    with st.spinner("Construyendo Matriz de Convicción Multidimensional..."):
+        if cre is not None:
+            df_matrix = cre.generate_cross_reference_matrix(snapshot_type=snap_code if snap_code != "RADAR" else "OPEN")
+        else:
+            df_matrix = pd.DataFrame()
+
+    if df_matrix is not None and not df_matrix.empty:
+        # Aplicar filtros interactivos
+        if "Máxima Convicción" in sel_tier:
+            df_matrix = df_matrix[df_matrix["Convicción (1-100)"] >= 88]
+        elif "Alta Convicción" in sel_tier:
+            df_matrix = df_matrix[df_matrix["Convicción (1-100)"] >= 75]
+        elif "Convicción Moderada" in sel_tier:
+            df_matrix = df_matrix[df_matrix["Convicción (1-100)"] >= 60]
+
+        df_matrix = df_matrix[df_matrix["Precio"] >= min_p_slider].reset_index(drop=True)
+
+    if df_matrix is not None and not df_matrix.empty:
+        # KPI Cards
+        top_row = df_matrix.iloc[0]
+        max_conv_count = len(df_matrix[df_matrix["Convicción (1-100)"] >= 88])
+        avg_score = int(df_matrix["Convicción (1-100)"].mean())
+
+        kpi_c1, kpi_c2, kpi_c3, kpi_c4 = st.columns(4)
+        with kpi_c1:
+            st.markdown(f"""
+            <div style="background: #0E121A; border: 1px solid #1C2433; border-radius: 8px; padding: 12px 16px;">
+                <div style="font-size: 11px; color: #94A3B8; font-weight: 700;">TOTAL ACTIVOS EN MATRIZ</div>
+                <div style="font-size: 24px; font-weight: 800; color: #FFFFFF; font-family: 'JetBrains Mono';">{len(df_matrix)}</div>
+                <div style="font-size: 11px; color: #38BDF8;">Snapshot {snap_code} Activo</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with kpi_c2:
+            st.markdown(f"""
+            <div style="background: #0E121A; border: 1px solid #1C2433; border-radius: 8px; padding: 12px 16px;">
+                <div style="font-size: 11px; color: #94A3B8; font-weight: 700;">MÁXIMA CONVICCIÓN (≥88)</div>
+                <div style="font-size: 24px; font-weight: 800; color: #00FF87; font-family: 'JetBrains Mono';">{max_conv_count}</div>
+                <div style="font-size: 11px; color: #00FF87;">Whale + Breakout + DP</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with kpi_c3:
+            st.markdown(f"""
+            <div style="background: #0E121A; border: 1px solid #1C2433; border-radius: 8px; padding: 12px 16px;">
+                <div style="font-size: 11px; color: #94A3B8; font-weight: 700;">SCORE PROMEDIO CONVICCIÓN</div>
+                <div style="font-size: 24px; font-weight: 800; color: #F59E0B; font-family: 'JetBrains Mono';">{avg_score}/100</div>
+                <div style="font-size: 11px; color: #94A3B8;">Ponderación Cuantitativa</div>
+            </div>
+            """, unsafe_allow_html=True)
+        with kpi_c4:
+            st.markdown(f"""
+            <div style="background: #0E121A; border: 1px solid #1C2433; border-radius: 8px; padding: 12px 16px;">
+                <div style="font-size: 11px; color: #94A3B8; font-weight: 700;">LÍDER ABSOLUTO CONVICCIÓN</div>
+                <div style="font-size: 24px; font-weight: 800; color: #38BDF8; font-family: 'JetBrains Mono';">{top_row['Ticker']} ({top_row['Convicción (1-100)']})</div>
+                <div style="font-size: 11px; color: #00FF87;">${top_row['Precio']:.2f} ({top_row['Cambio %']:+.2f}%)</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown("<div style='height: 14px;'></div>", unsafe_allow_html=True)
+
+        # Tabla Interactiva
+        st.dataframe(
+            df_matrix,
+            use_container_width=True,
+            column_config={
+                "Ticker": st.column_config.TextColumn("Ticker", width="small"),
+                "Precio": st.column_config.NumberColumn("Precio ($)", format="$%.2f", width="small"),
+                "Cambio %": st.column_config.NumberColumn("Cambio %", format="%+.2f%%", width="small"),
+                "Convicción (1-100)": st.column_config.ProgressColumn("Convicción (1-100)", min_value=0, max_value=100, format="%d", width="medium"),
+                "Nivel Convicción": st.column_config.TextColumn("Nivel Convicción", width="medium"),
+                "Patrón Screener": st.column_config.TextColumn("Patrón Screener", width="large"),
+                "Fuerza Intradía (RS)": st.column_config.TextColumn("Fuerza Intradía (RS)", width="medium"),
+                "Opciones UOA (Whale Flow)": st.column_config.TextColumn("Opciones UOA (Whale)", width="medium"),
+                "Dark Pool Tape": st.column_config.TextColumn("Dark Pool Tape", width="medium"),
+                "Estado Earnings": st.column_config.TextColumn("Estado Earnings", width="medium"),
+            },
+            hide_index=True
+        )
+
+        csv_data = df_matrix.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            "📥 Descargar Matriz Institucional (.CSV)",
+            data=csv_data,
+            file_name=f"TradingVolt_CrossReference_Matrix_{snap_code}_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+            mime="text/csv",
+            key="btn_dl_matrix_csv"
+        )
+
+        st.markdown("---")
+        st.subheader("🔍 Inspección y Gráfico Institucional del Activo Seleccionado")
+        matrix_tickers = df_matrix["Ticker"].tolist()
+        sel_matrix_ticker = st.selectbox("Selecciona Activo para Análisis 360°:", matrix_tickers, index=0, key="sel_matrix_chart_ticker")
+
+        if sel_matrix_ticker:
+            render_institutional_chart(sel_matrix_ticker, key_suffix="cross_matrix_desk")
+    else:
+        st.info("No se encontraron activos para este snapshot o filtro de convicción.")
+
+
+
 elif "CANSLIM" in nav_view:
     st.markdown("""
         <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.12), rgba(0, 255, 135, 0.08)); border: 1px solid rgba(14, 165, 233, 0.35); border-radius: 12px; padding: 18px 24px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(14, 165, 233, 0.1);">
@@ -3833,6 +4039,9 @@ elif "Quant Options" in nav_view:
             uoa_preset = st.selectbox(
                 "Activo o Canasta:",
                 [
+                    "🔔 Snapshot Oficial OPEN (Apertura 10:15 AM)",
+                    "🌅 Snapshot Oficial PRE (Pre-Market 8:30 AM)",
+                    "🌙 Snapshot Oficial CLOSE (Cierre 4:15 PM)",
                     "🎯 Radar Activo del Screener (Canasta Dinámica)",
                     "🤖 Top Líderes Autónomos TradingVolt (Canasta)",
                     "NVDA (NVIDIA Corp)",
@@ -3891,7 +4100,19 @@ elif "Quant Options" in nav_view:
         if btn_scan_uoa or uoa_cache_key not in st.session_state:
             with st.spinner(f"Analizando actividad inusual de opciones para {uoa_sym}..."):
                 if uoe:
-                    if "Radar Activo" in uoa_preset or "🎯" in uoa_preset:
+                    if "Snapshot Oficial OPEN" in uoa_preset or "🔔" in uoa_preset:
+                        s_cands = dse.get_latest_snapshot("OPEN").get("candidates", []) if dse else []
+                        s_syms = [c["symbol"] for c in s_cands[:12]] or ["ADT", "BHC", "GKOS", "PRCH"]
+                        df_uoa_raw = uoe.scan_multiticker_unusual_flow(s_syms, min_v_oi=min_voi_val, min_premium=min_prem_val)
+                    elif "Snapshot Oficial PRE" in uoa_preset or "🌅" in uoa_preset:
+                        s_cands = dse.get_latest_snapshot("PRE").get("candidates", []) if dse else []
+                        s_syms = [c["symbol"] for c in s_cands[:12]] or ["NVDA", "TSLA", "PLTR"]
+                        df_uoa_raw = uoe.scan_multiticker_unusual_flow(s_syms, min_v_oi=min_voi_val, min_premium=min_prem_val)
+                    elif "Snapshot Oficial CLOSE" in uoa_preset or "🌙" in uoa_preset:
+                        s_cands = dse.get_latest_snapshot("CLOSE").get("candidates", []) if dse else []
+                        s_syms = [c["symbol"] for c in s_cands[:12]] or ["NVDA", "AAPL", "MSFT"]
+                        df_uoa_raw = uoe.scan_multiticker_unusual_flow(s_syms, min_v_oi=min_voi_val, min_premium=min_prem_val)
+                    elif "Radar Activo" in uoa_preset or "🎯" in uoa_preset:
                         radar_syms = are.get_active_radar_tickers(max_items=12) if are else ["NVDA", "PLTR", "TSLA"]
                         df_uoa_raw = uoe.scan_multiticker_unusual_flow(radar_syms, min_v_oi=min_voi_val, min_premium=min_prem_val)
                     elif "Líderes Autónomos" in uoa_preset or "🤖" in uoa_preset:
@@ -4412,9 +4633,11 @@ elif "Dark Pool" in nav_view:
     col_dp_ctrl1, col_dp_ctrl2, col_dp_ctrl3, col_dp_ctrl4 = st.columns([1.5, 1.3, 1.2, 0.9])
     
     with col_dp_ctrl1:
+        radar_snap_tickers = are.get_active_radar_tickers(max_items=8) if are else []
+        dp_choices = list(dict.fromkeys(radar_snap_tickers + ["NVDA", "SPY", "QQQ", "TSLA", "AAPL", "AMZN", "MSFT", "META", "PLTR", "AMD", "✏️ Otro Ticker..."]))
         dp_preset = st.selectbox(
             "Activo a Inspeccionar:",
-            ["NVDA", "SPY", "QQQ", "TSLA", "AAPL", "AMZN", "MSFT", "META", "PLTR", "AMD", "✏️ Otro Ticker..."],
+            dp_choices,
             index=0,
             key="dp_sel_preset"
         )

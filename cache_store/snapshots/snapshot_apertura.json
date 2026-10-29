@@ -1,0 +1,153 @@
+{
+  "snapshot_type": "OPEN",
+  "title": "Snapshot Oficial OPEN \u2022 29/10/2026 11:28 EST",
+  "timestamp": "2026-10-29 11:28:22",
+  "date_str": "29 Oct 2026",
+  "count": 12,
+  "candidates": [
+    {
+      "symbol": "ADT",
+      "price": 9.9,
+      "change_pct": 33.62,
+      "rvol": 12.82,
+      "dcr": 35.3,
+      "pattern": "\ud83d\ude80 BREAKOUT PIVOTE (Confirmado) \u2022 RVOL 12.8x \u2022 ROC +50.8%",
+      "rs_score": 81,
+      "dollar_vol_m": 937.78,
+      "pivot_high": 7.56,
+      "stage2": false
+    },
+    {
+      "symbol": "BHC",
+      "price": 8.6,
+      "change_pct": 24.35,
+      "rvol": 5.81,
+      "dcr": 94.9,
+      "pattern": "\ud83d\ude80 BREAKOUT PIVOTE (Confirmado) \u2022 RVOL 5.8x \u2022 ROC +68.4%",
+      "rs_score": 76,
+      "dollar_vol_m": 112.33,
+      "pivot_high": 6.99,
+      "stage2": false
+    },
+    {
+      "symbol": "GKOS",
+      "price": 240.59,
+      "change_pct": 32.6,
+      "rvol": 2.83,
+      "dcr": 97.4,
+      "pattern": "\ud83d\ude80 BREAKOUT PIVOTE (Confirmado) \u2022 RVOL 2.8x \u2022 ROC +97.3%",
+      "rs_score": 81,
+      "dollar_vol_m": 736.29,
+      "pivot_high": 174.48,
+      "stage2": true
+    },
+    {
+      "symbol": "PRCH",
+      "price": 20.78,
+      "change_pct": 27.48,
+      "rvol": 2.5,
+      "dcr": 79.6,
+      "pattern": "\ud83d\ude80 BREAKOUT PIVOTE (Confirmado) \u2022 RVOL 2.5x \u2022 ROC +118.0%",
+      "rs_score": 67,
+      "dollar_vol_m": 85.05,
+      "pivot_high": 18.75,
+      "stage2": true
+    },
+    {
+      "symbol": "MAX",
+      "price": 14.06,
+      "change_pct": 20.01,
+      "rvol": 1.64,
+      "dcr": 61.1,
+      "pattern": "\ud83d\ude80 BREAKOUT PIVOTE (Confirmado) \u2022 RVOL 1.6x \u2022 ROC +53.4%",
+      "rs_score": 69,
+      "dollar_vol_m": 22.47,
+      "pivot_high": 12.2,
+      "stage2": true
+    },
+    {
+      "symbol": "EHC",
+      "price": 130.42,
+      "change_pct": 6.82,
+      "rvol": 1.02,
+      "dcr": 51.3,
+      "pattern": "\ud83d\ude80 BREAKOUT PIVOTE (Confirmado) \u2022 RVOL 1.0x \u2022 ROC +29.5%",
+      "rs_score": 57,
+      "dollar_vol_m": 140.03,
+      "pivot_high": 129.96,
+      "stage2": true
+    },
+    {
+      "symbol": "PURR",
+      "price": 12.15,
+      "change_pct": 21.82,
+      "rvol": 2.97,
+      "dcr": 88.4,
+      "pattern": "\u26a1 Episodic Pivot \u2022 RVOL 3.0x \u2022 ROC +36.2%",
+      "rs_score": 70,
+      "dollar_vol_m": 423.98,
+      "pivot_high": 13.05,
+      "stage2": true
+    },
+    {
+      "symbol": "CART",
+      "price": 57.17,
+      "change_pct": -2.14,
+      "rvol": 2.48,
+      "dcr": 8.8,
+      "pattern": "\ud83d\udd25 Convicci\u00f3n Apertura \u2022 RVOL 2.5x \u2022 ROC +34.7%",
+      "rs_score": 67,
+      "dollar_vol_m": 837.85,
+      "pivot_high": 52.68,
+      "stage2": true
+    },
+    {
+      "symbol": "CROX",
+      "price": 149.22,
+      "change_pct": 24.67,
+      "rvol": 2.15,
+      "dcr": 79.2,
+      "pattern": "\u26a1 Episodic Pivot \u2022 RVOL 2.1x \u2022 ROC +23.7%",
+      "rs_score": 62,
+      "dollar_vol_m": 333.13,
+      "pivot_high": 127.28,
+      "stage2": true
+    },
+    {
+      "symbol": "CNH",
+      "price": 11.51,
+      "change_pct": 4.59,
+      "rvol": 1.67,
+      "dcr": 92.7,
+      "pattern": "\u26a1 Episodic Pivot \u2022 RVOL 1.7x \u2022 ROC +7.7%",
+      "rs_score": 41,
+      "dollar_vol_m": 284.9,
+      "pivot_high": 13.59,
+      "stage2": false
+    },
+    {
+      "symbol": "FCN",
+      "price": 174.91,
+      "change_pct": 10.29,
+      "rvol": 1.55,
+      "dcr": 60.4,
+      "pattern": "\u26a1 Episodic Pivot \u2022 RVOL 1.6x \u2022 ROC +10.2%",
+      "rs_score": 60,
+      "dollar_vol_m": 107.14,
+      "pivot_high": 144.6,
+      "stage2": false
+    },
+    {
+      "symbol": "ACA",
+      "price": 149.15,
+      "change_pct": 0.08,
+      "rvol": 1.37,
+      "dcr": 80.6,
+      "pattern": "\ud83d\udd25 Convicci\u00f3n Apertura \u2022 RVOL 1.4x \u2022 ROC +19.7%",
+      "rs_score": 51,
+      "dollar_vol_m": 130.51,
+      "pivot_high": 146.77,
+      "stage2": true
+    }
+  ]
+}

@@ -847,7 +847,7 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
                 chunk_size = 250
                 for i in range(0, len(missing_tickers), chunk_size):
                     chunk = missing_tickers[i:i + chunk_size]
-                    data = yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=True, progress=False)
+                    data = yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=False, progress=False)
                     if data is None or data.empty:
                         continue
                     for t in chunk:
@@ -1421,8 +1421,8 @@ def run_daytrade_scanner(tickers: list[str], strategy: str, min_gap: float = 2.0
             chunk_size = 100
             for i in range(0, len(tickers), chunk_size):
                 chunk = tickers[i:i + chunk_size]
-                data_5m = yf.download(chunk, period="5d", interval="5m", group_by="ticker", threads=True, progress=False)
-                data_1d = yf.download(chunk, period="5d", interval="1d", group_by="ticker", threads=True, progress=False)
+                data_5m = yf.download(chunk, period="5d", interval="5m", group_by="ticker", threads=False, progress=False)
+                data_1d = yf.download(chunk, period="5d", interval="1d", group_by="ticker", threads=False, progress=False)
                 for t in chunk:
                     try:
                         df_5m = data_5m[t].dropna(how="all") if len(chunk) > 1 else data_5m.dropna(how="all")

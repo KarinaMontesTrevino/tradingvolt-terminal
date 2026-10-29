@@ -1,4 +1,4 @@
-"""
+﻿"""
 ================================================================================
 TRADINGVOLT • LARGE-SCALE QUANTITATIVE DATA PIPELINE & VECTORIZED ENGINE
 ================================================================================
@@ -279,6 +279,35 @@ def get_updated_filters_catalog(session_state: Optional[Any] = None) -> Dict[str
                 "updated_at": r_ts,
                 "is_live_session": True
             }
+
+    # 1.1 Snapshots Diarios Oficiales (PRE, OPEN, CLOSE)
+    try:
+        import daily_snapshot_engine as dse
+        for s_type, s_title, s_icon in [
+            ("PRE", "Snapshot Oficial PRE (Pre-Market 8:30 AM)", "🌅"),
+            ("OPEN", "Snapshot Oficial OPEN (Apertura 10:15 AM)", "🔔"),
+            ("CLOSE", "Snapshot Oficial CLOSE (Cierre 4:15 PM)", "🌙")
+        ]:
+            s_file = dse.SNAPSHOT_FILES.get(s_type)
+            if s_file and s_file.exists():
+                try:
+                    with open(s_file, "r", encoding="utf-8") as fs:
+                        s_data = json.load(fs)
+                        s_cands = [c["symbol"] for c in s_data.get("candidates", [])]
+                        if s_cands:
+                            s_key = f"{s_icon} {s_title} ({len(s_cands)} activos)"
+                            catalog[s_key] = {
+                                "name": s_key,
+                                "short_name": f"Snapshot {s_type}",
+                                "tickers": s_cands,
+                                "category": "Snapshots Diarios",
+                                "updated_at": s_data.get("timestamp", "Hoy"),
+                                "is_live_session": True
+                            }
+                except Exception:
+                    pass
+    except Exception:
+        pass
 
     # 2. Revisar si hay ejecuciones en st.session_state de la sesión actual
     if session_state is not None:
