@@ -388,6 +388,24 @@ def get_latest_snapshot(snapshot_type: str = "OPEN") -> Dict[str, Any]:
     return generate_master_snapshot(snapshot_type=snapshot_type, force_refresh=False)
 
 
+def get_snapshot_status(snapshot_type: str = "OPEN") -> Dict[str, Any]:
+    """Retorna métricas de conteo y fecha para el snapshot solicitado."""
+    stype = snapshot_type.upper()
+    fpath = SNAPSHOT_FILES.get(stype, FILE_OPEN)
+    if fpath.exists():
+        try:
+            with open(fpath, "r", encoding="utf-8") as f:
+                d = json.load(f)
+                return {
+                    "exists": True,
+                    "count": d.get("count", len(d.get("candidates", []))),
+                    "time": d.get("timestamp", "Hoy")
+                }
+        except Exception:
+            pass
+    return {"exists": False, "count": 0, "time": "Pendiente"}
+
+
 def get_all_snapshots_summary() -> Dict[str, Any]:
     """Retorna el estado de disponibilidad de los 3 snapshots."""
     summary = {}
