@@ -79,7 +79,7 @@ def fetch_ticker_data() -> dict:
     quotes = {}
     try:
         import yfinance as yf
-        raw = yf.download(all_syms, period="5d", interval="1d", progress=False)
+        raw = yf.download(all_syms, period="5d", interval="1d", threads=False, progress=False)
         if raw is not None and not raw.empty and "Close" in raw:
             closes = raw["Close"]
             for s in all_syms:

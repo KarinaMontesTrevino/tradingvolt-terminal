@@ -287,7 +287,13 @@ def run_canslim_bo60_backtest(ticker: str, period_years: int = 2, hold_days: int
     - Identifica cada breakout del máximo de 60 días tras consolidación.
     - Mide la rentabilidad máxima a N sesiones, R-múltiplos y tasa de acierto.
     """
-    df = yf.download(ticker.strip().upper(), period=f"{period_years}y", interval="1d", progress=False)
+    try:
+        tk = yf.Ticker(ticker.strip().upper())
+        df = tk.history(period=f"{period_years}y", interval="1d", auto_adjust=False)
+        if df is None or df.empty:
+            df = yf.download(ticker.strip().upper(), period=f"{period_years}y", interval="1d", threads=False, progress=False)
+    except Exception:
+        df = pd.DataFrame()
     if isinstance(df.columns, pd.MultiIndex):
         df.columns = df.columns.get_level_values(0)
     df = df.dropna()

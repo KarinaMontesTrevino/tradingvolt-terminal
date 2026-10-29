@@ -354,10 +354,22 @@ def get_stock_ohlcv(symbol: str, timeframe: str = "1D") -> pd.DataFrame:
     interval, period = tf_mapping.get(timeframe, ("1d", "1y"))
     
     try:
-        df = yf.download(symbol, period=period, interval=interval, progress=False, auto_adjust=True)
+        df = pd.DataFrame()
+        try:
+            tk = yf.Ticker(symbol)
+            df = tk.history(period=period, interval=interval, auto_adjust=True)
+        except Exception:
+            df = pd.DataFrame()
+
+        if df is None or df.empty:
+            try:
+                df = yf.download(symbol, period=period, interval=interval, threads=False, progress=False, auto_adjust=True)
+            except Exception:
+                df = pd.DataFrame()
+
         if isinstance(df.columns, pd.MultiIndex):
             df.columns = df.columns.get_level_values(0)
-            
+                
         if df.empty or len(df) < 5:
             dates = pd.date_range(end=datetime.now(), periods=100, freq='D')
             base_p = 50.0

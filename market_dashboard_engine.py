@@ -234,7 +234,7 @@ def fetch_themes_performance(timeframe="Today"):
     unique_etfs = list(dict.fromkeys(etf_tickers))
     
     try:
-        data = yf.download(unique_etfs, period="1y", interval="1d", progress=False)
+        data = yf.download(unique_etfs, period="1y", interval="1d", threads=False, progress=False)
         closes = data["Close"]
         
         results = []
@@ -300,7 +300,7 @@ def fetch_theme_constituents(theme_name, timeframe="Today"):
     
     tickers = THEMES_CATALOG[theme_name]["stocks"]
     try:
-        data = yf.download(tickers, period="1y", interval="1d", progress=False)
+        data = yf.download(tickers, period="1y", interval="1d", threads=False, progress=False)
         closes = data["Close"]
         vols = data["Volume"]
         
@@ -493,7 +493,7 @@ def fetch_market_breadth(provider="Alpaca", alpaca_key=None, alpaca_secret=None)
     ]
 
     try:
-        yf_data = yf.download(breadth_leaders, period="1y", interval="1d", progress=False)
+        yf_data = yf.download(breadth_leaders, period="1y", interval="1d", threads=False, progress=False)
         closes = yf_data["Close"]
         opens = yf_data["Open"]
         highs = yf_data["High"]

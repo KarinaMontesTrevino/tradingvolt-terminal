@@ -580,6 +580,10 @@ def render_institutional_chart(ticker, key_suffix="chart"):
     - Subplot de volumen con coloreado de velas y media SMA 20
     - Selector de temporalidad independiente
     """
+    if not ticker or not isinstance(ticker, str) or not ticker.strip():
+        st.info("Selecciona un ticker para cargar el gráfico institucional.")
+        return
+    ticker = ticker.strip().upper()
     col_tf1, col_tf2, col_tf3, col_tf4, col_tf5 = st.columns([1.7, 0.55, 0.75, 0.75, 0.95])
     with col_tf1:
         chart_tf = st.radio(
@@ -633,9 +637,23 @@ def render_institutional_chart(ticker, key_suffix="chart"):
         is_intraday = True
 
     with st.spinner(f"Cargando {chart_tf} para {ticker}..."):
-        raw_data = yf.download(ticker, period=period, interval=interval, progress=False)
+        raw_data = pd.DataFrame()
+        try:
+            # 1. Preferir yf.Ticker(ticker).history (evita hilos multitasking de yfinance que fallan en Python 3.14)
+            tk = yf.Ticker(ticker)
+            raw_data = tk.history(period=period, interval=interval, auto_adjust=False)
+        except Exception:
+            raw_data = pd.DataFrame()
 
-        if raw_data.empty:
+        if raw_data is None or raw_data.empty:
+            try:
+                # 2. Fallback a yf.download explícitamente con threads=False
+                raw_data = yf.download(ticker, period=period, interval=interval, threads=False, progress=False)
+            except Exception as e:
+                print(f"Error descargando datos para {ticker}: {e}")
+                raw_data = pd.DataFrame()
+
+        if raw_data is None or raw_data.empty:
             st.warning(f"No se pudieron descargar datos para {ticker}.")
             return
 
@@ -3344,7 +3362,10 @@ elif "CANSLIM" in nav_view:
             """, unsafe_allow_html=True)
 
             try:
-                df_hist = yf.download(selected_ticker, period="1y", interval="1d", progress=False)
+                tk = yf.Ticker(selected_ticker)
+                df_hist = tk.history(period="1y", interval="1d", auto_adjust=False)
+                if df_hist is None or df_hist.empty:
+                    df_hist = yf.download(selected_ticker, period="1y", interval="1d", threads=False, progress=False)
                 if isinstance(df_hist.columns, pd.MultiIndex):
                     df_hist.columns = df_hist.columns.get_level_values(0)
                 df_hist = df_hist.dropna()
