@@ -23,7 +23,8 @@ import time
 import re
 from datetime import datetime
 
-CACHE_FILE = os.path.join(r"C:\Users\kim17\.gemini\antigravity\scratch\trading_screener", "ticker_banner_cache.json")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_FILE = os.path.join(BASE_DIR, "ticker_banner_cache.json")
 CACHE_TTL_SECONDS = 180  # 3 minutos
 
 CORE_INDICES = [

@@ -14,7 +14,10 @@ for _mod, _pkg in [
     try:
         __import__(_mod)
     except ImportError:
-        subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", _pkg])
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install", "--quiet", _pkg])
+        except Exception:
+            pass
 
 import streamlit as st
 import pandas as pd
