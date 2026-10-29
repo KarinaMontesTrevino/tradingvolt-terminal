@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 import subprocess
 
 # Auto-instalador de respaldo para Streamlit Community Cloud si falta requirements.txt en la raíz
@@ -3163,6 +3163,13 @@ elif nav_view == "⚡ Screener Cuantitativo":
             st.warning("⚠️ No se encontraron activos que cumplan con todos los criterios bajo los parámetros actuales.")
         else:
             st.info("👆 Selecciona tu filtro cuantitativo e inicia el escaneo con el botón principal.")
+
+    # -------------------------------------------------------------------------
+    # WIDGET INSTITUCIONAL: LISTAS OFICIALES DIARIAS & ACTIVOS EN MOVIMIENTO
+    # -------------------------------------------------------------------------
+    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
+    if dse is not None:
+        dse.render_snapshot_lists_widget(render_chart_fn=render_institutional_chart, key_suffix="screener_main_widget")
 
 
 # -----------------------------------------------------------------------------

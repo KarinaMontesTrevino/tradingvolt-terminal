@@ -231,7 +231,7 @@ def generate_master_snapshot(snapshot_type: str = "OPEN", force_refresh: bool = 
         except Exception:
             bars_store = {}
 
-    missing = [t for t in universe_tickers if t not in bars_store or bars_store[t] is None or bars_store[t].empty]
+    missing = [t for t in universe_tickers if t not in bars_store]
     if missing:
         try:
             chunk_size = 250
@@ -239,6 +239,8 @@ def generate_master_snapshot(snapshot_type: str = "OPEN", force_refresh: bool = 
                 chunk = missing[i:i + chunk_size]
                 data = yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=False, progress=False)
                 if data is None or data.empty:
+                    for t in chunk:
+                        bars_store[t] = "EMPTY"
                     continue
                 for t in chunk:
                     try:
@@ -246,12 +248,15 @@ def generate_master_snapshot(snapshot_type: str = "OPEN", force_refresh: bool = 
                             df_t = data[t].dropna(how="all")
                             if not df_t.empty and 'Close' in df_t:
                                 bars_store[t] = df_t
+                            else:
+                                bars_store[t] = "EMPTY"
                         elif not isinstance(data.columns, pd.MultiIndex) and len(chunk) == 1:
-                            bars_store[t] = data.dropna(how="all")
+                            df_t = data.dropna(how="all")
+                            bars_store[t] = df_t if (not df_t.empty and 'Close' in df_t) else "EMPTY"
                         else:
-                            bars_store[t] = None
+                            bars_store[t] = "EMPTY"
                     except Exception:
-                        bars_store[t] = None
+                        bars_store[t] = "EMPTY"
         except Exception as e:
             print(f"[SnapshotEngine] Error en delta download: {e}")
 
@@ -267,7 +272,7 @@ def generate_master_snapshot(snapshot_type: str = "OPEN", force_refresh: bool = 
     records = []
     for t in universe_tickers:
         df_t = bars_store.get(t)
-        if df_t is not None and not df_t.empty:
+        if df_t is not None and isinstance(df_t, pd.DataFrame) and not df_t.empty:
             f_dict = build_stock_factors(t, df_t)
             if f_dict:
                 records.append(f_dict)
@@ -427,3 +432,209 @@ def get_all_snapshots_summary() -> Dict[str, Any]:
         else:
             summary[stype] = {"exists": False, "count": 0, "timestamp": "", "age_minutes": -1}
     return summary
+
+
+def render_snapshot_lists_widget(render_chart_fn=None, key_suffix: str = "screener_bottom"):
+    """
+    Renderiza el widget visual e interactivo de las Listas Oficiales Diarias
+    con la visualización en vivo de los activos en movimiento, métricas y botones
+    para generar datos frescos o sincronizar con todos los Desks.
+    """
+    import streamlit as st
+
+    st.markdown("""
+        <div style="background: linear-gradient(135deg, rgba(14, 20, 32, 0.95), rgba(20, 27, 45, 0.95)); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 12px; padding: 18px 22px; margin-top: 24px; margin-bottom: 18px; box-shadow: 0 8px 32px rgba(0, 240, 255, 0.08);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #FFFFFF; display: flex; align-items: center; gap: 8px;">
+                        <span>📸</span> Listas Oficiales Diarias & Activos en Movimiento (Snapshot Hub)
+                    </h3>
+                    <p style="margin: 4px 0 0 0; font-size: 13px; color: #94A3B8;">
+                        Monitoreo continuo de los activos detectados en las 3 extracciones oficiales del mercado (Bloomberg EQS & Finviz Elite). Datos vectorizados pre-calculados con acceso instantáneo y visualización en vivo de los activos en juego.
+                    </p>
+                </div>
+                <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                    <span style="background: rgba(0, 255, 135, 0.15); border: 1px solid #00FF87; color: #00FF87; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">● ZERO LATENCY CACHE</span>
+                    <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38BDF8; color: #38BDF8; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">CROSS-DESK PIPELINE</span>
+                </div>
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
+
+    tab_open, tab_pre, tab_close = st.tabs([
+        "🔔 Apertura Breakouts & Momentum (10:15 AM EST)",
+        "🌅 Pre-Market Movers & Gappers (8:30 AM EST)",
+        "🌙 Cierre High DCR & New 52w Highs (4:15 PM EST)"
+    ])
+
+    tab_configs = [
+        (tab_open, "OPEN", "🔔 Apertura (Breakouts & RVOL)", "Breakout Pivote y Convicción de Apertura"),
+        (tab_pre, "PRE", "🌅 Pre-Market (Movers & Gappers)", "Gap Ups y Volatilidad Temprana"),
+        (tab_close, "CLOSE", "🌙 Cierre (High DCR & New Highs)", "Cierres Fuertes y Acumulación Institucional")
+    ]
+
+    for tab_obj, s_code, s_label, s_desc in tab_configs:
+        with tab_obj:
+            snap_data = get_latest_snapshot(s_code)
+            candidates = snap_data.get("candidates", [])
+            ts_str = snap_data.get("timestamp", "Hoy")
+            total_cnt = snap_data.get("count", len(candidates))
+
+            # Barra superior de controles del widget
+            ctrl_c1, ctrl_c2, ctrl_c3 = st.columns([2.2, 1.3, 1.1])
+            with ctrl_c1:
+                st.markdown(f"""
+                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                        <span style="font-size: 13px; color: #CBD5E1; font-weight: 600;">Estado Lista:</span>
+                        <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38BDF8; color: #38BDF8; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-family: 'JetBrains Mono', monospace;">
+                            ⏱️ {ts_str} EST
+                        </span>
+                        <span style="background: rgba(0, 255, 135, 0.15); border: 1px solid #00FF87; color: #00FF87; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">
+                            {total_cnt} Activos en Movimiento
+                        </span>
+                    </div>
+                """, unsafe_allow_html=True)
+
+            with ctrl_c2:
+                btn_refresh = st.button(
+                    f"🔄 Generar Resultados Frescos",
+                    key=f"btn_ref_{s_code}_{key_suffix}",
+                    use_container_width=True,
+                    help=f"Fuerza un re-escaneo completo del mercado para extraer la lista de {s_code} en tiempo real."
+                )
+
+            with ctrl_c3:
+                btn_sync = st.button(
+                    f"🎯 Sincronizar Radar",
+                    key=f"btn_sync_{s_code}_{key_suffix}",
+                    use_container_width=True,
+                    help=f"Transfiere todos los activos de {s_code} a los demás Desks (Opciones, Dark Pool, Intraday Map)."
+                )
+
+            if btn_refresh:
+                with st.spinner(f"Descargando y recalculando matriz para {s_label}..."):
+                    new_snap = generate_master_snapshot(s_code, force_refresh=True)
+                    st.toast(f"✅ Lista {s_code} actualizada: {new_snap.get('count', 0)} activos frescos.")
+                    st.rerun()
+
+            if btn_sync:
+                cand_syms = [c["symbol"] for c in candidates]
+                if cand_syms:
+                    try:
+                        import active_radar_engine as are
+                        are.set_active_radar(cand_syms, source_name=f"Snapshot {s_code}", description=f"Sincronizado desde {s_label}")
+                        st.toast(f"🎯 Radar Compartido actualizado con {len(cand_syms)} activos de {s_code}.")
+                    except Exception as e:
+                        st.error(f"Error sincronizando radar: {e}")
+
+            if not candidates:
+                st.info(f"No hay activos registrados aún en la lista de {s_label}. Pulsa 'Generar Resultados Frescos' para computarla.")
+                continue
+
+            # KPI Summary Cards para la lista activa
+            df_snap = pd.DataFrame(candidates)
+            top_gainer = df_snap.sort_values(by="change_pct", ascending=False).iloc[0]
+            top_rvol = df_snap.sort_values(by="rvol", ascending=False).iloc[0]
+            avg_chg = df_snap["change_pct"].mean()
+            stage2_cnt = len(df_snap[df_snap["stage2"] == True])
+
+            k1, k2, k3, k4 = st.columns(4)
+            with k1:
+                st.markdown(f"""
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid #1E293B; border-radius: 8px; padding: 10px 14px;">
+                    <div style="font-size: 11px; color: #94A3B8; font-weight: 700;">TOP GAINER</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #00FF87; font-family: 'JetBrains Mono';">${top_gainer['symbol']} ({top_gainer['change_pct']:+.2f}%)</div>
+                    <div style="font-size: 11px; color: #64748B;">P: ${top_gainer['price']:.2f}</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with k2:
+                st.markdown(f"""
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid #1E293B; border-radius: 8px; padding: 10px 14px;">
+                    <div style="font-size: 11px; color: #94A3B8; font-weight: 700;">MÁXIMO VOLUMEN RVOL</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #38BDF8; font-family: 'JetBrains Mono';">${top_rvol['symbol']} ({top_rvol['rvol']:.1f}x)</div>
+                    <div style="font-size: 11px; color: #64748B;">Volumen Institucional</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with k3:
+                st.markdown(f"""
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid #1E293B; border-radius: 8px; padding: 10px 14px;">
+                    <div style="font-size: 11px; color: #94A3B8; font-weight: 700;">CAMBIO PROMEDIO</div>
+                    <div style="font-size: 18px; font-weight: 800; color: {'#00FF87' if avg_chg >= 0 else '#FF2E63'}; font-family: 'JetBrains Mono';">{avg_chg:+.2f}%</div>
+                    <div style="font-size: 11px; color: #64748B;">Sobre {len(df_snap)} activos</div>
+                </div>
+                """, unsafe_allow_html=True)
+            with k4:
+                st.markdown(f"""
+                <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid #1E293B; border-radius: 8px; padding: 10px 14px;">
+                    <div style="font-size: 11px; color: #94A3B8; font-weight: 700;">EN ETAPA 2 (WEINSTEIN)</div>
+                    <div style="font-size: 18px; font-weight: 800; color: #F59E0B; font-family: 'JetBrains Mono';">{stage2_cnt} Activos</div>
+                    <div style="font-size: 11px; color: #64748B;">Tendencia Alcista Clara</div>
+                </div>
+                """, unsafe_allow_html=True)
+
+            st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+
+            # Preparar tabla visual
+            table_display_df = pd.DataFrame([
+                {
+                    "Ticker": c["symbol"],
+                    "Precio": c["price"],
+                    "Cambio %": c["change_pct"],
+                    "RVOL": c["rvol"],
+                    "DCR %": c["dcr"],
+                    "RS Score": c["rs_score"],
+                    "Patrón Cuantitativo": c["pattern"],
+                    "Etapa 2": "🟢 Sí" if c.get("stage2") else "⚪ No"
+                }
+                for c in candidates
+            ])
+
+            col_w_table, col_w_chart = st.columns([2.3, 1.7])
+            with col_w_table:
+                st.caption("💡 Haz clic en cualquier activo de la lista para inspeccionar su gráfico institucional:")
+                sel_w_row = st.dataframe(
+                    table_display_df,
+                    use_container_width=True,
+                    height=380,
+                    hide_index=True,
+                    selection_mode="single-row",
+                    on_select="rerun",
+                    column_config={
+                        "Ticker": st.column_config.TextColumn("Ticker", width="small"),
+                        "Precio": st.column_config.NumberColumn("Precio ($)", format="$%.2f", width="small"),
+                        "Cambio %": st.column_config.NumberColumn("Cambio %", format="%+.2f%%", width="small"),
+                        "RVOL": st.column_config.NumberColumn("RVOL", format="%.1fx", width="small"),
+                        "DCR %": st.column_config.NumberColumn("DCR %", format="%.0f%%", width="small"),
+                        "RS Score": st.column_config.NumberColumn("RS / 99", format="%d", width="small"),
+                        "Patrón Cuantitativo": st.column_config.TextColumn("Patrón / Setup Cuantitativo", width="large"),
+                        "Etapa 2": st.column_config.TextColumn("Etapa 2", width="small")
+                    },
+                    key=f"df_snap_view_{s_code}_{key_suffix}"
+                )
+
+                csv_snap = table_display_df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    f"📥 Descargar Lista {s_code} (.CSV)",
+                    data=csv_snap,
+                    file_name=f"TradingVolt_Snapshot_{s_code}_{ts_str.replace(':', '').replace(' ', '_')}.csv",
+                    mime="text/csv",
+                    key=f"dl_csv_{s_code}_{key_suffix}"
+                )
+
+            with col_w_chart:
+                active_sym = candidates[0]["symbol"]
+                if sel_w_row and hasattr(sel_w_row, "selection") and sel_w_row.selection.rows:
+                    r_idx = sel_w_row.selection.rows[0]
+                    if r_idx < len(candidates):
+                        active_sym = candidates[r_idx]["symbol"]
+
+                st.markdown(f"""
+                    <div style="background: rgba(14, 20, 32, 0.7); border: 1px solid #1E293B; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px;">
+                        <span style="font-size: 13px; font-weight: 700; color: #FFFFFF;">🔍 Gráfico Institucional en Vivo: <span style="color:#00F0FF;">${active_sym}</span></span>
+                    </div>
+                """, unsafe_allow_html=True)
+
+                if render_chart_fn is not None:
+                    render_chart_fn(active_sym, key_suffix=f"snap_w_{s_code}_{active_sym}")
+                else:
+                    st.info(f"Seleccionado: ${active_sym}")
