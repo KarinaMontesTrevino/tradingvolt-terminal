@@ -1,0 +1,324 @@
+[
+  {
+    "date": "2023-01-01",
+    "unemployment_rate": 3.4,
+    "labor_force_participation_rate": 62.4,
+    "avg_hourly_earnings": 33.03,
+    "job_openings": 10563
+  },
+  {
+    "date": "2023-02-01",
+    "unemployment_rate": 3.6,
+    "labor_force_participation_rate": 62.5,
+    "avg_hourly_earnings": 33.15,
+    "job_openings": 9974
+  },
+  {
+    "date": "2023-03-01",
+    "unemployment_rate": 3.5,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 33.28,
+    "job_openings": 9745
+  },
+  {
+    "date": "2023-04-01",
+    "unemployment_rate": 3.4,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 33.41,
+    "job_openings": 10320
+  },
+  {
+    "date": "2023-05-01",
+    "unemployment_rate": 3.7,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 33.53,
+    "job_openings": 9616
+  },
+  {
+    "date": "2023-06-01",
+    "unemployment_rate": 3.6,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 33.68,
+    "job_openings": 9400
+  },
+  {
+    "date": "2023-07-01",
+    "unemployment_rate": 3.5,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 33.82,
+    "job_openings": 8920
+  },
+  {
+    "date": "2023-08-01",
+    "unemployment_rate": 3.8,
+    "labor_force_participation_rate": 62.8,
+    "avg_hourly_earnings": 33.91,
+    "job_openings": 9497
+  },
+  {
+    "date": "2023-09-01",
+    "unemployment_rate": 3.8,
+    "labor_force_participation_rate": 62.8,
+    "avg_hourly_earnings": 34.02,
+    "job_openings": 9350
+  },
+  {
+    "date": "2023-10-01",
+    "unemployment_rate": 3.8,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 34.11,
+    "job_openings": 8852
+  },
+  {
+    "date": "2023-11-01",
+    "unemployment_rate": 3.7,
+    "labor_force_participation_rate": 62.8,
+    "avg_hourly_earnings": 34.25,
+    "job_openings": 8931
+  },
+  {
+    "date": "2023-12-01",
+    "unemployment_rate": 3.7,
+    "labor_force_participation_rate": 62.5,
+    "avg_hourly_earnings": 34.39,
+    "job_openings": 8889
+  },
+  {
+    "date": "2024-01-01",
+    "unemployment_rate": 3.7,
+    "labor_force_participation_rate": 62.5,
+    "avg_hourly_earnings": 34.55,
+    "job_openings": 8748
+  },
+  {
+    "date": "2024-02-01",
+    "unemployment_rate": 3.9,
+    "labor_force_participation_rate": 62.5,
+    "avg_hourly_earnings": 34.62,
+    "job_openings": 8756
+  },
+  {
+    "date": "2024-03-01",
+    "unemployment_rate": 3.8,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 34.74,
+    "job_openings": 8355
+  },
+  {
+    "date": "2024-04-01",
+    "unemployment_rate": 3.9,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 34.82,
+    "job_openings": 7919
+  },
+  {
+    "date": "2024-05-01",
+    "unemployment_rate": 4.0,
+    "labor_force_participation_rate": 62.5,
+    "avg_hourly_earnings": 34.95,
+    "job_openings": 8230
+  },
+  {
+    "date": "2024-06-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 35.05,
+    "job_openings": 7910
+  },
+  {
+    "date": "2024-07-01",
+    "unemployment_rate": 4.3,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 35.12,
+    "job_openings": 7711
+  },
+  {
+    "date": "2024-08-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 35.25,
+    "job_openings": 7861
+  },
+  {
+    "date": "2024-09-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 35.38,
+    "job_openings": 7672
+  },
+  {
+    "date": "2024-10-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 35.53,
+    "job_openings": 7744
+  },
+  {
+    "date": "2024-11-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.5,
+    "avg_hourly_earnings": 35.68,
+    "job_openings": 8098
+  },
+  {
+    "date": "2024-12-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.5,
+    "avg_hourly_earnings": 35.79,
+    "job_openings": 7600
+  },
+  {
+    "date": "2025-01-01",
+    "unemployment_rate": 4.0,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 35.95,
+    "job_openings": 7740
+  },
+  {
+    "date": "2025-02-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 36.08,
+    "job_openings": 7580
+  },
+  {
+    "date": "2025-03-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.5,
+    "avg_hourly_earnings": 36.2,
+    "job_openings": 7510
+  },
+  {
+    "date": "2025-04-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 36.32,
+    "job_openings": 7650
+  },
+  {
+    "date": "2025-05-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.5,
+    "avg_hourly_earnings": 36.45,
+    "job_openings": 7480
+  },
+  {
+    "date": "2025-06-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 36.58,
+    "job_openings": 7540
+  },
+  {
+    "date": "2025-07-01",
+    "unemployment_rate": 4.3,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 36.7,
+    "job_openings": 7420
+  },
+  {
+    "date": "2025-08-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 36.82,
+    "job_openings": 7490
+  },
+  {
+    "date": "2025-09-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 36.96,
+    "job_openings": 7520
+  },
+  {
+    "date": "2025-10-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 37.1,
+    "job_openings": 7480
+  },
+  {
+    "date": "2025-11-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 37.22,
+    "job_openings": 7510
+  },
+  {
+    "date": "2025-12-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 37.35,
+    "job_openings": 7450
+  },
+  {
+    "date": "2026-01-01",
+    "unemployment_rate": 4.0,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 37.48,
+    "job_openings": 7520
+  },
+  {
+    "date": "2026-02-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 37.6,
+    "job_openings": 7480
+  },
+  {
+    "date": "2026-03-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 37.72,
+    "job_openings": 7410
+  },
+  {
+    "date": "2026-04-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 37.84,
+    "job_openings": 7460
+  },
+  {
+    "date": "2026-05-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 37.96,
+    "job_openings": 7390
+  },
+  {
+    "date": "2026-06-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 38.08,
+    "job_openings": 7430
+  },
+  {
+    "date": "2026-07-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 38.19,
+    "job_openings": 7380
+  },
+  {
+    "date": "2026-08-01",
+    "unemployment_rate": 4.2,
+    "labor_force_participation_rate": 62.6,
+    "avg_hourly_earnings": 38.3,
+    "job_openings": 7350
+  },
+  {
+    "date": "2026-09-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 38.42,
+    "job_openings": 7390
+  },
+  {
+    "date": "2026-10-01",
+    "unemployment_rate": 4.1,
+    "labor_force_participation_rate": 62.7,
+    "avg_hourly_earnings": 38.54,
+    "job_openings": 7410
+  }
+]
