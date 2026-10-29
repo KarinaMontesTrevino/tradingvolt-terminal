@@ -2668,16 +2668,16 @@ elif nav_view == "⚡ Screener Cuantitativo":
         dow30_cnt = len(getattr(eu, 'DOW30_COMPLETE_TICKERS', [])) or 30
 
         universe_options = [
-            f"🌎 Todo el Mercado EE.UU. (S&P 1500 + Russell 2000 + Nasdaq Comp + Dow 30 / {full_mkt_cnt:,} acciones)",
+            f"🚀 High Momentum & Leaders Universe ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones - Rápido 5-8s)",
+            f"🇺🇸 S&P 1500 Composite ({sp1500_cnt:,} acciones - Líquidas 15-20s)",
+            f"🏆 S&P 500 Completo ({len(eu.SP500_COMPLETE_TICKERS)} acciones)",
+            f"💻 Nasdaq 100 Completo ({len(eu.NASDAQ100_COMPLETE_TICKERS)} acciones - Instantáneo)",
             f"🐻 Russell 2000 Completo ({r2k_cnt:,} small-caps)",
             f"🌐 Nasdaq Composite Líquido ({nasdaq_comp_cnt:,} acciones)",
-            f"🇺🇸 S&P 1500 Composite ({sp1500_cnt:,} acciones)",
             f"🏛️ Dow Jones 30 ({dow30_cnt} blue-chips)",
-            f"🏆 S&P 500 Completo ({len(eu.SP500_COMPLETE_TICKERS)} acciones)",
-            f"💻 Nasdaq 100 Completo ({len(eu.NASDAQ100_COMPLETE_TICKERS)} acciones)",
             f"🏢 S&P 400 Mid-Cap Growth ({len(eu.SP400_MIDCAP_TICKERS)} acciones)",
             f"⚡ S&P 600 Small-Cap Momentum ({len(eu.SP600_SMALLCAP_TICKERS)} acciones)",
-            f"🚀 High Momentum & Growth Universe ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones)",
+            f"🌎 Todo el Mercado EE.UU. ({full_mkt_cnt:,} acciones - Exhaustivo 1-2m)",
             "📡 Mercado en Vivo: Top Gappers, Movers & Momentum (+950 activos en juego)",
             f"🎯 Radar Activo Compartido ({radar_count_now} activos de {radar_src_now})",
             "✏️ Personalizado (Escribir tickers)"

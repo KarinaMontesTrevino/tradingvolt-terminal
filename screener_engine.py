@@ -1,3 +1,7 @@
+import os
+import sys
+import time as _time
+import pickle
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -797,14 +801,35 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
         return fetch_live_extended_hours_movers(scan_type="pre", min_move=2.0, min_price=3.0, target_tickers=tickers)
 
     now_ts = _time.time()
+    import pickle
+    cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".quant_cache")
+    os.makedirs(cache_dir, exist_ok=True)
+    disk_cache_file = os.path.join(cache_dir, f"daily_bars_{provider.lower()}.pkl")
+
+    # Si la memoria está vacía, restaurar desde disco si tiene menos de 1 hora
+    if not _DAILY_BARS_CACHE.get("data") and os.path.exists(disk_cache_file) and not force_refresh:
+        try:
+            mtime = os.path.getmtime(disk_cache_file)
+            if (now_ts - mtime) < 3600.0:
+                with open(disk_cache_file, "rb") as f_disk:
+                    loaded_disk = pickle.load(f_disk)
+                    if loaded_disk:
+                        _DAILY_BARS_CACHE["timestamp"] = mtime
+                        _DAILY_BARS_CACHE["provider"] = provider
+                        _DAILY_BARS_CACHE["data"] = loaded_disk
+        except Exception:
+            pass
+
     cache_age = now_ts - _DAILY_BARS_CACHE.get("timestamp", 0.0)
-    cached_store = _DAILY_BARS_CACHE.get("data", {}) if (not force_refresh and cache_age < 300.0 and _DAILY_BARS_CACHE.get("provider") == provider) else {}
+    cached_store = _DAILY_BARS_CACHE.get("data", {}) if (not force_refresh and cache_age < 3600.0 and _DAILY_BARS_CACHE.get("provider") == provider) else {}
 
     ticker_dfs = {}
     missing_tickers = []
     for t in tickers:
         if t in cached_store:
-            ticker_dfs[t] = cached_store[t]
+            val = cached_store[t]
+            if val is not None and not (isinstance(val, pd.DataFrame) and val.empty):
+                ticker_dfs[t] = val
         else:
             missing_tickers.append(t)
 
@@ -847,14 +872,25 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
             except Exception as e:
                 print(f"Error descargando datos diarios: {e}")
 
+        for t in missing_tickers:
+            if t not in fetched_dfs:
+                fetched_dfs[t] = None
         if fetched_dfs:
-            ticker_dfs.update(fetched_dfs)
-            if cache_age >= 300.0 or _DAILY_BARS_CACHE.get("provider") != provider or force_refresh:
+            for k, v in fetched_dfs.items():
+                if v is not None and not (isinstance(v, pd.DataFrame) and v.empty):
+                    ticker_dfs[k] = v
+            if cache_age >= 3600.0 or _DAILY_BARS_CACHE.get("provider") != provider or force_refresh:
                 _DAILY_BARS_CACHE["timestamp"] = now_ts
                 _DAILY_BARS_CACHE["provider"] = provider
                 _DAILY_BARS_CACHE["data"] = dict(ticker_dfs)
             else:
                 _DAILY_BARS_CACHE["data"].update(fetched_dfs)
+            # Guardar en disco para que re-escanear sea instantáneo (<0.1s)
+            try:
+                with open(disk_cache_file, "wb") as f_disk:
+                    pickle.dump(_DAILY_BARS_CACHE["data"], f_disk, protocol=pickle.HIGHEST_PROTOCOL)
+            except Exception:
+                pass
 
     if not ticker_dfs:
         return pd.DataFrame()
@@ -952,6 +988,12 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
             # EVALUACIÓN CUANTITATIVA 100% EN TIEMPO REAL (CERO LISTAS HARDCODEADAS)
             # =========================================================================
             if "Pivot Breakout" in strategy or "Daily Pivot" in strategy:
+                # Pre-filtro ultra-rápido: Si el ROC(100) es < 25%, salta de inmediato sin calcular pivotes pesados
+                if len(close) >= 101:
+                    c_100 = float(close.iloc[-101])
+                    roc_fast = ((current_price - c_100) / c_100) * 100.0
+                    if roc_fast < 25.0:
+                        continue
                 # Daily Pivot Breakout Strategy Indicator (by Mike):
                 # Left=5, Right=5, Lookback=100, ROC(100)>=30%, RVOL(20)>1.0x, EMA(100) Slope(100)>=20%
                 piv_eval = evaluate_daily_pivot_breakout(df, params=pivot_params)
