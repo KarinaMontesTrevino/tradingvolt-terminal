@@ -1,278 +1,340 @@
 """
 TradingVolt • Earnings Calendar & Multi-Timeframe Chart Engine
-Reverse engineered from Deepvue Institutional Earnings Desk.
-Provides weekly calendar breakdown, beat/miss metrics, and interactive multi-timeframe technical charts.
+Reverse engineered from Deepvue Institutional Earnings Desk & Earnings Whispers.
+Provides weekly calendar breakdown, BMO/AMC categorization, beat/miss metrics,
+and interactive multi-timeframe technical charts.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, date, timedelta
 import pandas as pd
 import numpy as np
 import yfinance as yf
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-# ----------------- SEMANA DE EARNINGS (BENCHMARK OCTUBRE 2026) -----------------
-EARNINGS_WEEK_DATA = {
+# =========================================================================
+# SEMANA 1: 19 - 23 OCTUBRE 2026 (RESULTADOS ANTERIORES: BANCOS & INDUSTRIALES)
+# =========================================================================
+EARNINGS_WEEK_OCT19_DATA = {
     "Mon 19": {
         "date_str": "Lunes 19 Octubre",
+        "day_num": 19,
+        "is_today": False,
         "reported": 22,
         "eps_growth": "+32%",
         "sales_growth": "+18%",
         "surprise_pct": "+6%",
         "tickers": [
-            {"symbol": "FITB", "name": "Fifth Third Bancorp", "sector": "Financials", "time": "BMO", "result": "Beat +21%", "type": "beat", "eps": "$0.91", "est": "$0.75"},
-            {"symbol": "STLD", "name": "Steel Dynamics", "sector": "Materials", "time": "AMC", "result": "Miss -4%", "type": "miss", "eps": "$2.05", "est": "$2.14"},
-            {"symbol": "WRB", "name": "W. R. Berkley", "sector": "Financials", "time": "AMC", "result": "Beat +1%", "type": "beat", "eps": "$1.02", "est": "$1.01"},
-            {"symbol": "CCK", "name": "Crown Holdings", "sector": "Packaging", "time": "AMC", "result": "Beat +6%", "type": "beat", "eps": "$1.99", "est": "$1.88"},
-            {"symbol": "ABCL", "name": "AbCellera Biologics", "sector": "Healthcare", "time": "AMC", "result": "Miss -7%", "type": "miss", "eps": "-$0.15", "est": "-$0.14"},
-            {"symbol": "AGNC", "name": "AGNC Investment", "sector": "Financials", "time": "AMC", "result": "Miss -1%", "type": "miss", "eps": "$0.58", "est": "$0.59"},
-            {"symbol": "WTFC", "name": "Wintrust Financial", "sector": "Financials", "time": "AMC", "result": "Beat +2%", "type": "beat", "eps": "$2.55", "est": "$2.50"},
-            {"symbol": "ZION", "name": "Zions Bancorporation", "sector": "Financials", "time": "AMC", "result": "Beat +7%", "type": "beat", "eps": "$1.37", "est": "$1.28"},
-            {"symbol": "WAL", "name": "Western Alliance Bancorp", "sector": "Financials", "time": "AMC", "result": "Beat +1%", "type": "beat", "eps": "$1.80", "est": "$1.78"},
-            {"symbol": "CLF", "name": "Cleveland-Cliffs", "sector": "Materials", "time": "AMC", "result": "Beat +21%", "type": "beat", "eps": "$0.40", "est": "$0.33"},
-            {"symbol": "BOKF", "name": "BOK Financial Corp", "sector": "Financials", "time": "BMO", "result": "Beat +5%", "type": "beat", "eps": "$2.18", "est": "$2.08"},
-            {"symbol": "VFS", "name": "VinFast Auto", "sector": "Consumer Cyclical", "time": "BMO", "result": "Miss -7%", "type": "miss", "eps": "-$0.31", "est": "-$0.29"},
-            {"symbol": "FNB", "name": "F.N.B. Corporation", "sector": "Financials", "time": "AMC", "result": "Beat +1%", "type": "beat", "eps": "$0.34", "est": "$0.33"},
-            {"symbol": "RJ", "name": "Raymond James", "sector": "Financials", "time": "AMC", "result": "Beat +7%", "type": "beat", "eps": "$2.55", "est": "$2.38"},
-            {"symbol": "SFNC", "name": "Simmons First National", "sector": "Financials", "time": "BMO", "result": "Miss -3%", "type": "miss", "eps": "$0.35", "est": "$0.36"},
-            {"symbol": "FBNC", "name": "First Bancorp", "sector": "Financials", "time": "AMC", "result": "Beat +4%", "type": "beat", "eps": "$0.54", "est": "$0.52"},
-            {"symbol": "DX", "name": "Dynex Capital", "sector": "Real Estate", "time": "BMO", "result": "Miss -2%", "type": "miss", "eps": "$0.39", "est": "$0.40"},
-            {"symbol": "AERO", "name": "AeroVironment", "sector": "Industrials", "time": "AMC", "result": "Miss -6%", "type": "miss", "eps": "$0.80", "est": "$0.85"},
-            {"symbol": "KMB", "name": "Kimberly-Clark", "sector": "Consumer Defensive", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$1.83", "est": "$1.79"},
-            {"symbol": "SMBC", "name": "Southern Missouri Bancorp", "sector": "Financials", "time": "AMC", "result": "Beat +15%", "type": "beat", "eps": "$1.15", "est": "$1.00"},
-            {"symbol": "WASH", "name": "Washington Trust Bancorp", "sector": "Financials", "time": "BMO", "result": "Beat +16%", "type": "beat", "eps": "$0.72", "est": "$0.62"}
+            {"symbol": "FITB", "name": "Fifth Third Bancorp", "sector": "Financials", "time": "BMO", "result": "Beat +21%", "type": "beat", "eps": "$0.91", "est": "$0.75", "cap": "Large"},
+            {"symbol": "BOKF", "name": "BOK Financial Corp", "sector": "Financials", "time": "BMO", "result": "Beat +5%", "type": "beat", "eps": "$2.18", "est": "$2.08", "cap": "Mid"},
+            {"symbol": "KMB", "name": "Kimberly-Clark", "sector": "Consumer Defensive", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$1.83", "est": "$1.79", "cap": "Large"},
+            {"symbol": "STLD", "name": "Steel Dynamics", "sector": "Materials", "time": "AMC", "result": "Miss -4%", "type": "miss", "eps": "$2.05", "est": "$2.14", "cap": "Large"},
+            {"symbol": "WRB", "name": "W. R. Berkley", "sector": "Financials", "time": "AMC", "result": "Beat +1%", "type": "beat", "eps": "$1.02", "est": "$1.01", "cap": "Large"},
+            {"symbol": "CCK", "name": "Crown Holdings", "sector": "Packaging", "time": "AMC", "result": "Beat +6%", "type": "beat", "eps": "$1.99", "est": "$1.88", "cap": "Mid"},
+            {"symbol": "ZION", "name": "Zions Bancorporation", "sector": "Financials", "time": "AMC", "result": "Beat +7%", "type": "beat", "eps": "$1.37", "est": "$1.28", "cap": "Mid"},
+            {"symbol": "WAL", "name": "Western Alliance", "sector": "Financials", "time": "AMC", "result": "Beat +1%", "type": "beat", "eps": "$1.80", "est": "$1.78", "cap": "Mid"},
+            {"symbol": "CLF", "name": "Cleveland-Cliffs", "sector": "Materials", "time": "AMC", "result": "Beat +21%", "type": "beat", "eps": "$0.40", "est": "$0.33", "cap": "Mid"}
         ]
     },
     "Tue 20": {
         "date_str": "Martes 20 Octubre",
+        "day_num": 20,
+        "is_today": False,
         "reported": 54,
         "eps_growth": "+27%",
         "sales_growth": "+18%",
         "surprise_pct": "+3%",
         "tickers": [
-            {"symbol": "GE", "name": "GE Aerospace", "sector": "Industrials", "time": "BMO", "result": "Beat +12%", "type": "beat", "eps": "$1.15", "est": "$1.03"},
-            {"symbol": "NFLX", "name": "Netflix Inc.", "sector": "Communication Services", "time": "AMC", "result": "Beat +6%", "type": "beat", "eps": "$5.40", "est": "$5.10"},
-            {"symbol": "RTX", "name": "RTX Corporation", "sector": "Industrials", "time": "BMO", "result": "Beat +27%", "type": "beat", "eps": "$1.45", "est": "$1.14"},
-            {"symbol": "CR", "name": "Crane Company", "sector": "Industrials", "time": "AMC", "result": "Beat +13%", "type": "beat", "eps": "$1.32", "est": "$1.17"},
-            {"symbol": "COF", "name": "Capital One Financial", "sector": "Financials", "time": "AMC", "result": "Beat +21%", "type": "beat", "eps": "$4.51", "est": "$3.73"},
-            {"symbol": "MMM", "name": "3M Company", "sector": "Industrials", "time": "BMO", "result": "Beat +8%", "type": "beat", "eps": "$1.98", "est": "$1.83"},
-            {"symbol": "NOC", "name": "Northrop Grumman", "sector": "Industrials", "time": "BMO", "result": "Beat +10%", "type": "beat", "eps": "$7.00", "est": "$6.36"},
-            {"symbol": "AMX", "name": "America Movil", "sector": "Communication Services", "time": "AMC", "result": "Miss -5%", "type": "miss", "eps": "$0.38", "est": "$0.40"},
-            {"symbol": "GM", "name": "General Motors", "sector": "Consumer Cyclical", "time": "BMO", "result": "Beat +6%", "type": "beat", "eps": "$2.96", "est": "$2.79"},
-            {"symbol": "MSCI", "name": "MSCI Inc.", "sector": "Financials", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$3.86", "est": "$3.78"},
-            {"symbol": "UAL", "name": "United Airlines Holdings", "sector": "Industrials", "time": "AMC", "result": "Beat +7%", "type": "beat", "eps": "$3.33", "est": "$3.11"},
-            {"symbol": "HAL", "name": "Halliburton", "sector": "Energy", "time": "BMO", "result": "Beat +3%", "type": "beat", "eps": "$0.73", "est": "$0.71"},
-            {"symbol": "SYF", "name": "Synchrony Financial", "sector": "Financials", "time": "BMO", "result": "Beat +11%", "type": "beat", "eps": "$1.86", "est": "$1.68"},
-            {"symbol": "KEY", "name": "KeyCorp", "sector": "Financials", "time": "BMO", "result": "Beat +10%", "type": "beat", "eps": "$0.33", "est": "$0.30"},
-            {"symbol": "GPC", "name": "Genuine Parts Co", "sector": "Consumer Cyclical", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$1.88", "est": "$1.84"},
-            {"symbol": "HAS", "name": "Hasbro Inc", "sector": "Consumer Cyclical", "time": "BMO", "result": "Beat +56%", "type": "beat", "eps": "$1.73", "est": "$1.11"},
-            {"symbol": "MLI", "name": "Mueller Industries", "sector": "Industrials", "time": "BMO", "result": "Beat +7%", "type": "beat", "eps": "$1.65", "est": "$1.54"},
-            {"symbol": "PAC", "name": "Grupo Aeroportuario", "sector": "Industrials", "time": "AMC", "result": "Beat +7%", "type": "beat", "eps": "$3.10", "est": "$2.90"}
+            {"symbol": "GE", "name": "GE Aerospace", "sector": "Industrials", "time": "BMO", "result": "Beat +12%", "type": "beat", "eps": "$1.15", "est": "$1.03", "cap": "Mega"},
+            {"symbol": "RTX", "name": "RTX Corporation", "sector": "Industrials", "time": "BMO", "result": "Beat +27%", "type": "beat", "eps": "$1.45", "est": "$1.14", "cap": "Large"},
+            {"symbol": "MMM", "name": "3M Company", "sector": "Industrials", "time": "BMO", "result": "Beat +8%", "type": "beat", "eps": "$1.98", "est": "$1.83", "cap": "Large"},
+            {"symbol": "GM", "name": "General Motors", "sector": "Consumer Cyclical", "time": "BMO", "result": "Beat +6%", "type": "beat", "eps": "$2.96", "est": "$2.79", "cap": "Large"},
+            {"symbol": "NFLX", "name": "Netflix Inc.", "sector": "Communication Services", "time": "AMC", "result": "Beat +6%", "type": "beat", "eps": "$5.40", "est": "$5.10", "cap": "Mega"},
+            {"symbol": "COF", "name": "Capital One Financial", "sector": "Financials", "time": "AMC", "result": "Beat +21%", "type": "beat", "eps": "$4.51", "est": "$3.73", "cap": "Large"},
+            {"symbol": "UAL", "name": "United Airlines", "sector": "Industrials", "time": "AMC", "result": "Beat +7%", "type": "beat", "eps": "$3.33", "est": "$3.11", "cap": "Large"}
         ]
     },
     "Wed 21": {
         "date_str": "Miércoles 21 Octubre",
+        "day_num": 21,
+        "is_today": False,
         "reported": 90,
         "eps_growth": "+55%",
         "sales_growth": "+16%",
         "surprise_pct": "+8%",
         "tickers": [
-            {"symbol": "META", "name": "Meta Platforms Inc", "sector": "Technology", "time": "AMC", "result": "Beat +13%", "type": "beat", "eps": "$6.03", "est": "$5.34"},
-            {"symbol": "TSLA", "name": "Tesla Inc", "sector": "Consumer Cyclical", "time": "AMC", "result": "Beat +5%", "type": "beat", "eps": "$0.72", "est": "$0.68"},
-            {"symbol": "PM", "name": "Philip Morris Int.", "sector": "Consumer Defensive", "time": "BMO", "result": "Beat +3%", "type": "beat", "eps": "$1.91", "est": "$1.85"},
-            {"symbol": "LRCX", "name": "Lam Research Corp", "sector": "Technology", "time": "AMC", "result": "Beat +1%", "type": "beat", "eps": "$0.86", "est": "$0.85"},
-            {"symbol": "SAP", "name": "SAP SE", "sector": "Technology", "time": "AMC", "result": "Beat +6%", "type": "beat", "eps": "$1.23", "est": "$1.16"},
-            {"symbol": "TXN", "name": "Texas Instruments", "sector": "Technology", "time": "AMC", "result": "Beat +13%", "type": "beat", "eps": "$1.47", "est": "$1.30"},
-            {"symbol": "TMO", "name": "Thermo Fisher Scientific", "sector": "Healthcare", "time": "BMO", "result": "Beat +4%", "type": "beat", "eps": "$5.28", "est": "$5.08"},
-            {"symbol": "IBM", "name": "IBM Corporation", "sector": "Technology", "time": "AMC", "result": "Beat +3%", "type": "beat", "eps": "$2.30", "est": "$2.23"},
-            {"symbol": "ABT", "name": "Abbott Laboratories", "sector": "Healthcare", "time": "BMO", "result": "Beat +0%", "type": "beat", "eps": "$1.21", "est": "$1.21"},
-            {"symbol": "NEE", "name": "NextEra Energy", "sector": "Utilities", "time": "BMO", "result": "Beat +4%", "type": "beat", "eps": "$1.03", "est": "$0.99"},
-            {"symbol": "DHR", "name": "Danaher Corp", "sector": "Healthcare", "time": "BMO", "result": "Beat +10%", "type": "beat", "eps": "$1.71", "est": "$1.55"},
-            {"symbol": "T", "name": "AT&T Inc.", "sector": "Communication Services", "time": "BMO", "result": "Beat +5%", "type": "beat", "eps": "$0.60", "est": "$0.57"},
-            {"symbol": "CMS", "name": "CMS Energy Corp", "sector": "Utilities", "time": "BMO", "result": "Beat +1%", "type": "beat", "eps": "$0.84", "est": "$0.83"},
-            {"symbol": "ELV", "name": "Elevance Health", "sector": "Healthcare", "time": "BMO", "result": "Beat +40%", "type": "beat", "eps": "$8.37", "est": "$5.98"},
-            {"symbol": "CSX", "name": "CSX Corporation", "sector": "Industrials", "time": "AMC", "result": "Beat +7%", "type": "beat", "eps": "$0.46", "est": "$0.43"},
-            {"symbol": "MCO", "name": "Moody's Corp", "sector": "Financials", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$3.21", "est": "$3.15"},
-            {"symbol": "KMI", "name": "Kinder Morgan", "sector": "Energy", "time": "AMC", "result": "Beat +9%", "type": "beat", "eps": "$0.25", "est": "$0.23"},
-            {"symbol": "URI", "name": "United Rentals", "sector": "Industrials", "time": "AMC", "result": "Beat +11%", "type": "beat", "eps": "$11.80", "est": "$10.63"},
-            {"symbol": "WM", "name": "Waste Management", "sector": "Industrials", "time": "AMC", "result": "Beat +4%", "type": "beat", "eps": "$1.96", "est": "$1.88"},
-            {"symbol": "CCI", "name": "Crown Castle", "sector": "Real Estate", "time": "AMC", "result": "Miss -3%", "type": "miss", "eps": "$0.68", "est": "$0.70"}
+            {"symbol": "PM", "name": "Philip Morris Int.", "sector": "Consumer Defensive", "time": "BMO", "result": "Beat +3%", "type": "beat", "eps": "$1.91", "est": "$1.85", "cap": "Large"},
+            {"symbol": "TMO", "name": "Thermo Fisher Scientific", "sector": "Healthcare", "time": "BMO", "result": "Beat +4%", "type": "beat", "eps": "$5.28", "est": "$5.08", "cap": "Large"},
+            {"symbol": "ABT", "name": "Abbott Laboratories", "sector": "Healthcare", "time": "BMO", "result": "Beat +0%", "type": "beat", "eps": "$1.21", "est": "$1.21", "cap": "Large"},
+            {"symbol": "T", "name": "AT&T Inc.", "sector": "Communication Services", "time": "BMO", "result": "Beat +5%", "type": "beat", "eps": "$0.60", "est": "$0.57", "cap": "Large"},
+            {"symbol": "META", "name": "Meta Platforms Inc.", "sector": "Technology", "time": "AMC", "result": "Beat +13%", "type": "beat", "eps": "$6.03", "est": "$5.34", "cap": "Mega"},
+            {"symbol": "TSLA", "name": "Tesla Inc.", "sector": "Consumer Cyclical", "time": "AMC", "result": "Beat +5%", "type": "beat", "eps": "$0.72", "est": "$0.68", "cap": "Mega"},
+            {"symbol": "LRCX", "name": "Lam Research", "sector": "Technology", "time": "AMC", "result": "Beat +1%", "type": "beat", "eps": "$0.86", "est": "$0.85", "cap": "Large"},
+            {"symbol": "IBM", "name": "IBM Corporation", "sector": "Technology", "time": "AMC", "result": "Beat +3%", "type": "beat", "eps": "$2.30", "est": "$2.23", "cap": "Large"}
         ]
     },
     "Thu 22": {
         "date_str": "Jueves 22 Octubre",
+        "day_num": 22,
+        "is_today": False,
         "reported": 109,
         "eps_growth": "+80%",
         "sales_growth": "+13%",
         "surprise_pct": "+3%",
         "tickers": [
-            {"symbol": "PG", "name": "Procter & Gamble", "sector": "Consumer Defensive", "time": "BMO", "result": "Beat +8%", "type": "beat", "eps": "$1.93", "est": "$1.79"},
-            {"symbol": "UNP", "name": "Union Pacific", "sector": "Industrials", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$2.75", "est": "$2.70"},
-            {"symbol": "LMT", "name": "Lockheed Martin", "sector": "Industrials", "time": "BMO", "result": "Beat +6%", "type": "beat", "eps": "$6.80", "est": "$6.42"},
-            {"symbol": "D", "name": "Dominion Energy", "sector": "Utilities", "time": "BMO", "result": "Beat +5%", "type": "beat", "eps": "$0.98", "est": "$0.93"},
-            {"symbol": "WDC", "name": "Western Digital", "sector": "Technology", "time": "AMC", "result": "Beat +13%", "type": "beat", "eps": "$1.78", "est": "$1.57"},
-            {"symbol": "VLO", "name": "Valero Energy", "sector": "Energy", "time": "BMO", "result": "Beat +13%", "type": "beat", "eps": "$1.14", "est": "$1.01"},
-            {"symbol": "SPOT", "name": "Spotify Technology", "sector": "Communication Services", "time": "BMO", "result": "Miss -1%", "type": "miss", "eps": "$1.45", "est": "$1.46"},
-            {"symbol": "NEM", "name": "Newmont Mining", "sector": "Materials", "time": "AMC", "result": "Beat +13%", "type": "beat", "eps": "$0.81", "est": "$0.72"},
-            {"symbol": "CMCSA", "name": "Comcast Corp", "sector": "Communication Services", "time": "BMO", "result": "Beat +8%", "type": "beat", "eps": "$1.12", "est": "$1.04"},
-            {"symbol": "NSC", "name": "Norfolk Southern", "sector": "Industrials", "time": "BMO", "result": "Beat +4%", "type": "beat", "eps": "$3.25", "est": "$3.12"},
-            {"symbol": "HON", "name": "Honeywell Int.", "sector": "Industrials", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$2.58", "est": "$2.53"},
-            {"symbol": "NDAQ", "name": "Nasdaq Inc", "sector": "Financials", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$0.74", "est": "$0.72"},
-            {"symbol": "NOK", "name": "Nokia Corp", "sector": "Technology", "time": "BMO", "result": "Beat +41%", "type": "beat", "eps": "$0.10", "est": "$0.07"},
-            {"symbol": "ROP", "name": "Roper Technologies", "sector": "Technology", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$4.62", "est": "$4.53"},
-            {"symbol": "BBD", "name": "Banco Bradesco", "sector": "Financials", "time": "BMO", "result": "Beat +25%", "type": "beat", "eps": "$0.09", "est": "$0.07"},
-            {"symbol": "FIX", "name": "Comfort Systems USA", "sector": "Industrials", "time": "AMC", "result": "Beat +9%", "type": "beat", "eps": "$4.09", "est": "$3.75"},
-            {"symbol": "COHR", "name": "Coherent Corp", "sector": "Technology", "time": "AMC", "result": "Beat +4%", "type": "beat", "eps": "$0.91", "est": "$0.87"},
-            {"symbol": "PCG", "name": "PG&E Corporation", "sector": "Utilities", "time": "BMO", "result": "Miss -1%", "type": "miss", "eps": "$0.37", "est": "$0.37"}
+            {"symbol": "PG", "name": "Procter & Gamble", "sector": "Consumer Defensive", "time": "BMO", "result": "Beat +8%", "type": "beat", "eps": "$1.93", "est": "$1.79", "cap": "Mega"},
+            {"symbol": "UNP", "name": "Union Pacific", "sector": "Industrials", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$2.75", "est": "$2.70", "cap": "Large"},
+            {"symbol": "LMT", "name": "Lockheed Martin", "sector": "Industrials", "time": "BMO", "result": "Beat +6%", "type": "beat", "eps": "$6.80", "est": "$6.42", "cap": "Large"},
+            {"symbol": "HON", "name": "Honeywell Int.", "sector": "Industrials", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$2.58", "est": "$2.53", "cap": "Large"},
+            {"symbol": "WDC", "name": "Western Digital", "sector": "Technology", "time": "AMC", "result": "Beat +13%", "type": "beat", "eps": "$1.78", "est": "$1.57", "cap": "Large"},
+            {"symbol": "COHR", "name": "Coherent Corp", "sector": "Technology", "time": "AMC", "result": "Beat +4%", "type": "beat", "eps": "$0.91", "est": "$0.87", "cap": "Mid"}
         ]
     },
     "Fri 23": {
         "date_str": "Viernes 23 Octubre",
+        "day_num": 23,
+        "is_today": False,
         "reported": 22,
         "eps_growth": "+58%",
         "sales_growth": "+19%",
         "surprise_pct": "+7%",
         "tickers": [
-            {"symbol": "AXP", "name": "American Express", "sector": "Financials", "time": "BMO", "result": "Beat +4%", "type": "beat", "eps": "$3.49", "est": "$3.35"},
-            {"symbol": "SLB", "name": "Schlumberger Ltd", "sector": "Energy", "time": "BMO", "result": "Beat +4%", "type": "beat", "eps": "$0.89", "est": "$0.86"},
-            {"symbol": "INFY", "name": "Infosys Limited", "sector": "Technology", "time": "BMO", "result": "Miss -2%", "type": "miss", "eps": "$0.19", "est": "$0.19"},
-            {"symbol": "FCNCA", "name": "First Citizens BancShares", "sector": "Financials", "time": "BMO", "result": "Beat +20%", "type": "beat", "eps": "$50.25", "est": "$41.87"},
-            {"symbol": "RCI", "name": "Rogers Communications", "sector": "Communication Services", "time": "BMO", "result": "Beat +53%", "type": "beat", "eps": "$1.42", "est": "$0.93"},
-            {"symbol": "RDY", "name": "Dr. Reddy's Lab", "sector": "Healthcare", "time": "BMO", "result": "Beat +22%", "type": "beat", "eps": "$1.12", "est": "$0.92"},
-            {"symbol": "BAH", "name": "Booz Allen Hamilton", "sector": "Industrials", "time": "BMO", "result": "Beat +10%", "type": "beat", "eps": "$1.81", "est": "$1.64"},
-            {"symbol": "ALV", "name": "Autoliv Inc", "sector": "Consumer Cyclical", "time": "BMO", "result": "Miss -2%", "type": "miss", "eps": "$1.85", "est": "$1.88"},
-            {"symbol": "MKTX", "name": "MarketAxess", "sector": "Financials", "time": "BMO", "result": "Miss -5%", "type": "miss", "eps": "$1.90", "est": "$2.00"},
-            {"symbol": "BCPC", "name": "Balchem Corp", "sector": "Basic Materials", "time": "BMO", "result": "Beat +10%", "type": "beat", "eps": "$1.10", "est": "$1.00"},
-            {"symbol": "RITM", "name": "Rithm Capital", "sector": "Real Estate", "time": "BMO", "result": "Beat +10%", "type": "beat", "eps": "$0.54", "est": "$0.49"},
-            {"symbol": "FLG", "name": "Flagstar Financial", "sector": "Financials", "time": "BMO", "result": "Miss -80%", "type": "miss", "eps": "-$0.79", "est": "-$0.44"},
-            {"symbol": "FHB", "name": "First Hawaiian", "sector": "Financials", "time": "BMO", "result": "Miss -12%", "type": "miss", "eps": "$0.42", "est": "$0.48"},
-            {"symbol": "GRC", "name": "Gorman-Rupp", "sector": "Industrials", "time": "BMO", "result": "Beat +24%", "type": "beat", "eps": "$0.57", "est": "$0.46"},
-            {"symbol": "WRLD", "name": "World Acceptance", "sector": "Financials", "time": "BMO", "result": "Beat +35%", "type": "beat", "eps": "$3.12", "est": "$2.31"}
+            {"symbol": "AXP", "name": "American Express", "sector": "Financials", "time": "BMO", "result": "Beat +4%", "type": "beat", "eps": "$3.49", "est": "$3.35", "cap": "Large"},
+            {"symbol": "SLB", "name": "Schlumberger", "sector": "Energy", "time": "BMO", "result": "Beat +4%", "type": "beat", "eps": "$0.89", "est": "$0.86", "cap": "Large"},
+            {"symbol": "BAH", "name": "Booz Allen Hamilton", "sector": "Industrials", "time": "BMO", "result": "Beat +10%", "type": "beat", "eps": "$1.81", "est": "$1.64", "cap": "Mid"}
         ]
-    },
-    "Sat 24": {
-        "date_str": "Sábado 24 Octubre",
-        "reported": 0,
-        "eps_growth": "-",
-        "sales_growth": "-",
-        "surprise_pct": "-",
-        "tickers": []
-    },
-    "Sun 25": {
-        "date_str": "Domingo 25 Octubre",
-        "reported": 0,
-        "eps_growth": "-",
-        "sales_growth": "-",
-        "surprise_pct": "-",
-        "tickers": []
     }
 }
 
-
-
+# =========================================================================
+# SEMANA 2: 26 - 30 OCTUBRE 2026 (SEMANA EN CURSO • MEGA-TECH CLAVE)
+# =========================================================================
 EARNINGS_WEEK_OCT26_DATA = {
     "Mon 26": {
         "date_str": "Lunes 26 Octubre",
+        "day_num": 26,
+        "is_today": False,
         "reported": 38,
         "eps_growth": "+19%",
         "sales_growth": "+12%",
         "surprise_pct": "+4%",
         "tickers": [
-            {"symbol": "ON", "name": "ON Semiconductor", "sector": "Technology", "time": "BMO", "result": "Est. $0.98", "type": "beat", "eps": "$1.04", "est": "$0.98"},
-            {"symbol": "WMB", "name": "Williams Companies", "sector": "Energy", "time": "AMC", "result": "Est. $0.44", "type": "beat", "eps": "$0.47", "est": "$0.44"},
-            {"symbol": "CDNS", "name": "Cadence Design Systems", "sector": "Technology", "time": "AMC", "result": "Est. $1.44", "type": "beat", "eps": "$1.50", "est": "$1.44"},
-            {"symbol": "NXPI", "name": "NXP Semiconductors", "sector": "Technology", "time": "AMC", "result": "Est. $3.42", "type": "beat", "eps": "$3.45", "est": "$3.42"},
-            {"symbol": "FFIV", "name": "F5 Inc.", "sector": "Technology", "time": "AMC", "result": "Est. $3.45", "type": "beat", "eps": "$3.52", "est": "$3.45"}
+            {"symbol": "ON", "name": "ON Semiconductor", "sector": "Technology", "time": "BMO", "result": "Beat +6%", "type": "beat", "eps": "$1.04", "est": "$0.98", "cap": "Large"},
+            {"symbol": "BRO", "name": "Brown & Brown", "sector": "Financials", "time": "BMO", "result": "Beat +3%", "type": "beat", "eps": "$0.93", "est": "$0.90", "cap": "Large"},
+            {"symbol": "CDNS", "name": "Cadence Design Systems", "sector": "Technology", "time": "AMC", "result": "Beat +4%", "type": "beat", "eps": "$2.31", "est": "$2.23", "cap": "Large"},
+            {"symbol": "FFIV", "name": "F5 Inc.", "sector": "Technology", "time": "AMC", "result": "Beat +2%", "type": "beat", "eps": "$3.52", "est": "$3.45", "cap": "Mid"},
+            {"symbol": "AGYS", "name": "Agilysys Inc.", "sector": "Technology", "time": "AMC", "result": "Beat +8%", "type": "beat", "eps": "$0.38", "est": "$0.35", "cap": "Mid"}
         ]
     },
     "Tue 27": {
         "date_str": "Martes 27 Octubre",
-        "reported": 84,
-        "eps_growth": "+42%",
-        "sales_growth": "+21%",
-        "surprise_pct": "+8%",
+        "day_num": 27,
+        "is_today": False,
+        "reported": 72,
+        "eps_growth": "+36%",
+        "sales_growth": "+18%",
+        "surprise_pct": "+7%",
         "tickers": [
-            {"symbol": "GOOGL", "name": "Alphabet Inc.", "sector": "Communication Services", "time": "AMC", "result": "Est. $1.85", "type": "beat", "eps": "$1.98", "est": "$1.85"},
-            {"symbol": "MSFT", "name": "Microsoft Corporation", "sector": "Technology", "time": "AMC", "result": "Est. $3.10", "type": "beat", "eps": "$3.24", "est": "$3.10"},
-            {"symbol": "AMD", "name": "Advanced Micro Devices", "sector": "Technology", "time": "AMC", "result": "Est. $0.92", "type": "beat", "eps": "$0.98", "est": "$0.92"},
-            {"symbol": "PYPL", "name": "PayPal Holdings", "sector": "Financials", "time": "BMO", "result": "Est. $1.20", "type": "beat", "eps": "$1.28", "est": "$1.20"},
-            {"symbol": "PFE", "name": "Pfizer Inc.", "sector": "Healthcare", "time": "BMO", "result": "Est. $0.62", "type": "beat", "eps": "$0.66", "est": "$0.62"},
-            {"symbol": "MCD", "name": "McDonald's Corp.", "sector": "Consumer Cyclical", "time": "BMO", "result": "Est. $3.18", "type": "beat", "eps": "$3.23", "est": "$3.18"},
-            {"symbol": "MDLZ", "name": "Mondelez International", "sector": "Consumer Defensive", "time": "AMC", "result": "Est. $0.85", "type": "beat", "eps": "$0.87", "est": "$0.85"}
+            {"symbol": "PYPL", "name": "PayPal Holdings", "sector": "Financials", "time": "BMO", "result": "Beat +19%", "type": "beat", "eps": "$1.43", "est": "$1.20", "cap": "Large"},
+            {"symbol": "MCD", "name": "McDonald's Corp.", "sector": "Consumer Cyclical", "time": "BMO", "result": "Beat +2%", "type": "beat", "eps": "$3.23", "est": "$3.18", "cap": "Mega"},
+            {"symbol": "PFE", "name": "Pfizer Inc.", "sector": "Healthcare", "time": "BMO", "result": "Beat +18%", "type": "beat", "eps": "$0.73", "est": "$0.62", "cap": "Large"},
+            {"symbol": "SHW", "name": "Sherwin-Williams", "sector": "Materials", "time": "BMO", "result": "Beat +5%", "type": "beat", "eps": "$2.45", "est": "$2.34", "cap": "Large"},
+            {"symbol": "NXPI", "name": "NXP Semiconductors", "sector": "Technology", "time": "AMC", "result": "Beat +4%", "type": "beat", "eps": "$4.36", "est": "$4.18", "cap": "Large"},
+            {"symbol": "V", "name": "Visa Inc.", "sector": "Financials", "time": "AMC", "result": "Beat +4%", "type": "beat", "eps": "$3.63", "est": "$3.50", "cap": "Mega"},
+            {"symbol": "CHKP", "name": "Check Point Software", "sector": "Technology", "time": "AMC", "result": "Beat +3%", "type": "beat", "eps": "$2.48", "est": "$2.40", "cap": "Large"}
         ]
     },
     "Wed 28": {
-        "date_str": "Miércoles 28 Octubre",
-        "reported": 115,
-        "eps_growth": "+52%",
-        "sales_growth": "+26%",
+        "date_str": "Miércoles 28 Octubre (HOY)",
+        "day_num": 28,
+        "is_today": True,
+        "reported": 118,
+        "eps_growth": "+58%",
+        "sales_growth": "+24%",
         "surprise_pct": "+9%",
         "tickers": [
-            {"symbol": "META", "name": "Meta Platforms Inc.", "sector": "Technology", "time": "AMC", "result": "Est. $5.25", "type": "beat", "eps": "$5.85", "est": "$5.25"},
-            {"symbol": "AMZN", "name": "Amazon.com Inc.", "sector": "Consumer Cyclical", "time": "AMC", "result": "Est. $1.14", "type": "beat", "eps": "$1.28", "est": "$1.14"},
-            {"symbol": "CAT", "name": "Caterpillar Inc.", "sector": "Industrials", "time": "BMO", "result": "Est. $5.35", "type": "beat", "eps": "$5.48", "est": "$5.35"},
-            {"symbol": "LLY", "name": "Eli Lilly and Company", "sector": "Healthcare", "time": "BMO", "result": "Est. $1.45", "type": "beat", "eps": "$1.62", "est": "$1.45"},
-            {"symbol": "COIN", "name": "Coinbase Global", "sector": "Financials", "time": "AMC", "result": "Est. $0.48", "type": "beat", "eps": "$0.55", "est": "$0.48"},
-            {"symbol": "ETSY", "name": "Etsy Inc.", "sector": "Consumer Cyclical", "time": "AMC", "result": "Est. $0.55", "type": "beat", "eps": "$0.58", "est": "$0.55"},
-            {"symbol": "ROKU", "name": "Roku Inc.", "sector": "Communication Services", "time": "AMC", "result": "Est. -$0.32", "type": "beat", "eps": "-$0.25", "est": "-$0.32"}
+            # BMO (Antes de la Apertura)
+            {"symbol": "BA", "name": "Boeing Company", "sector": "Industrials", "time": "BMO", "result": "Miss -14%", "type": "miss", "eps": "-$1.20", "est": "-$1.05", "cap": "Large"},
+            {"symbol": "ADP", "name": "Automatic Data Processing", "sector": "Technology", "time": "BMO", "result": "Beat +3%", "type": "beat", "eps": "$2.29", "est": "$2.22", "cap": "Large"},
+            {"symbol": "HUM", "name": "Humana Inc.", "sector": "Healthcare", "time": "BMO", "result": "Beat +9%", "type": "beat", "eps": "$4.16", "est": "$3.80", "cap": "Large"},
+            {"symbol": "GEV", "name": "GE Vernova", "sector": "Industrials/Energy", "time": "BMO", "result": "Beat +20%", "type": "beat", "eps": "$0.42", "est": "$0.35", "cap": "Large"},
+            # AMC (Al Cierre del Mercado - REPORTARON HOY)
+            {"symbol": "GOOGL", "name": "Alphabet Inc.", "sector": "Communication Services", "time": "AMC", "result": "Beat +10% 🚀", "type": "beat", "eps": "$3.33", "est": "$3.03", "cap": "Mega"},
+            {"symbol": "MSFT", "name": "Microsoft Corporation", "sector": "Technology", "time": "AMC", "result": "Beat +4% 🚀", "type": "beat", "eps": "$4.82", "est": "$4.65", "cap": "Mega"},
+            {"symbol": "NOW", "name": "ServiceNow Inc.", "sector": "Technology", "time": "AMC", "result": "Beat +8%", "type": "beat", "eps": "$1.17", "est": "$1.08", "cap": "Mega"},
+            {"symbol": "FTNT", "name": "Fortinet Inc.", "sector": "Technology", "time": "AMC", "result": "Beat +3% (Guía -25%)", "type": "miss", "eps": "$0.88", "est": "$0.85", "cap": "Large"},
+            {"symbol": "ETSY", "name": "Etsy Inc.", "sector": "Consumer Cyclical", "time": "AMC", "result": "Beat +5%", "type": "beat", "eps": "$1.94", "est": "$1.85", "cap": "Mid"},
+            {"symbol": "SIMO", "name": "Silicon Motion Technology", "sector": "Technology", "time": "AMC", "result": "Beat +6%", "type": "beat", "eps": "$3.33", "est": "$3.15", "cap": "Mid"}
         ]
     },
     "Thu 29": {
-        "date_str": "Jueves 29 Octubre",
-        "reported": 142,
-        "eps_growth": "+45%",
-        "sales_growth": "+18%",
-        "surprise_pct": "+6%",
+        "date_str": "Jueves 29 Octubre (MAÑANA)",
+        "day_num": 29,
+        "is_today": False,
+        "reported": 145,
+        "eps_growth": "+48%",
+        "sales_growth": "+20%",
+        "surprise_pct": "Est.",
         "tickers": [
-            {"symbol": "AAPL", "name": "Apple Inc.", "sector": "Technology", "time": "AMC", "result": "Est. $1.58", "type": "beat", "eps": "$1.65", "est": "$1.58"},
-            {"symbol": "INTC", "name": "Intel Corporation", "sector": "Technology", "time": "AMC", "result": "Est. -$0.02", "type": "miss", "eps": "-$0.08", "est": "-$0.02"},
-            {"symbol": "UBER", "name": "Uber Technologies", "sector": "Technology", "time": "BMO", "result": "Est. $0.41", "type": "beat", "eps": "$0.48", "est": "$0.41"},
-            {"symbol": "TEAM", "name": "Atlassian Corp.", "sector": "Technology", "time": "AMC", "result": "Est. $0.64", "type": "beat", "eps": "$0.69", "est": "$0.64"},
-            {"symbol": "ABNB", "name": "Airbnb Inc.", "sector": "Consumer Cyclical", "time": "AMC", "result": "Est. $2.15", "type": "beat", "eps": "$2.28", "est": "$2.15"},
-            {"symbol": "AMGN", "name": "Amgen Inc.", "sector": "Healthcare", "time": "AMC", "result": "Est. $5.10", "type": "beat", "eps": "$5.22", "est": "$5.10"},
-            {"symbol": "RBLX", "name": "Roblox Corporation", "sector": "Communication Services", "time": "BMO", "result": "Est. -$0.38", "type": "beat", "eps": "-$0.31", "est": "-$0.38"}
+            # BMO (Antes de la Apertura)
+            {"symbol": "CAT", "name": "Caterpillar Inc.", "sector": "Industrials", "time": "BMO", "result": "Est. $7.03", "type": "pending", "eps": "-", "est": "$7.03", "cap": "Mega"},
+            {"symbol": "LLY", "name": "Eli Lilly and Company", "sector": "Healthcare", "time": "BMO", "result": "Est. $6.61", "type": "pending", "eps": "-", "est": "$6.61", "cap": "Mega"},
+            {"symbol": "MA", "name": "Mastercard Inc.", "sector": "Financials", "time": "BMO", "result": "Est. $5.17", "type": "pending", "eps": "-", "est": "$5.17", "cap": "Mega"},
+            {"symbol": "BMY", "name": "Bristol Myers Squibb", "sector": "Healthcare", "time": "BMO", "result": "Est. $1.22", "type": "pending", "eps": "-", "est": "$1.22", "cap": "Large"},
+            {"symbol": "RBLX", "name": "Roblox Corporation", "sector": "Communication Services", "time": "BMO", "result": "Est. -$0.38", "type": "pending", "eps": "-", "est": "-$0.38", "cap": "Large"},
+            {"symbol": "SO", "name": "Southern Company", "sector": "Utilities", "time": "BMO", "result": "Est. $1.32", "type": "pending", "eps": "-", "est": "$1.32", "cap": "Large"},
+            # AMC (Al Cierre del Mercado)
+            {"symbol": "AMZN", "name": "Amazon.com Inc.", "sector": "Consumer Cyclical", "time": "AMC", "result": "Est. $1.99 🚀", "type": "pending", "eps": "-", "est": "$1.99", "cap": "Mega"},
+            {"symbol": "INTC", "name": "Intel Corporation", "sector": "Technology", "time": "AMC", "result": "Est. $0.40", "type": "pending", "eps": "-", "est": "$0.40", "cap": "Large"},
+            {"symbol": "COIN", "name": "Coinbase Global", "sector": "Financials", "time": "AMC", "result": "Est. $0.07", "type": "pending", "eps": "-", "est": "$0.07", "cap": "Large"},
+            {"symbol": "TEAM", "name": "Atlassian Corp.", "sector": "Technology", "time": "AMC", "result": "Est. $0.64", "type": "pending", "eps": "-", "est": "$0.64", "cap": "Large"},
+            {"symbol": "MHK", "name": "Mohawk Industries", "sector": "Industrials", "time": "AMC", "result": "Est. $2.58", "type": "pending", "eps": "-", "est": "$2.58", "cap": "Mid"}
         ]
     },
     "Fri 30": {
         "date_str": "Viernes 30 Octubre",
-        "reported": 35,
-        "eps_growth": "+22%",
-        "sales_growth": "+10%",
-        "surprise_pct": "+5%",
+        "day_num": 30,
+        "is_today": False,
+        "reported": 42,
+        "eps_growth": "+25%",
+        "sales_growth": "+11%",
+        "surprise_pct": "Est.",
         "tickers": [
-            {"symbol": "XOM", "name": "Exxon Mobil Corp.", "sector": "Energy", "time": "BMO", "result": "Est. $1.92", "type": "beat", "eps": "$2.05", "est": "$1.92"},
-            {"symbol": "CVX", "name": "Chevron Corporation", "sector": "Energy", "time": "BMO", "result": "Est. $2.42", "type": "beat", "eps": "$2.51", "est": "$2.42"},
-            {"symbol": "ABBV", "name": "AbbVie Inc.", "sector": "Healthcare", "time": "BMO", "result": "Est. $2.90", "type": "beat", "eps": "$2.98", "est": "$2.90"},
-            {"symbol": "CHTR", "name": "Charter Communications", "sector": "Communication Services", "time": "BMO", "result": "Est. $8.75", "type": "beat", "eps": "$9.12", "est": "$8.75"}
+            {"symbol": "XOM", "name": "Exxon Mobil Corp.", "sector": "Energy", "time": "BMO", "result": "Est. $4.03", "type": "pending", "eps": "-", "est": "$4.03", "cap": "Mega"},
+            {"symbol": "CVX", "name": "Chevron Corporation", "sector": "Energy", "time": "BMO", "result": "Est. $4.83", "type": "pending", "eps": "-", "est": "$4.83", "cap": "Mega"},
+            {"symbol": "ABBV", "name": "AbbVie Inc.", "sector": "Healthcare", "time": "BMO", "result": "Est. $3.77", "type": "pending", "eps": "-", "est": "$3.77", "cap": "Mega"},
+            {"symbol": "CL", "name": "Colgate-Palmolive", "sector": "Consumer Defensive", "time": "BMO", "result": "Est. $0.93", "type": "pending", "eps": "-", "est": "$0.93", "cap": "Large"},
+            {"symbol": "AON", "name": "Aon plc", "sector": "Financials", "time": "BMO", "result": "Est. $2.48", "type": "pending", "eps": "-", "est": "$2.48", "cap": "Large"}
         ]
-    },
-    "Sat 31": {
-        "date_str": "Sábado 31 Octubre",
-        "reported": 0,
-        "eps_growth": "-",
-        "sales_growth": "-",
-        "surprise_pct": "-",
-        "tickers": []
-    },
-    "Sun 01": {
-        "date_str": "Domingo 1 Noviembre",
-        "reported": 0,
-        "eps_growth": "-",
-        "sales_growth": "-",
-        "surprise_pct": "-",
-        "tickers": []
     }
 }
 
-EARNINGS_WEEKS = {
-    "📅 Oct 19 - 25, 2026 (Semana de Resultados Industriales & Bancos)": EARNINGS_WEEK_DATA,
-    "🚀 Oct 26 - 31, 2026 (Mega-Tech: AAPL, MSFT, GOOGL, META, AMZN, AMD)": EARNINGS_WEEK_OCT26_DATA
+# =========================================================================
+# SEMANA 3: 02 - 06 NOVIEMBRE 2026 (PRÓXIMA SEMANA • AAPL, AMD, UBER, QCOM, PLTR)
+# =========================================================================
+EARNINGS_WEEK_NOV02_DATA = {
+    "Mon 02": {
+        "date_str": "Lunes 02 Noviembre",
+        "day_num": 2,
+        "is_today": False,
+        "reported": 35,
+        "eps_growth": "Est.",
+        "sales_growth": "Est.",
+        "surprise_pct": "-",
+        "tickers": [
+            {"symbol": "FSR", "name": "Fisker Inc.", "sector": "Consumer Cyclical", "time": "BMO", "result": "Est. -$0.22", "type": "pending", "eps": "-", "est": "-$0.22", "cap": "Small"},
+            {"symbol": "SOFI", "name": "SoFi Technologies", "sector": "Financials", "time": "BMO", "result": "Est. $0.04", "type": "pending", "eps": "-", "est": "$0.04", "cap": "Large"},
+            {"symbol": "AAPL", "name": "Apple Inc.", "sector": "Technology", "time": "AMC", "result": "Est. $1.98 👑", "type": "pending", "eps": "-", "est": "$1.98", "cap": "Mega"},
+            {"symbol": "WMB", "name": "Williams Companies", "sector": "Energy", "time": "AMC", "result": "Est. $0.54", "type": "pending", "eps": "-", "est": "$0.54", "cap": "Large"},
+            {"symbol": "ROKU", "name": "Roku Inc.", "sector": "Communication Services", "time": "AMC", "result": "Est. $0.55", "type": "pending", "eps": "-", "est": "$0.55", "cap": "Mid"}
+        ]
+    },
+    "Tue 03": {
+        "date_str": "Martes 03 Noviembre",
+        "day_num": 3,
+        "is_today": False,
+        "reported": 65,
+        "eps_growth": "Est.",
+        "sales_growth": "Est.",
+        "surprise_pct": "-",
+        "tickers": [
+            {"symbol": "AMGN", "name": "Amgen Inc.", "sector": "Healthcare", "time": "BMO", "result": "Est. $5.79", "type": "pending", "eps": "-", "est": "$5.79", "cap": "Large"},
+            {"symbol": "ZTS", "name": "Zoetis Inc.", "sector": "Healthcare", "time": "BMO", "result": "Est. $1.45", "type": "pending", "eps": "-", "est": "$1.45", "cap": "Large"},
+            {"symbol": "AMD", "name": "Advanced Micro Devices", "sector": "Technology", "time": "AMC", "result": "Est. $2.10 🚀", "type": "pending", "eps": "-", "est": "$2.10", "cap": "Mega"},
+            {"symbol": "SMCI", "name": "Super Micro Computer", "sector": "Technology", "time": "AMC", "result": "Est. $0.75", "type": "pending", "eps": "-", "est": "$0.75", "cap": "Large"},
+            {"symbol": "MTCH", "name": "Match Group", "sector": "Communication Services", "time": "AMC", "result": "Est. $0.52", "type": "pending", "eps": "-", "est": "$0.52", "cap": "Mid"}
+        ]
+    },
+    "Wed 04": {
+        "date_str": "Miércoles 04 Noviembre",
+        "day_num": 4,
+        "is_today": False,
+        "reported": 110,
+        "eps_growth": "Est.",
+        "sales_growth": "Est.",
+        "surprise_pct": "-",
+        "tickers": [
+            {"symbol": "UBER", "name": "Uber Technologies", "sector": "Technology", "time": "BMO", "result": "Est. $0.87", "type": "pending", "eps": "-", "est": "$0.87", "cap": "Mega"},
+            {"symbol": "CVS", "name": "CVS Health Corp.", "sector": "Healthcare", "time": "BMO", "result": "Est. $1.65", "type": "pending", "eps": "-", "est": "$1.65", "cap": "Large"},
+            {"symbol": "QCOM", "name": "Qualcomm Inc.", "sector": "Technology", "time": "AMC", "result": "Est. $2.16 🚀", "type": "pending", "eps": "-", "est": "$2.16", "cap": "Mega"},
+            {"symbol": "ARM", "name": "Arm Holdings", "sector": "Technology", "time": "AMC", "result": "Est. $0.32", "type": "pending", "eps": "-", "est": "$0.32", "cap": "Mega"},
+            {"symbol": "HOOD", "name": "Robinhood Markets", "sector": "Financials", "time": "AMC", "result": "Est. $0.25", "type": "pending", "eps": "-", "est": "$0.25", "cap": "Large"},
+            {"symbol": "MELI", "name": "MercadoLibre Inc.", "sector": "Consumer Cyclical", "time": "AMC", "result": "Est. $9.85", "type": "pending", "eps": "-", "est": "$9.85", "cap": "Mega"}
+        ]
+    },
+    "Thu 05": {
+        "date_str": "Jueves 05 Noviembre",
+        "day_num": 5,
+        "is_today": False,
+        "reported": 95,
+        "eps_growth": "Est.",
+        "sales_growth": "Est.",
+        "surprise_pct": "-",
+        "tickers": [
+            {"symbol": "PLTR", "name": "Palantir Technologies", "sector": "Technology", "time": "BMO", "result": "Est. $0.11 🔥", "type": "pending", "eps": "-", "est": "$0.11", "cap": "Mega"},
+            {"symbol": "DIS", "name": "Walt Disney Company", "sector": "Communication Services", "time": "BMO", "result": "Est. $1.10", "type": "pending", "eps": "-", "est": "$1.10", "cap": "Mega"},
+            {"symbol": "ABNB", "name": "Airbnb Inc.", "sector": "Consumer Cyclical", "time": "AMC", "result": "Est. $2.85", "type": "pending", "eps": "-", "est": "$2.85", "cap": "Large"},
+            {"symbol": "SQ", "name": "Block Inc.", "sector": "Financials", "time": "AMC", "result": "Est. $0.88", "type": "pending", "eps": "-", "est": "$0.88", "cap": "Large"},
+            {"symbol": "NET", "name": "Cloudflare Inc.", "sector": "Technology", "time": "AMC", "result": "Est. $0.18", "type": "pending", "eps": "-", "est": "$0.18", "cap": "Large"}
+        ]
+    },
+    "Fri 06": {
+        "date_str": "Viernes 06 Noviembre",
+        "day_num": 6,
+        "is_today": False,
+        "reported": 28,
+        "eps_growth": "Est.",
+        "sales_growth": "Est.",
+        "surprise_pct": "-",
+        "tickers": [
+            {"symbol": "ENB", "name": "Enbridge Inc.", "sector": "Energy", "time": "BMO", "result": "Est. $0.58", "type": "pending", "eps": "-", "est": "$0.58", "cap": "Large"},
+            {"symbol": "DUK", "name": "Duke Energy", "sector": "Utilities", "time": "BMO", "result": "Est. $1.72", "type": "pending", "eps": "-", "est": "$1.72", "cap": "Large"}
+        ]
+    }
 }
 
-def get_earnings_week_data(week_key: str = "📅 Oct 19 - 25, 2026 (Semana de Resultados Industriales & Bancos)"):
-    """Retorna el diccionario de días para la semana seleccionada."""
-    return EARNINGS_WEEKS.get(week_key, EARNINGS_WEEK_DATA)
+KEY_WEEK_OCT19 = "⏪ Oct 19 - 23 (Semana Anterior: Bancos & Reportes Previos)"
+KEY_WEEK_OCT26 = "🟢 Oct 26 - 30 (🔥 ESTA SEMANA EN VIVO: GOOGL, MSFT, AMZN, NOW, FTNT)"
+KEY_WEEK_NOV02 = "⏩ Nov 02 - 06 (Próxima Semana: AAPL, AMD, UBER, QCOM, PLTR)"
 
+EARNINGS_WEEKS = {
+    KEY_WEEK_OCT26: EARNINGS_WEEK_OCT26_DATA,
+    KEY_WEEK_OCT19: EARNINGS_WEEK_OCT19_DATA,
+    KEY_WEEK_NOV02: EARNINGS_WEEK_NOV02_DATA
+}
+
+def get_default_week_key() -> str:
+    """Retorna la semana actual en curso."""
+    return KEY_WEEK_OCT26
+
+def get_default_day_key(week_key: str = KEY_WEEK_OCT26) -> str:
+    """Detecta el día actual y retorna la clave de día adecuada."""
+    week_data = get_earnings_week_data(week_key)
+    today_dt = date.today()
+    # Si la semana seleccionada es la actual (Oct 26-30), sincronizar con el día de hoy
+    if "Oct 26" in week_key or week_key == KEY_WEEK_OCT26:
+        day_map = {0: "Mon 26", 1: "Tue 27", 2: "Wed 28", 3: "Thu 29", 4: "Fri 30"}
+        target = day_map.get(today_dt.weekday(), "Wed 28")
+        if target in week_data:
+            return target
+    # Si no, retornar el primer día con datos
+    return list(week_data.keys())[0]
+
+def get_earnings_week_data(week_key: str = KEY_WEEK_OCT26):
+    """Retorna el diccionario de días para la semana seleccionada."""
+    return EARNINGS_WEEKS.get(week_key, EARNINGS_WEEK_OCT26_DATA)
+
+def get_day_grouped_tickers(day_dict: dict) -> dict:
+    """Agrupa los tickers del día en 'bmo' y 'amc'."""
+    tickers = day_dict.get("tickers", [])
+    bmo = [t for t in tickers if t.get("time") == "BMO"]
+    amc = [t for t in tickers if t.get("time") == "AMC"]
+    return {"bmo": bmo, "amc": amc, "all": tickers}
+
+
+# =========================================================================
+# MOTOR TÉCNICO MULTI-TEMPORALIDAD (DEEPVUE CANDLESTICK & INDICATORS)
+# =========================================================================
 
 def get_stock_ohlcv(symbol: str, timeframe: str = "1D") -> pd.DataFrame:
     """
@@ -283,7 +345,7 @@ def get_stock_ohlcv(symbol: str, timeframe: str = "1D") -> pd.DataFrame:
         "5m": ("5m", "5d"),
         "15m": ("15m", "10d"),
         "1h": ("60m", "1mo"),
-        "4h": ("60m", "3mo"),  # Resampleado a 4h si es necesario
+        "4h": ("60m", "3mo"),
         "1D": ("1d", "1y"),
         "1W": ("1wk", "2y"),
         "1M": ("1mo", "5y")
@@ -297,7 +359,6 @@ def get_stock_ohlcv(symbol: str, timeframe: str = "1D") -> pd.DataFrame:
             df.columns = df.columns.get_level_values(0)
             
         if df.empty or len(df) < 5:
-            # Fallback sintético realista si el ticker está fuera de hora o sin feed
             dates = pd.date_range(end=datetime.now(), periods=100, freq='D')
             base_p = 50.0
             noise = np.cumsum(np.random.normal(0, 1.2, 100))
@@ -326,7 +387,7 @@ def get_stock_ohlcv(symbol: str, timeframe: str = "1D") -> pd.DataFrame:
         df['ADR10'] = ((df['High'] - df['Low']) / (df['Low'] + 1e-9) * 100).rolling(10, min_periods=1).mean()
         
         return df
-    except Exception as e:
+    except Exception:
         return pd.DataFrame()
 
 

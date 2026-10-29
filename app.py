@@ -4792,83 +4792,162 @@ elif "Earnings" in nav_view:
     if "earnings_tf" not in st.session_state:
         st.session_state["earnings_tf"] = "1D"
     if "earnings_active_ticker" not in st.session_state:
-        st.session_state["earnings_active_ticker"] = "ADSE"
+        st.session_state["earnings_active_ticker"] = "GOOGL"
     if "earnings_active_name" not in st.session_state:
-        st.session_state["earnings_active_name"] = "ADS-TEC Energy PLC"
+        st.session_state["earnings_active_name"] = "Alphabet Inc."
     if "earnings_active_sector" not in st.session_state:
-        st.session_state["earnings_active_sector"] = "Industrials • Machinery"
+        st.session_state["earnings_active_sector"] = "Communication Services • AMC"
 
-    col_cal, col_chart = st.columns([1.05, 1.35], gap="medium")
+    # Selector de Semana Superior (Navegación Visual Estilo Deepvue)
+    week_keys = list(ece.EARNINGS_WEEKS.keys())
+    if "sel_earn_week_sb" not in st.session_state or st.session_state["sel_earn_week_sb"] not in week_keys:
+        st.session_state["sel_earn_week_sb"] = ece.get_default_week_key()
+
+    c_w1, c_w2, c_w3 = st.columns([1, 1.35, 1], gap="small")
+    with c_w1:
+        is_p = (st.session_state["sel_earn_week_sb"] == ece.KEY_WEEK_OCT19)
+        if st.button("⏪ Semana Anterior (Oct 19 - 23)", use_container_width=True, type="primary" if is_p else "secondary"):
+            st.session_state["sel_earn_week_sb"] = ece.KEY_WEEK_OCT19
+            st.rerun()
+    with c_w2:
+        is_curr = (st.session_state["sel_earn_week_sb"] == ece.KEY_WEEK_OCT26)
+        btn_curr_label = "🟢 ESTA SEMANA (Oct 26 - 30) • EN VIVO" if is_curr else "📅 Esta Semana (Oct 26 - 30) • EN VIVO"
+        if st.button(btn_curr_label, use_container_width=True, type="primary" if is_curr else "secondary"):
+            st.session_state["sel_earn_week_sb"] = ece.KEY_WEEK_OCT26
+            st.rerun()
+    with c_w3:
+        is_n = (st.session_state["sel_earn_week_sb"] == ece.KEY_WEEK_NOV02)
+        if st.button("⏩ Próxima Semana (Nov 02 - 06)", use_container_width=True, type="primary" if is_n else "secondary"):
+            st.session_state["sel_earn_week_sb"] = ece.KEY_WEEK_NOV02
+            st.rerun()
+
+    sel_earn_week = st.session_state["sel_earn_week_sb"]
+    active_week_data = ece.get_earnings_week_data(sel_earn_week)
+
+    col_cal, col_chart = st.columns([1.1, 1.3], gap="medium")
 
     with col_cal:
-        # Selector de Semana Dinámica (Multi-Semana & Próximas Fechas)
-        sel_earn_week = st.selectbox(
-            "Seleccionar Semana de Earnings:",
-            list(ece.EARNINGS_WEEKS.keys()),
-            index=0,
-            key="sel_earn_week_sb"
-        )
-        active_week_data = ece.get_earnings_week_data(sel_earn_week)
-        
-        st.markdown(f"""
-            <div style="display:flex; justify-content:space-between; align-items:center; background:#111827; padding:10px 14px; border-radius:8px; border:1px solid #1F2937; margin-bottom:12px;">
-                <div style="font-weight:700; color:#F3F4F6; font-size:14px;">📅 {sel_earn_week.split('(')[0].strip()}</div>
-                <div style="font-size:12px; color:#9CA3AF;"><span style="color:#10B981; font-weight:600;">84% Beats</span> | Informes de Alta Convicción</div>
-            </div>
-        """, unsafe_allow_html=True)
-
         days_list = list(active_week_data.keys())
-        selected_day = st.radio("Día de la semana:", days_list, horizontal=True, label_visibility="collapsed", index=min(2, len(days_list)-1), key="earn_day_radio")
-        
+        default_day = ece.get_default_day_key(sel_earn_week)
+        if "earn_day_radio" not in st.session_state or st.session_state["earn_day_radio"] not in days_list:
+            st.session_state["earn_day_radio"] = default_day
+
+        day_labels = {}
+        for d in days_list:
+            d_obj = active_week_data[d]
+            if d_obj.get("is_today"):
+                day_labels[d] = f"🟢 {d} (HOY)"
+            elif "29" in d:
+                day_labels[d] = f"⚡ {d} (MAÑANA)"
+            else:
+                day_labels[d] = d
+
+        selected_day = st.radio(
+            "Día de la semana:",
+            days_list,
+            format_func=lambda x: day_labels.get(x, x),
+            horizontal=True,
+            label_visibility="collapsed",
+            key="earn_day_radio"
+        )
         day_info = active_week_data[selected_day]
+
+        # Métricas de convicción institucional del día
         st.markdown(f"""
-            <div style="background:rgba(30, 41, 59, 0.7); border:1px solid #334155; border-radius:6px; padding:8px 12px; margin-bottom:12px; display:flex; justify-content:space-between; font-size:12px;">
-                <span><strong>REPORTED:</strong> {day_info['reported']}</span>
-                <span><strong>EPS:</strong> <span style="color:#10B981;">{day_info['eps_growth']}</span></span>
-                <span><strong>Sales:</strong> <span style="color:#10B981;">{day_info['sales_growth']}</span></span>
-                <span><strong>Surprise:</strong> <span style="color:#10B981;">{day_info['surprise_pct']}</span></span>
+            <div style="background:rgba(15, 23, 42, 0.85); border:1px solid #1E293B; border-radius:8px; padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <span style="font-weight:700; color:#38BDF8; font-size:13px;">📅 {day_info['date_str']}</span>
+                    <span style="color:#64748B; font-size:11px; margin-left:8px;">({day_info['reported']} empresas en agenda)</span>
+                </div>
+                <div style="font-size:12px; display:flex; gap:12px;">
+                    <span>EPS: <strong style="color:#10B981;">{day_info['eps_growth']}</strong></span>
+                    <span>Ventas: <strong style="color:#10B981;">{day_info['sales_growth']}</strong></span>
+                    <span>Surprise: <strong style="color:#38BDF8;">{day_info['surprise_pct']}</strong></span>
+                </div>
             </div>
         """, unsafe_allow_html=True)
 
-        filter_txt = st.text_input("🔍 Filtrar ticker o empresa:", placeholder="Ej: META, TSLA, NFLX...", label_visibility="collapsed").upper()
+        f_col1, f_col2 = st.columns([1.2, 1.8])
+        with f_col1:
+            filter_txt = st.text_input("Buscar Ticker:", placeholder="Buscar Ticker...", label_visibility="collapsed").upper()
+        with f_col2:
+            sess_opts = ["Todos", "☀️ Solo BMO (Apertura)", "🌙 Solo AMC (Cierre)", "👑 Solo Mega-Caps"]
+            sess_sel = st.selectbox("Sesión:", sess_opts, label_visibility="collapsed")
 
-        tickers = day_info["tickers"]
+        raw_tickers = day_info["tickers"]
         if filter_txt:
-            tickers = [t for t in tickers if filter_txt in t["symbol"] or filter_txt in t["name"].upper()]
+            raw_tickers = [t for t in raw_tickers if filter_txt in t["symbol"] or filter_txt in t["name"].upper()]
+        if sess_sel == "☀️ Solo BMO (Apertura)":
+            raw_tickers = [t for t in raw_tickers if t.get("time") == "BMO"]
+        elif sess_sel == "🌙 Solo AMC (Cierre)":
+            raw_tickers = [t for t in raw_tickers if t.get("time") == "AMC"]
+        elif sess_sel == "👑 Solo Mega-Caps":
+            raw_tickers = [t for t in raw_tickers if t.get("cap") == "Mega"]
 
-        if not tickers:
-            st.info(f"No hay empresas reportando en {day_info['date_str']}.")
+        if not raw_tickers:
+            st.info(f"No hay empresas que coincidan con los filtros en {day_info['date_str']}.")
         else:
-            st.caption(f"Mostrando {len(tickers)} empresas. Haz clic en un ticker para sincronizar el gráfico:")
-            for t in tickers:
-                c1, c2, c3, c4 = st.columns([1.1, 1.8, 1.3, 1.1])
-                with c1:
-                    is_active = (st.session_state["earnings_active_ticker"] == t["symbol"])
-                    btn_label = f"👉 **{t['symbol']}**" if is_active else t["symbol"]
-                    if st.button(btn_label, key=f"btn_earn_{t['symbol']}_{selected_day}", use_container_width=True):
-                        st.session_state["earnings_active_ticker"] = t["symbol"]
-                        st.session_state["earnings_active_name"] = t["name"]
-                        st.session_state["earnings_active_sector"] = f"{t['sector']} • {t['time']}"
-                        st.rerun()
-                with c2:
-                    st.markdown(f"<div style='font-size:12px; color:#E5E7EB; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>{t['name']}</div>", unsafe_allow_html=True)
-                with c3:
-                    b_color = "#10B981" if t["type"] == "beat" else "#EF4444"
-                    st.markdown(f"<div style='color:{b_color}; font-weight:700; font-size:12px;'>{t['result']}</div>", unsafe_allow_html=True)
-                with c4:
-                    st.markdown(f"<div style='color:#9CA3AF; font-size:11px;'>{t['eps']} vs {t['est']}</div>", unsafe_allow_html=True)
-                st.markdown("<hr style='margin:4px 0; border:none; border-top:1px solid #1F2937;'>", unsafe_allow_html=True)
+            bmo_list = [t for t in raw_tickers if t.get("time") == "BMO"]
+            amc_list = [t for t in raw_tickers if t.get("time") == "AMC"]
+
+            def render_ticker_list(t_list, session_title, session_icon):
+                if not t_list:
+                    return
+                st.markdown(f"""
+                    <div style="color:#94A3B8; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; margin:10px 0 6px 0; border-bottom:1px solid #1E293B; padding-bottom:4px;">
+                        {session_icon} {session_title} ({len(t_list)})
+                    </div>
+                """, unsafe_allow_html=True)
+
+                for t in t_list:
+                    c1, c2, c3, c4 = st.columns([1.1, 1.8, 1.4, 1.1])
+                    with c1:
+                        is_active = (st.session_state["earnings_active_ticker"] == t["symbol"])
+                        btn_label = f"🟢 **{t['symbol']}**" if is_active else t["symbol"]
+                        if st.button(btn_label, key=f"btn_earn_{t['symbol']}_{selected_day}", use_container_width=True, type="primary" if is_active else "secondary"):
+                            st.session_state["earnings_active_ticker"] = t["symbol"]
+                            st.session_state["earnings_active_name"] = t["name"]
+                            st.session_state["earnings_active_sector"] = f"{t['sector']} • {t['time']}"
+                            st.rerun()
+                    with c2:
+                        cap_badge = "👑 " if t.get("cap") == "Mega" else ""
+                        st.markdown(f"<div style='font-size:12px; color:#F1F5F9; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;'>{cap_badge}{t['name']}</div><div style='font-size:10px; color:#64748B;'>{t['sector']}</div>", unsafe_allow_html=True)
+                    with c3:
+                        if t["type"] == "beat":
+                            b_color = "#10B981"
+                            badge_bg = "rgba(16, 185, 129, 0.15)"
+                        elif t["type"] == "miss":
+                            b_color = "#EF4444"
+                            badge_bg = "rgba(239, 68, 68, 0.15)"
+                        else:
+                            b_color = "#38BDF8"
+                            badge_bg = "rgba(56, 189, 248, 0.15)"
+                        st.markdown(f"<div style='background:{badge_bg}; color:{b_color}; border:1px solid {b_color}44; border-radius:4px; padding:2px 6px; font-weight:700; font-size:11px; text-align:center;'>{t['result']}</div>", unsafe_allow_html=True)
+                    with c4:
+                        st.markdown(f"<div style='color:#94A3B8; font-size:11px; text-align:right;'>{t['eps']}<br><span style='color:#64748B; font-size:9px;'>Est: {t['est']}</span></div>", unsafe_allow_html=True)
+                    st.markdown("<hr style='margin:3px 0; border:none; border-top:1px solid #1E293B;'>", unsafe_allow_html=True)
+
+            if sess_sel == "☀️ Solo BMO (Apertura)":
+                render_ticker_list(bmo_list, "Antes de la Apertura (BMO)", "☀️")
+            elif sess_sel == "🌙 Solo AMC (Cierre)":
+                render_ticker_list(amc_list, "Al Cierre del Mercado (AMC)", "🌙")
+            else:
+                if bmo_list:
+                    render_ticker_list(bmo_list, "Antes de la Apertura (BMO)", "☀️")
+                if amc_list:
+                    render_ticker_list(amc_list, "Al Cierre del Mercado (AMC)", "🌙")
 
     with col_chart:
         cur_t = st.session_state["earnings_active_ticker"]
         cur_n = st.session_state["earnings_active_name"]
         cur_s = st.session_state["earnings_active_sector"]
 
-        tf_cols = st.columns([1, 1, 1, 1, 1, 1, 1, 3])
+        tf_cols = st.columns([1, 1, 1, 1, 1, 1, 1, 2.5])
         tf_options = ["5m", "15m", "1h", "4h", "1D", "1W", "1M"]
         for idx, tf in enumerate(tf_options):
             with tf_cols[idx]:
-                if st.button(tf, key=f"btn_tf_{tf}", use_container_width=True):
+                is_cur_tf = (st.session_state["earnings_tf"] == tf)
+                if st.button(tf, key=f"btn_tf_{tf}", use_container_width=True, type="primary" if is_cur_tf else "secondary"):
                     st.session_state["earnings_tf"] = tf
                     st.rerun()
 
@@ -4881,22 +4960,21 @@ elif "Earnings" in nav_view:
         st.plotly_chart(fig_stock, use_container_width=True, config={"displayModeBar": True})
         
         st.markdown(f"""
-            <div style="background:#111827; border:1px solid #1F2937; border-radius:8px; padding:12px 16px; margin-top:8px;">
+            <div style="background:#0F172A; border:1px solid #1E293B; border-radius:8px; padding:12px 16px; margin-top:8px;">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <span style="font-size:16px; font-weight:bold; color:#F9FAFB;">{cur_t}</span> • 
-                        <span style="color:#9CA3AF; font-size:13px;">{cur_n}</span>
-                        <div style="font-size:12px; color:#6B7280;">{cur_s}</div>
+                        <span style="font-size:16px; font-weight:bold; color:#F8FAFC;">{cur_t}</span> • 
+                        <span style="color:#94A3B8; font-size:13px;">{cur_n}</span>
+                        <div style="font-size:12px; color:#64748B;">{cur_s}</div>
                     </div>
                     <div style="text-align:right;">
-                        <span style="background:rgba(16, 185, 129, 0.15); color:#10B981; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600;">Sincronizado en Vivo</span>
+                        <span style="background:rgba(16, 185, 129, 0.15); color:#10B981; border:1px solid #10B98144; padding:4px 10px; border-radius:6px; font-size:12px; font-weight:600;">⚡ Terminal Sincronizado</span>
                     </div>
                 </div>
             </div>
         """, unsafe_allow_html=True)
 
 
-# =========================================================================
 # VISTA 2: NEW HIGHS & NEW LOWS (BREADTH & MULTI-TIMEFRAME CHART)
 # =========================================================================
 elif "New Highs" in nav_view:
