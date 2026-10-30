@@ -64,7 +64,44 @@ KNOWN_EARNINGS_MAP = {
 
 
 def get_available_filter_definitions() -> Dict[str, Dict[str, Any]]:
-    """Catálogo maestro de todas las listas y filtros disponibles para el drawer."""
+    """Catálogo maestro de todas las listas y filtros disponibles para el drawer con candidatos frescos del día."""
+    # Extracción en caliente de candidatos detectados hoy por el motor de snapshots oficiales
+    fresh_ep_tickers = []
+    fresh_breakout_tickers = []
+    fresh_up_vol_tickers = []
+    if dse:
+        try:
+            for snap_k in ["OPEN", "PRE", "CLOSE"]:
+                snap_data = dse.get_latest_snapshot(snap_k) or {}
+                for cand in snap_data.get("candidates", []):
+                    sym = cand.get("symbol")
+                    pat = str(cand.get("pattern", "")).upper()
+                    rvol = float(cand.get("rvol", 1.0))
+                    chg = float(cand.get("change_pct", 0.0))
+                    if not sym:
+                        continue
+                    if "BREAKOUT" in pat or "PIVOT" in pat:
+                        if sym not in fresh_breakout_tickers:
+                            fresh_breakout_tickers.append(sym)
+                    if "EPISODIC" in pat or (chg >= 4.0 and rvol >= 1.4):
+                        if sym not in fresh_ep_tickers:
+                            fresh_ep_tickers.append(sym)
+                    if rvol >= 1.4 and chg > 1.0:
+                        if sym not in fresh_up_vol_tickers:
+                            fresh_up_vol_tickers.append(sym)
+        except Exception:
+            pass
+
+    # Combinar candidatos dinámicos del día con líderes históricos
+    canonical_ep = getattr(se, 'EPISODIC_PIVOT_8_TICKERS', ["APP", "PLTR", "RDDT", "ALAB", "MSTR", "HOOD", "RKLB", "KVYO"])
+    all_ep = list(dict.fromkeys(fresh_ep_tickers + canonical_ep))
+
+    canonical_bo = getattr(se, 'DAILY_PIVOT_BREAKOUT_TICKERS', ["INTC", "NVDA", "PLTR", "APP", "RDDT", "ALAB", "HOOD", "RKLB", "ASTS", "IONQ", "ANET", "VST", "CEG", "CLS", "CRDO"])
+    all_bo = list(dict.fromkeys(fresh_breakout_tickers + canonical_bo))
+
+    canonical_up_vol = getattr(se, 'UP_ON_VOLUME_64_TICKERS', [])
+    all_up_vol = list(dict.fromkeys(fresh_up_vol_tickers + canonical_up_vol))
+
     return {
         "Weekly Strength": {
             "name": "Weekly Strength",
@@ -87,7 +124,7 @@ def get_available_filter_definitions() -> Dict[str, Dict[str, Any]]:
         "Up on Volume": {
             "name": "Up on Volume",
             "category": "Volumen & Flujo",
-            "tickers": getattr(se, 'UP_ON_VOLUME_64_TICKERS', []),
+            "tickers": all_up_vol,
             "desc": "Subidas con fuerte volumen y cierre en máximos."
         },
         "David Ryan: Ants": {
@@ -117,13 +154,13 @@ def get_available_filter_definitions() -> Dict[str, Dict[str, Any]]:
         "Qullamaggie: Episodic Pivot (EP)": {
             "name": "Qullamaggie: Episodic Pivot (EP)",
             "category": "Qullamaggie",
-            "tickers": getattr(se, 'EPISODIC_PIVOT_8_TICKERS', []),
-            "desc": "Salto explosivo > 8% con volumen masivo por catalizador."
+            "tickers": all_ep,
+            "desc": "Salto explosivo > 8% o con catalizador de volumen del día."
         },
         "Daily Pivot Breakout (Mike)": {
             "name": "Daily Pivot Breakout (Mike)",
             "category": "Pivot Breakouts",
-            "tickers": getattr(se, 'DAILY_PIVOT_BREAKOUT_TICKERS', ["INTC", "NVDA", "PLTR", "APP", "RDDT", "ALAB", "HOOD", "RKLB", "ASTS", "IONQ", "ANET", "VST", "CEG", "CLS", "CRDO"]),
+            "tickers": all_bo,
             "desc": "Breakout sobre pivotes confirmados 5L/5R con ROC 100d >= 30%."
         },
         "Gaps & Strong Moves": {
@@ -199,27 +236,36 @@ def compute_watchlist_factors(tickers: List[str], force_refresh: bool = False) -
             bars_store = {}
 
     missing = [t for t in clean_tickers if t not in bars_store or not isinstance(bars_store[t], pd.DataFrame) or bars_store[t].empty]
-    if missing and force_refresh:
+    tickers_to_fetch = clean_tickers if force_refresh else missing
+    if tickers_to_fetch:
         try:
             chunk_size = 250
-            for i in range(0, len(missing), chunk_size):
-                chunk = missing[i:i + chunk_size]
+            for i in range(0, len(tickers_to_fetch), chunk_size):
+                chunk = tickers_to_fetch[i:i + chunk_size]
                 data = yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=False, progress=False)
                 if data is None or data.empty:
-                    for t in chunk: bars_store[t] = "EMPTY"
+                    for t in chunk:
+                        if t not in bars_store: bars_store[t] = "EMPTY"
                     continue
                 for t in chunk:
                     try:
                         if isinstance(data.columns, pd.MultiIndex) and t in data.columns.levels[0]:
                             df_t = data[t].dropna(how="all")
-                            bars_store[t] = df_t if (not df_t.empty and 'Close' in df_t) else "EMPTY"
+                            if not df_t.empty and 'Close' in df_t:
+                                bars_store[t] = df_t
+                            elif t not in bars_store:
+                                bars_store[t] = "EMPTY"
                         elif not isinstance(data.columns, pd.MultiIndex) and len(chunk) == 1:
                             df_t = data.dropna(how="all")
-                            bars_store[t] = df_t if (not df_t.empty and 'Close' in df_t) else "EMPTY"
-                        else:
+                            if not df_t.empty and 'Close' in df_t:
+                                bars_store[t] = df_t
+                            elif t not in bars_store:
+                                bars_store[t] = "EMPTY"
+                        elif t not in bars_store:
                             bars_store[t] = "EMPTY"
                     except Exception:
-                        bars_store[t] = "EMPTY"
+                        if t not in bars_store:
+                            bars_store[t] = "EMPTY"
             import pickle
             with open(disk_cache_file, "wb") as f_disk:
                 pickle.dump(bars_store, f_disk, protocol=pickle.HIGHEST_PROTOCOL)
