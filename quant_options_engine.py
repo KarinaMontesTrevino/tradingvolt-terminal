@@ -40,7 +40,14 @@ CBOE_ENDPOINTS = {
     "ES": "https://cdn.cboe.com/api/global/delayed_quotes/options/_SPX.json",
     "NQ": "https://cdn.cboe.com/api/global/delayed_quotes/options/_NDX.json",
     "IWM": "https://cdn.cboe.com/api/global/delayed_quotes/options/IWM.json",
-    "NVDA": "https://cdn.cboe.com/api/global/delayed_quotes/options/NVDA.json"
+    # 7 Magníficas (Magnificent 7)
+    "NVDA": "https://cdn.cboe.com/api/global/delayed_quotes/options/NVDA.json",
+    "AAPL": "https://cdn.cboe.com/api/global/delayed_quotes/options/AAPL.json",
+    "MSFT": "https://cdn.cboe.com/api/global/delayed_quotes/options/MSFT.json",
+    "AMZN": "https://cdn.cboe.com/api/global/delayed_quotes/options/AMZN.json",
+    "META": "https://cdn.cboe.com/api/global/delayed_quotes/options/META.json",
+    "GOOGL": "https://cdn.cboe.com/api/global/delayed_quotes/options/GOOGL.json",
+    "TSLA": "https://cdn.cboe.com/api/global/delayed_quotes/options/TSLA.json"
 }
 
 FUTURES_MAP = {

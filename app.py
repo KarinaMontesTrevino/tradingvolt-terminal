@@ -4282,7 +4282,13 @@ elif "Quant Options" in nav_view:
                 "QQQ (Invesco QQQ Trust)": "QQQ",
                 "SPX (S&P 500 Index CBOE)": "SPX",
                 "IWM (Russell 2000 ETF)": "IWM",
-                "NVDA (NVIDIA Corp)": "NVDA"
+                "NVDA (NVIDIA Corp)": "NVDA",
+                "AAPL (Apple Inc)": "AAPL",
+                "MSFT (Microsoft Corp)": "MSFT",
+                "AMZN (Amazon.com Inc)": "AMZN",
+                "META (Meta Platforms Inc)": "META",
+                "GOOGL (Alphabet Inc)": "GOOGL",
+                "TSLA (Tesla Inc)": "TSLA"
             }
             sel_label = st.selectbox("Activo Subyacente:", list(sym_options.keys()), index=0, key="gex_sym_sel")
             gex_sym = sym_options[sel_label]
