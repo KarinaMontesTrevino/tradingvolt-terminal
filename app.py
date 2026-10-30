@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 import subprocess
 
 # Auto-instalador de respaldo para Streamlit Community Cloud si falta requirements.txt en la raíz
@@ -179,6 +179,11 @@ try:
     importlib.reload(cre)
 except ImportError:
     cre = None
+try:
+    import deepvue_watchlist_widget as dvw
+    importlib.reload(dvw)
+except ImportError:
+    dvw = None
 import urllib.parse
 import streamlit.components.v1 as components
 
@@ -3165,10 +3170,12 @@ elif nav_view == "⚡ Screener Cuantitativo":
             st.info("👆 Selecciona tu filtro cuantitativo e inicia el escaneo con el botón principal.")
 
     # -------------------------------------------------------------------------
-    # WIDGET INSTITUCIONAL: LISTAS OFICIALES DIARIAS & ACTIVOS EN MOVIMIENTO
+    # WIDGET / DRAWER INSTITUCIONAL DE LISTAS DE FILTROS (ESTILO DEEPVUE MULTI-TAB)
     # -------------------------------------------------------------------------
-    st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
-    if dse is not None:
+    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
+    if dvw is not None:
+        dvw.render_deepvue_multi_tab_drawer(render_chart_fn=render_institutional_chart, key_suffix="screener_main_dv")
+    elif dse is not None:
         dse.render_snapshot_lists_widget(render_chart_fn=render_institutional_chart, key_suffix="screener_main_widget")
 
 
