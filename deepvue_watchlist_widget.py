@@ -364,146 +364,197 @@ def render_deepvue_multi_tab_drawer(render_chart_fn=None, key_suffix="dv_drawer"
         col_list_ratio, col_chart_ratio = 3.5, 0.0
         is_full_width = True
 
-    # Generar pestañas con badges de conteo estilo Deepvue: e.g. "Weekly Strength 425"
+    # Mapeo de etiqueta a nombre de filtro
+    label_to_filter = {}
     tab_labels = []
     for t_name in enabled_tabs:
         f_info = all_filters.get(t_name, {})
         t_cnt = len(f_info.get("tickers", []))
-        tab_labels.append(f"{t_name} ({t_cnt})")
+        lbl = f"{t_name} ({t_cnt})"
+        tab_labels.append(lbl)
+        label_to_filter[lbl] = t_name
 
-    tabs_objs = st.tabs(tab_labels)
+    # Barra horizontal de pestañas interactivas estilo Deepvue
+    st.markdown("""
+        <style>
+            div[data-testid="stRadio"] > div[role="radiogroup"] {
+                display: flex !important;
+                flex-direction: row !important;
+                flex-wrap: nowrap !important;
+                overflow-x: auto !important;
+                padding-bottom: 8px !important;
+                gap: 8px !important;
+                scrollbar-width: thin;
+            }
+            div[data-testid="stRadio"] > div[role="radiogroup"] > label {
+                background: #0E1420 !important;
+                border: 1px solid #1E293B !important;
+                border-radius: 8px !important;
+                padding: 6px 14px !important;
+                margin: 0 !important;
+                white-space: nowrap !important;
+                transition: all 0.2s ease !important;
+                cursor: pointer !important;
+            }
+            div[data-testid="stRadio"] > div[role="radiogroup"] > label:hover {
+                border-color: #00F0FF !important;
+                background: rgba(0, 240, 255, 0.08) !important;
+            }
+            div[data-testid="stRadio"] > div[role="radiogroup"] > label[data-checked="true"] {
+                border-color: #00F0FF !important;
+                background: rgba(0, 240, 255, 0.15) !important;
+                color: #FFFFFF !important;
+                font-weight: 700 !important;
+            }
+        </style>
+    """, unsafe_allow_html=True)
 
-    for idx, t_obj in enumerate(tabs_objs):
-        active_filter_name = enabled_tabs[idx]
-        f_info = all_filters[active_filter_name]
-        raw_tickers = f_info.get("tickers", [])
+    default_tab_idx = 0
+    if f"sel_dv_tab_{key_suffix}" in st.session_state and st.session_state[f"sel_dv_tab_{key_suffix}"] in tab_labels:
+        default_tab_idx = tab_labels.index(st.session_state[f"sel_dv_tab_{key_suffix}"])
 
-        with t_obj:
-            # Barra superior de la pestaña activa
-            top_bar_c1, top_bar_c2, top_bar_c3, top_bar_c4 = st.columns([2.0, 1.2, 1.2, 1.0])
-            with top_bar_c1:
-                st.markdown(f"""
-                    <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
-                        <span style="font-size: 14px; font-weight: 800; color: #FFFFFF;">{active_filter_name}</span>
-                        <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38BDF8; color: #38BDF8; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700;">
-                            {len(raw_tickers)} ACTIVOS
-                        </span>
-                        <span style="font-size: 12px; color: #94A3B8;">{f_info.get('desc', '')}</span>
+    selected_tab_label = st.radio(
+        "Pestañas Deepvue:",
+        tab_labels,
+        index=default_tab_idx,
+        horizontal=True,
+        label_visibility="collapsed",
+        key=f"sel_dv_tab_{key_suffix}"
+    )
+
+    active_filter_name = label_to_filter.get(selected_tab_label, enabled_tabs[0])
+    f_info = all_filters[active_filter_name]
+    raw_tickers = f_info.get("tickers", [])
+
+    # Contenido de la pestaña activa seleccionada
+    top_bar_c1, top_bar_c2, top_bar_c3, top_bar_c4 = st.columns([2.0, 1.2, 1.2, 1.0])
+    with top_bar_c1:
+        st.markdown(f"""
+            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                <span style="font-size: 15px; font-weight: 800; color: #FFFFFF;">{active_filter_name}</span>
+                <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38BDF8; color: #38BDF8; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 700;">
+                    {len(raw_tickers)} ACTIVOS
+                </span>
+                <span style="font-size: 12px; color: #94A3B8;">{f_info.get('desc', '')}</span>
+            </div>
+        """, unsafe_allow_html=True)
+
+    with top_bar_c2:
+        btn_refresh_tab = st.button(
+            "🔄 Cotizaciones Frescas",
+            key=f"btn_rf_{active_filter_name}_{key_suffix}",
+            use_container_width=True,
+            help="Descarga y refresca las cotizaciones en tiempo real para todos los activos de este filtro."
+        )
+
+    with top_bar_c3:
+        btn_sync_radar = st.button(
+            "🎯 Sincronizar Radar",
+            key=f"btn_sync_{active_filter_name}_{key_suffix}",
+            use_container_width=True,
+            help="Transfiere esta lista a todos los escritorios de la terminal (Opciones, Dark Pool, Intraday Bubble Map)."
+        )
+
+    with top_bar_c4:
+        search_q = st.text_input(
+            "🔍 Buscar",
+            placeholder="Ticker...",
+            key=f"txt_search_{active_filter_name}_{key_suffix}",
+            label_visibility="collapsed"
+        )
+
+    # Sincronización a Radar Compartido
+    if btn_sync_radar and raw_tickers:
+        if are:
+            are.set_active_radar(raw_tickers, source_name=f"Deepvue: {active_filter_name}")
+            st.toast(f"🎯 Radar Compartido sincronizado con {len(raw_tickers)} activos de {active_filter_name}.")
+
+    # Carga y computación de factores de la lista
+    with st.spinner(f"Cargando activos para {active_filter_name}..."):
+        df_factors = compute_watchlist_factors(raw_tickers, force_refresh=btn_refresh_tab)
+
+    if df_factors.empty:
+        st.info(f"No hay activos disponibles para el filtro {active_filter_name}.")
+        return
+
+    # Filtro de búsqueda rápida
+    if search_q and search_q.strip():
+        sq = search_q.strip().upper()
+        df_factors = df_factors[df_factors["Symbol"].str.contains(sq, na=False)].reset_index(drop=True)
+
+    # Disposición Split o Ancho Completo
+    if not is_full_width:
+        col_w_list, col_w_chart = st.columns([col_list_ratio, col_chart_ratio])
+    else:
+        col_w_list = st.container()
+        col_w_chart = None
+
+    with col_w_list:
+        # Tabla exactamente como en la captura de Deepvue
+        col_config = {
+            "Symbol": st.column_config.TextColumn("Symbol", width="small", help="Símbolo del activo"),
+            "RV 20d": st.column_config.NumberColumn("RV 20d ⇅", format="%.2f", width="small", help="Volumen Relativo a 20 días"),
+            "RV 50d": st.column_config.NumberColumn("RV 50d", format="%.2f", width="small", help="Volumen Relativo a 50 días"),
+            "RV 5d": st.column_config.NumberColumn("RV 5d", format="%.2f", width="small", help="Volumen Relativo a 5 días"),
+            "Precio": st.column_config.NumberColumn("Precio", format="$%.2f", width="small"),
+            "Cambio %": st.column_config.NumberColumn("Cambio %", format="%+.2f%%", width="small"),
+            "Next Earnings": st.column_config.TextColumn("Next Earnings", width="medium", help="Próxima fecha de reporte de ganancias")
+        }
+
+        sel_table = st.dataframe(
+            df_factors,
+            use_container_width=True,
+            height=table_height_px,
+            hide_index=True,
+            selection_mode="single-row",
+            on_select="rerun",
+            column_config=col_config,
+            key=f"df_table_{active_filter_name}_{key_suffix}"
+        )
+
+        # Exportar CSV
+        c_csv1, c_csv2 = st.columns([1.5, 1.5])
+        with c_csv1:
+            csv_bytes = df_factors.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                f"📥 Descargar {active_filter_name} (.CSV)",
+                data=csv_bytes,
+                file_name=f"TradingVolt_{active_filter_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+                mime="text/csv",
+                key=f"btn_dl_{active_filter_name}_{key_suffix}"
+            )
+        with c_csv2:
+            st.caption(f"Mostrando {len(df_factors)} de {len(raw_tickers)} activos.")
+
+    # Columna de Gráfico Institucional Split
+    if not is_full_width and col_w_chart is not None:
+        with col_w_chart:
+            # Recuperar ticker activo previo si pertenece a la lista actual
+            curr_active_sym = st.session_state.get(f"dv_active_sym_{key_suffix}")
+            valid_syms = df_factors["Symbol"].tolist() if not df_factors.empty else []
+
+            if sel_table and hasattr(sel_table, "selection") and sel_table.selection.rows:
+                clicked_r = sel_table.selection.rows[0]
+                if clicked_r < len(df_factors):
+                    curr_active_sym = df_factors.iloc[clicked_r]["Symbol"]
+                    st.session_state[f"dv_active_sym_{key_suffix}"] = curr_active_sym
+            elif not curr_active_sym or curr_active_sym not in valid_syms:
+                curr_active_sym = valid_syms[0] if valid_syms else "SGRY"
+                st.session_state[f"dv_active_sym_{key_suffix}"] = curr_active_sym
+
+            st.markdown(f"""
+                <div style="background: rgba(14, 20, 32, 0.85); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 8px; padding: 10px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <span style="font-size: 15px; font-weight: 800; color: #FFFFFF;">📈 Gráfico Institucional: <span style="color: #00F0FF;">${curr_active_sym}</span></span>
                     </div>
-                """, unsafe_allow_html=True)
+                    <div style="font-size: 12px; color: #94A3B8; font-family: 'JetBrains Mono';">
+                        Fuente: Deepvue Watchlist • {active_filter_name}
+                    </div>
+                </div>
+            """, unsafe_allow_html=True)
 
-            with top_bar_c2:
-                btn_refresh_tab = st.button(
-                    "🔄 Cotizaciones Frescas",
-                    key=f"btn_rf_{active_filter_name}_{key_suffix}",
-                    use_container_width=True,
-                    help="Descarga y refresca las cotizaciones en tiempo real para todos los activos de este filtro."
-                )
-
-            with top_bar_c3:
-                btn_sync_radar = st.button(
-                    "🎯 Sincronizar Radar",
-                    key=f"btn_sync_{active_filter_name}_{key_suffix}",
-                    use_container_width=True,
-                    help="Transfiere esta lista a todos los escritorios de la terminal (Opciones, Dark Pool, Intraday Bubble Map)."
-                )
-
-            with top_bar_c4:
-                search_q = st.text_input(
-                    "🔍 Buscar",
-                    placeholder="Ticker...",
-                    key=f"txt_search_{active_filter_name}_{key_suffix}",
-                    label_visibility="collapsed"
-                )
-
-            # Sincronización a Radar Compartido
-            if btn_sync_radar and raw_tickers:
-                if are:
-                    are.set_active_radar(raw_tickers, source_name=f"Deepvue: {active_filter_name}")
-                    st.toast(f"🎯 Radar Compartido sincronizado con {len(raw_tickers)} activos de {active_filter_name}.")
-
-            # Carga y computación de factores de la lista
-            with st.spinner(f"Cargando activos para {active_filter_name}..."):
-                df_factors = compute_watchlist_factors(raw_tickers, force_refresh=btn_refresh_tab)
-
-            if df_factors.empty:
-                st.info(f"No hay activos disponibles para el filtro {active_filter_name}.")
-                continue
-
-            # Filtro de búsqueda rápida
-            if search_q and search_q.strip():
-                sq = search_q.strip().upper()
-                df_factors = df_factors[df_factors["Symbol"].str.contains(sq, na=False)].reset_index(drop=True)
-
-            # Disposición Split o Ancho Completo
-            if not is_full_width:
-                col_w_list, col_w_chart = st.columns([col_list_ratio, col_chart_ratio])
+            if render_chart_fn is not None:
+                clean_name = active_filter_name.replace(" ", "_").replace(":", "_").replace("-", "_")
+                render_chart_fn(curr_active_sym, key_suffix=f"dv_{clean_name}_{curr_active_sym}")
             else:
-                col_w_list = st.container()
-                col_w_chart = None
-
-            with col_w_list:
-                # Tabla exactamente como en la captura de Deepvue
-                col_config = {
-                    "Symbol": st.column_config.TextColumn("Symbol", width="small", help="Símbolo del activo"),
-                    "RV 20d": st.column_config.NumberColumn("RV 20d ⇅", format="%.2f", width="small", help="Volumen Relativo a 20 días"),
-                    "RV 50d": st.column_config.NumberColumn("RV 50d", format="%.2f", width="small", help="Volumen Relativo a 50 días"),
-                    "RV 5d": st.column_config.NumberColumn("RV 5d", format="%.2f", width="small", help="Volumen Relativo a 5 días"),
-                    "Precio": st.column_config.NumberColumn("Precio", format="$%.2f", width="small"),
-                    "Cambio %": st.column_config.NumberColumn("Cambio %", format="%+.2f%%", width="small"),
-                    "Next Earnings": st.column_config.TextColumn("Next Earnings", width="medium", help="Próxima fecha de reporte de ganancias")
-                }
-
-                sel_table = st.dataframe(
-                    df_factors,
-                    use_container_width=True,
-                    height=table_height_px,
-                    hide_index=True,
-                    selection_mode="single-row",
-                    on_select="rerun",
-                    column_config=col_config,
-                    key=f"df_table_{active_filter_name}_{key_suffix}"
-                )
-
-                # Exportar CSV
-                c_csv1, c_csv2 = st.columns([1.5, 1.5])
-                with c_csv1:
-                    csv_bytes = df_factors.to_csv(index=False).encode('utf-8')
-                    st.download_button(
-                        f"📥 Descargar {active_filter_name} (.CSV)",
-                        data=csv_bytes,
-                        file_name=f"TradingVolt_{active_filter_name.replace(' ', '_')}_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-                        mime="text/csv",
-                        key=f"btn_dl_{active_filter_name}_{key_suffix}"
-                    )
-                with c_csv2:
-                    st.caption(f"Mostrando {len(df_factors)} de {len(raw_tickers)} activos.")
-
-            # Columna de Gráfico Institucional Split
-            if not is_full_width and col_w_chart is not None:
-                with col_w_chart:
-                    active_sym = df_factors.iloc[0]["Symbol"] if not df_factors.empty else "PCLA"
-
-                    # Si el usuario hizo clic en una fila, seleccionar ese activo
-                    if sel_table and hasattr(sel_table, "selection") and sel_table.selection.rows:
-                        clicked_r = sel_table.selection.rows[0]
-                        if clicked_r < len(df_factors):
-                            active_sym = df_factors.iloc[clicked_r]["Symbol"]
-
-                    st.session_state[f"deepvue_chart_active_{key_suffix}"] = active_sym
-
-                    st.markdown(f"""
-                        <div style="background: rgba(14, 20, 32, 0.85); border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 8px; padding: 10px 16px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;">
-                            <div>
-                                <span style="font-size: 15px; font-weight: 800; color: #FFFFFF;">📈 Gráfico Institucional: <span style="color: #00F0FF;">${active_sym}</span></span>
-                            </div>
-                            <div style="font-size: 12px; color: #94A3B8; font-family: 'JetBrains Mono';">
-                                Fuente: Deepvue Watchlist • {active_filter_name}
-                            </div>
-                        </div>
-                    """, unsafe_allow_html=True)
-
-                    if render_chart_fn is not None:
-                        render_chart_fn(active_sym, key_suffix=f"dv_chart_{active_filter_name}_{active_sym}")
-                    else:
-                        st.info(f"Seleccionado: ${active_sym}")
+                st.info(f"Seleccionado: ${curr_active_sym}")

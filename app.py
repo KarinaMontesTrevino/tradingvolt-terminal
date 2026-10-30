@@ -1068,7 +1068,8 @@ def render_institutional_chart(ticker, key_suffix="chart"):
             tickfont=dict(family="JetBrains Mono", size=9, color="#64748B")
         )
 
-        st.plotly_chart(fig, width="stretch")
+        chart_key = f"plotly_inst_{ticker}_{key_suffix}".replace(" ", "_").replace(":", "_").replace("-", "_")
+        st.plotly_chart(fig, width="stretch", key=chart_key)
 
         # ----------------- HUD TÁCTICO DE DAILY PIVOT BREAKOUT STRATEGY (BY MIKE) -----------------
         if show_pivot_breakout and piv_diag and piv_diag.get("valid"):
@@ -2186,7 +2187,7 @@ elif nav_view == "🏠 Dashboard de Mercado":
                         tickfont=dict(family="JetBrains Mono", size=9, color="#64748B")
                     )
                 )
-                st.plotly_chart(fig_breadth, width="stretch")
+                st.plotly_chart(fig_breadth, width="stretch", key="plotly_market_breadth_main")
 
 
 # =====================================================================
