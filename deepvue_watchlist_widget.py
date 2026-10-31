@@ -230,6 +230,7 @@ def compute_watchlist_factors(tickers: List[str], force_refresh: bool = False) -
     if disk_cache_file.exists():
         try:
             import pickle
+            import concurrent.futures
             with open(disk_cache_file, "rb") as f_disk:
                 bars_store = pickle.load(f_disk)
         except Exception:
@@ -239,34 +240,43 @@ def compute_watchlist_factors(tickers: List[str], force_refresh: bool = False) -
     tickers_to_fetch = clean_tickers if force_refresh else missing
     if tickers_to_fetch:
         try:
-            chunk_size = 250
-            for i in range(0, len(tickers_to_fetch), chunk_size):
-                chunk = tickers_to_fetch[i:i + chunk_size]
-                data = yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=False, progress=False)
-                if data is None or data.empty:
+            chunk_size = 60
+            chunks = [tickers_to_fetch[i:i + chunk_size] for i in range(0, len(tickers_to_fetch), chunk_size)]
+            
+            def _fetch_dvw_chunk(chunk):
+                try:
+                    return chunk, yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=True, progress=False)
+                except Exception:
+                    return chunk, None
+
+            max_w = min(6, max(1, len(chunks)))
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as executor:
+                for chunk, data in executor.map(_fetch_dvw_chunk, chunks):
+                    if data is None or data.empty:
+                        for t in chunk:
+                            if t not in bars_store: bars_store[t] = "EMPTY"
+                        continue
                     for t in chunk:
-                        if t not in bars_store: bars_store[t] = "EMPTY"
-                    continue
-                for t in chunk:
-                    try:
-                        if isinstance(data.columns, pd.MultiIndex) and t in data.columns.levels[0]:
-                            df_t = data[t].dropna(how="all")
-                            if not df_t.empty and 'Close' in df_t:
-                                bars_store[t] = df_t
+                        try:
+                            if isinstance(data.columns, pd.MultiIndex) and t in data.columns.levels[0]:
+                                df_t = data[t].dropna(how="all")
+                                if not df_t.empty and 'Close' in df_t:
+                                    bars_store[t] = df_t
+                                elif t not in bars_store:
+                                    bars_store[t] = "EMPTY"
+                            elif not isinstance(data.columns, pd.MultiIndex) and len(chunk) == 1:
+                                df_t = data.dropna(how="all")
+                                if not df_t.empty and 'Close' in df_t:
+                                    bars_store[t] = df_t
+                                elif t not in bars_store:
+                                    bars_store[t] = "EMPTY"
                             elif t not in bars_store:
                                 bars_store[t] = "EMPTY"
-                        elif not isinstance(data.columns, pd.MultiIndex) and len(chunk) == 1:
-                            df_t = data.dropna(how="all")
-                            if not df_t.empty and 'Close' in df_t:
-                                bars_store[t] = df_t
-                            elif t not in bars_store:
+                        except Exception:
+                            if t not in bars_store:
                                 bars_store[t] = "EMPTY"
-                        elif t not in bars_store:
-                            bars_store[t] = "EMPTY"
-                    except Exception:
-                        if t not in bars_store:
-                            bars_store[t] = "EMPTY"
             import pickle
+            import concurrent.futures
             with open(disk_cache_file, "wb") as f_disk:
                 pickle.dump(bars_store, f_disk, protocol=pickle.HIGHEST_PROTOCOL)
         except Exception as e:

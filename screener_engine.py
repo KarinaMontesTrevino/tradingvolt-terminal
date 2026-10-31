@@ -2,6 +2,7 @@ import os
 import sys
 import time as _time
 import pickle
+import concurrent.futures
 import yfinance as yf
 import pandas as pd
 import numpy as np
@@ -802,6 +803,7 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
 
     now_ts = _time.time()
     import pickle
+    import concurrent.futures
     cache_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), ".quant_cache")
     os.makedirs(cache_dir, exist_ok=True)
     disk_cache_file = os.path.join(cache_dir, f"daily_bars_{provider.lower()}.pkl")
@@ -844,31 +846,39 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
 
         if not fetched_dfs:
             try:
-                chunk_size = 250
-                for i in range(0, len(missing_tickers), chunk_size):
-                    chunk = missing_tickers[i:i + chunk_size]
-                    data = yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=False, progress=False)
-                    if data is None or data.empty:
-                        continue
-                    for t in chunk:
-                        try:
-                            if isinstance(data.columns, pd.MultiIndex) and t in data.columns.levels[0]:
-                                df = data[t].dropna(how="all")
-                            elif isinstance(data.columns, pd.MultiIndex):
-                                if len(chunk) == 1:
-                                    df = data.dropna(how="all").copy()
-                                    df.columns = df.columns.get_level_values(0)
-                                else:
-                                    continue
-                            else:
-                                df = data.dropna(how="all")
-                            if not df.empty and 'Close' in df.columns:
-                                df = df.dropna(subset=['Close'])
-                                df = df[df['Close'] > 0]
-                                if not df.empty:
-                                    fetched_dfs[t] = df
-                        except Exception:
+                chunk_size = 60
+                chunks = [missing_tickers[i:i + chunk_size] for i in range(0, len(missing_tickers), chunk_size)]
+                
+                def _fetch_daily_chunk(chunk):
+                    try:
+                        return chunk, yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=True, progress=False)
+                    except Exception:
+                        return chunk, None
+
+                max_w = min(6, max(1, len(chunks)))
+                with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as executor:
+                    for chunk, data in executor.map(_fetch_daily_chunk, chunks):
+                        if data is None or data.empty:
                             continue
+                        for t in chunk:
+                            try:
+                                if isinstance(data.columns, pd.MultiIndex) and t in data.columns.levels[0]:
+                                    df = data[t].dropna(how="all")
+                                elif isinstance(data.columns, pd.MultiIndex):
+                                    if len(chunk) == 1:
+                                        df = data.dropna(how="all").copy()
+                                        df.columns = df.columns.get_level_values(0)
+                                    else:
+                                        continue
+                                else:
+                                    df = data.dropna(how="all")
+                                if not df.empty and 'Close' in df.columns:
+                                    df = df.dropna(subset=['Close'])
+                                    df = df[df['Close'] > 0]
+                                    if not df.empty:
+                                        fetched_dfs[t] = df
+                            except Exception:
+                                continue
             except Exception as e:
                 print(f"Error descargando datos diarios: {e}")
 
@@ -1418,19 +1428,30 @@ def run_daytrade_scanner(tickers: list[str], strategy: str, min_gap: float = 2.0
     # 2. Si no es Alpaca o falló, usar yfinance
     if not ticker_dfs:
         try:
-            chunk_size = 100
-            for i in range(0, len(tickers), chunk_size):
-                chunk = tickers[i:i + chunk_size]
-                data_5m = yf.download(chunk, period="5d", interval="5m", group_by="ticker", threads=False, progress=False)
-                data_1d = yf.download(chunk, period="5d", interval="1d", group_by="ticker", threads=False, progress=False)
-                for t in chunk:
-                    try:
-                        df_5m = data_5m[t].dropna(how="all") if len(chunk) > 1 else data_5m.dropna(how="all")
-                        df_1d = data_1d[t].dropna(how="all") if len(chunk) > 1 else data_1d.dropna(how="all")
-                        if not df_5m.empty and not df_1d.empty:
-                            ticker_dfs[t] = (df_5m, df_1d)
-                    except Exception:
+            chunk_size = 50
+            chunks = [tickers[i:i + chunk_size] for i in range(0, len(tickers), chunk_size)]
+            
+            def _fetch_intra_chunk(chunk):
+                try:
+                    d_5m = yf.download(chunk, period="5d", interval="5m", group_by="ticker", threads=True, progress=False)
+                    d_1d = yf.download(chunk, period="5d", interval="1d", group_by="ticker", threads=True, progress=False)
+                    return chunk, d_5m, d_1d
+                except Exception:
+                    return chunk, None, None
+
+            max_w = min(4, max(1, len(chunks)))
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as executor:
+                for chunk, data_5m, data_1d in executor.map(_fetch_intra_chunk, chunks):
+                    if data_5m is None or data_1d is None:
                         continue
+                    for t in chunk:
+                        try:
+                            df_5m = data_5m[t].dropna(how="all") if len(chunk) > 1 else data_5m.dropna(how="all")
+                            df_1d = data_1d[t].dropna(how="all") if len(chunk) > 1 else data_1d.dropna(how="all")
+                            if not df_5m.empty and not df_1d.empty:
+                                ticker_dfs[t] = (df_5m, df_1d)
+                        except Exception:
+                            continue
         except Exception as e:
             print(f"Error descargando intradía yfinance: {e}")
             if not ticker_dfs:

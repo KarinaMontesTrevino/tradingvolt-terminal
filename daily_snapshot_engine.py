@@ -1,3 +1,4 @@
+import concurrent.futures
 """
 TradingVolt • Institutional Daily Snapshot & Master Matrix Engine
 ================================================================
@@ -234,29 +235,37 @@ def generate_master_snapshot(snapshot_type: str = "OPEN", force_refresh: bool = 
     missing = [t for t in universe_tickers if t not in bars_store]
     if missing:
         try:
-            chunk_size = 250
-            for i in range(0, len(missing), chunk_size):
-                chunk = missing[i:i + chunk_size]
-                data = yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=False, progress=False)
-                if data is None or data.empty:
+            chunk_size = 60
+            chunks = [missing[i:i + chunk_size] for i in range(0, len(missing), chunk_size)]
+            
+            def _fetch_dse_chunk(chunk):
+                try:
+                    return chunk, yf.download(chunk, period="1y", interval="1d", group_by="ticker", threads=True, progress=False)
+                except Exception:
+                    return chunk, None
+
+            max_w = min(6, max(1, len(chunks)))
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as executor:
+                for chunk, data in executor.map(_fetch_dse_chunk, chunks):
+                    if data is None or data.empty:
+                        for t in chunk:
+                            bars_store[t] = "EMPTY"
+                        continue
                     for t in chunk:
-                        bars_store[t] = "EMPTY"
-                    continue
-                for t in chunk:
-                    try:
-                        if isinstance(data.columns, pd.MultiIndex) and t in data.columns.levels[0]:
-                            df_t = data[t].dropna(how="all")
-                            if not df_t.empty and 'Close' in df_t:
-                                bars_store[t] = df_t
+                        try:
+                            if isinstance(data.columns, pd.MultiIndex) and t in data.columns.levels[0]:
+                                df_t = data[t].dropna(how="all")
+                                if not df_t.empty and 'Close' in df_t:
+                                    bars_store[t] = df_t
+                                else:
+                                    bars_store[t] = "EMPTY"
+                            elif not isinstance(data.columns, pd.MultiIndex) and len(chunk) == 1:
+                                df_t = data.dropna(how="all")
+                                bars_store[t] = df_t if (not df_t.empty and 'Close' in df_t) else "EMPTY"
                             else:
                                 bars_store[t] = "EMPTY"
-                        elif not isinstance(data.columns, pd.MultiIndex) and len(chunk) == 1:
-                            df_t = data.dropna(how="all")
-                            bars_store[t] = df_t if (not df_t.empty and 'Close' in df_t) else "EMPTY"
-                        else:
+                        except Exception:
                             bars_store[t] = "EMPTY"
-                    except Exception:
-                        bars_store[t] = "EMPTY"
         except Exception as e:
             print(f"[SnapshotEngine] Error en delta download: {e}")
 
