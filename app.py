@@ -135,11 +135,6 @@ try:
 except ImportError:
     oie = None
 try:
-    import weekend_review_engine as wre
-    importlib.reload(wre)
-except ImportError:
-    wre = None
-try:
     import rrg_engine as rrg
     importlib.reload(rrg)
 except ImportError:
@@ -1243,8 +1238,7 @@ with st.sidebar:
         "⚡ Intraday Strength Watch (Bubble Map)",
         "🔄 Relative Rotation Graphs (RRG Desk)",
         "🏛️ Insider & Institutional Ownership (SEC 3, 4 & 13F)",
-        "🔔 NYSE Order Imbalance Tracker (NOI Auctions)",
-        "📑 Weekend Review Hub (Informe de Fin de Semana)"
+        "🔔 NYSE Order Imbalance Tracker (NOI Auctions)"
     ]
     cur_nav_idx = 0
     if "nav_view_sidebar" in st.session_state and st.session_state["nav_view_sidebar"] in nav_options:
@@ -6936,111 +6930,6 @@ elif "Order Imbalance" in nav_view or "NOI" in nav_view:
                 </p>
             </div>
         """, unsafe_allow_html=True)
-
-
-
-# =========================================================================
-# VISTA 17: WEEKEND REVIEW HUB (INFORME SEMANAL INSTITUCIONAL)
-# =========================================================================
-elif "Weekend Review" in nav_view or "Informe de Fin de Semana" in nav_view:
-    st.markdown('<div class="brand-title">📑 Weekend Review Hub • Informe Semanal</div>', unsafe_allow_html=True)
-    st.markdown('<div class="brand-sub">GENERADOR &amp; VISOR DEL REPORTE EJECUTIVO DE FIN DE SEMANA • EXPORTACIÓN A HTML INTERACTIVO &amp; PDF</div>', unsafe_allow_html=True)
-    st.write("")
-
-    report_file_path = os.path.join(wre.OUTPUT_DIR, "tradingvolt_weekend_review_latest.html")
-    if not os.path.exists(report_file_path):
-        report_file_path = wre.generate_weekend_review_html()
-
-    with open(report_file_path, "r", encoding="utf-8") as f:
-        html_data = f.read()
-
-    pdf_file_path = os.path.join(wre.OUTPUT_DIR, "tradingvolt_weekend_review_latest.pdf")
-    if not os.path.exists(pdf_file_path):
-        wre.compile_pdf_from_html(report_file_path, pdf_file_path)
-
-    pdf_bytes = b""
-    if os.path.exists(pdf_file_path):
-        with open(pdf_file_path, "rb") as f_pdf:
-            pdf_bytes = f_pdf.read()
-
-    # Barra superior de acciones
-    c_btn1, c_btn2, c_btn3 = st.columns([1.5, 1.5, 1.5])
-    
-    with c_btn1:
-        if st.button("⚡ Regenerar Reporte Semanal", key="btn_gen_wr", type="primary", use_container_width=True):
-            with st.spinner("Regenerando reporte institucional y compilando PDF..."):
-                report_file_path = wre.generate_weekend_review_html()
-            st.success("✅ Reporte semanal generado con datos frescos.")
-            st.rerun()
-
-    with c_btn2:
-        st.download_button(
-            label="📥 Descargar Reporte (.HTML)",
-            data=html_data,
-            file_name=f"TradingVolt_Weekend_Review_{datetime.now().strftime('%Y-%m-%d')}.html",
-            mime="text/html",
-            use_container_width=True
-        )
-
-    with c_btn3:
-        if pdf_bytes:
-            st.download_button(
-                label="📄 Descargar Reporte (.PDF)",
-                data=pdf_bytes,
-                file_name=f"TradingVolt_Weekend_Review_{datetime.now().strftime('%Y-%m-%d')}.pdf",
-                mime="application/pdf",
-                type="primary",
-                use_container_width=True
-            )
-        else:
-            st.button("⚠️ PDF Compilándose...", disabled=True, use_container_width=True)
-
-    st.markdown("""
-        <div class="callout" style="margin-top:12px; margin-bottom:16px;">
-            💡 <b>Exportación & Descarga:</b><br>
-            • <b>PDF Institucional (.PDF):</b> Descarga directa del documento de 28 páginas precompilado con resolución vectorial para archivo o impresión.<br>
-            • <b>HTML Interactivo (.HTML):</b> Descárgalo para abrirlo en cualquier navegador con gráficos interactivos, tooltips y reproductor RRG.<br>
-            • <b>Impresión Rápida:</b> Dentro del visor interactivo inferior, pulsa el botón <b>🖨️ Imprimir PDF</b> de la barra superior o presiona <kbd>Ctrl + P</kbd>.
-        </div>
-    """, unsafe_allow_html=True)
-
-    # Visor interactivo incrustado en Streamlit
-    components.html(html_data, height=950, scrolling=True)
-
-    # Sección debajo del reporte semanal: Centro de Archivo & Exportación
-    st.write("")
-    st.markdown("---")
-    st.subheader("📑 Centro de Exportación & Archivo Institucional")
-    
-    c_exp1, c_exp2 = st.columns([2, 1])
-    with c_exp1:
-        st.markdown("""
-            <div style="background:#0B101D; border:1px solid #1E293B; border-radius:10px; padding:16px;">
-                <div style="font-size:15px; font-weight:700; color:#00F0FF; margin-bottom:8px;">
-                    📄 TradingVolt Weekend Market Review • Archivo Maestro
-                </div>
-                <div style="font-size:13px; color:#94A3B8; line-height:1.6;">
-                    Documento de alta fidelidad precompilado con motor Chromium. Incluye todos los 17 módulos de análisis de mercado, mapas de calor, amplitud McClellan, posicionamiento de opciones GEX y rotación sectorial RRG.<br>
-                    • <b>Tamaño del Archivo:</b> 4.7 MB (Vectorial de alta resolución).<br>
-                    • <b>Impresión Nativa:</b> Pulsa el botón flotante <b>🖨</b> en la esquina inferior derecha del reporte o utiliza el botón directo de descarga.
-                </div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    with c_exp2:
-        st.write("")
-        if pdf_bytes:
-            st.download_button(
-                label="📥 Descargar Documento PDF Completo (4.7 MB)",
-                data=pdf_bytes,
-                file_name=f"TradingVolt_Weekend_Review_{datetime.now().strftime('%Y-%m-%d')}.pdf",
-                mime="application/pdf",
-                type="primary",
-                use_container_width=True,
-                key="btn_dl_pdf_bottom"
-            )
-        else:
-            st.info("Generando archivo PDF...")
 
 
 
