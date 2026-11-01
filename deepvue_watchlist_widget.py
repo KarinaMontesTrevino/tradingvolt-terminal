@@ -41,6 +41,11 @@ try:
 except ImportError:
     ece = None
 
+try:
+    import finviz_feed_engine as ffe
+except ImportError:
+    ffe = None
+
 BASE_DIR = Path(__file__).parent
 CACHE_DIR = BASE_DIR / ".quant_cache"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
@@ -210,6 +215,30 @@ def get_available_filter_definitions() -> Dict[str, Dict[str, Any]]:
             "category": "Snapshots Diarios",
             "tickers": [c["symbol"] for c in (dse.get_latest_snapshot("CLOSE").get("candidates", []) if dse else [])] or ["NVDA", "AAPL", "MSFT"],
             "desc": "Extracción oficial de las 4:15 PM EST."
+        },
+        "👑 Finviz: 52w New Highs": {
+            "name": "👑 Finviz: 52w New Highs",
+            "category": "Finviz Signals Live",
+            "tickers": (ffe.get_finviz_signal_candidates("👑 New 52-Week Highs (Rupturas de Máximos)") if ffe else []) or ["OSPN", "GDYN", "CDNA", "ACCO", "DFIN"],
+            "desc": "Rupturas de máximos de 52 semanas extraídas en vivo desde Finviz."
+        },
+        "🚀 Finviz: Top Gainers": {
+            "name": "🚀 Finviz: Top Gainers",
+            "category": "Finviz Signals Live",
+            "tickers": (ffe.get_finviz_signal_candidates("🚀 Top Gainers (Máximas Ganancias)") if ffe else []) or ["ONEG", "CHOW", "SLGB", "GDYN", "FMC"],
+            "desc": "Ganadores máximos del mercado en tiempo real vía Finviz."
+        },
+        "🌊 Finviz: Unusual Volume": {
+            "name": "🌊 Finviz: Unusual Volume",
+            "category": "Finviz Signals Live",
+            "tickers": (ffe.get_finviz_signal_candidates("🌊 Unusual Volume (Volumen Inusual Institucional)") if ffe else []) or ["ONEG", "HUBC", "ABOS", "BDMD"],
+            "desc": "Volumen anómalo institucional detectado en directo por Finviz."
+        },
+        "⚡ Finviz: Breakouts": {
+            "name": "⚡ Finviz: Breakouts",
+            "category": "Finviz Signals Live",
+            "tickers": (ffe.get_finviz_signal_candidates("⚡ Multiple Tops / Breakouts (Rupturas de Resistencia)") if ffe else []) or ["FROG", "TORO", "RXO", "BTX"],
+            "desc": "Rupturas de resistencia de techos múltiples identificados por Finviz."
         }
     }
 

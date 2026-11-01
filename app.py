@@ -115,6 +115,11 @@ try:
 except ImportError:
     ire = None
 try:
+    import finviz_feed_engine as ffe
+    importlib.reload(ffe)
+except ImportError:
+    ffe = None
+try:
     import intraday_strength_engine as ise
     importlib.reload(ise)
 except ImportError:
@@ -2749,6 +2754,10 @@ elif nav_view == "⚡ Screener Cuantitativo":
             f"🏛️ Dow Jones 30 ({dow30_cnt} blue-chips)",
             f"🏢 S&P 400 Mid-Cap Growth ({len(eu.SP400_MIDCAP_TICKERS)} acciones)",
             f"⚡ S&P 600 Small-Cap Momentum ({len(eu.SP600_SMALLCAP_TICKERS)} acciones)",
+            "👑 Finviz Feed: New 52-Week Highs (Señal Oficial Finviz)",
+            "🚀 Finviz Feed: Top Gainers (Máximas Ganancias Finviz)",
+            "🌊 Finviz Feed: Unusual Volume (Flujo Anómalo Finviz)",
+            "⚡ Finviz Feed: Multiple Tops Breakouts (Finviz)",
             f"🌎 Todo el Mercado EE.UU. ({full_mkt_cnt:,} acciones - Exhaustivo 1-2m)",
             "📡 Mercado en Vivo: Top Gappers, Movers & Momentum (+950 activos en juego)",
             f"🎯 Radar Activo Compartido ({radar_count_now} activos de {radar_src_now})",
@@ -2821,6 +2830,22 @@ elif nav_view == "⚡ Screener Cuantitativo":
     elif "High Momentum" in selected_universe_option:
         ticker_list = eu.HIGH_MOMENTUM_EXPANDED_TICKERS
         universe_label = f"🚀 High Momentum & Growth ({len(ticker_list)} activos)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    elif "Finviz Feed: New 52-Week Highs" in selected_universe_option:
+        ticker_list = (ffe.get_finviz_signal_candidates("👑 New 52-Week Highs (Rupturas de Máximos)") if ffe else []) or ["OSPN", "GDYN", "CDNA", "ACCO", "DFIN"]
+        universe_label = f"👑 Finviz 52w New Highs ({len(ticker_list)} activos)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    elif "Finviz Feed: Top Gainers" in selected_universe_option:
+        ticker_list = (ffe.get_finviz_signal_candidates("🚀 Top Gainers (Máximas Ganancias)") if ffe else []) or ["ONEG", "CHOW", "SLGB", "GDYN", "FMC"]
+        universe_label = f"🚀 Finviz Top Gainers ({len(ticker_list)} activos)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    elif "Finviz Feed: Unusual Volume" in selected_universe_option:
+        ticker_list = (ffe.get_finviz_signal_candidates("🌊 Unusual Volume (Volumen Inusual Institucional)") if ffe else []) or ["ONEG", "HUBC", "ABOS", "BDMD"]
+        universe_label = f"🌊 Finviz Unusual Volume ({len(ticker_list)} activos)"
+        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
+    elif "Finviz Feed: Multiple Tops" in selected_universe_option:
+        ticker_list = (ffe.get_finviz_signal_candidates("⚡ Multiple Tops / Breakouts (Rupturas de Resistencia)") if ffe else []) or ["FROG", "TORO", "RXO", "BTX"]
+        universe_label = f"⚡ Finviz Multiple Tops Breakouts ({len(ticker_list)} activos)"
         ticker_count_display = f"{len(ticker_list)} ACTIVOS"
     elif "Radar Activo Compartido" in selected_universe_option:
         ticker_list = are.get_active_radar_tickers(max_items=200) if are else ["NVDA", "PLTR", "TSLA"]
