@@ -5271,22 +5271,56 @@ elif "New Highs" in nav_view:
 
     if "nhnl_tf" not in st.session_state:
         st.session_state["nhnl_tf"] = "1D"
-    if "nhnl_active_ticker" not in st.session_state:
-        st.session_state["nhnl_active_ticker"] = "MAGH"
-    if "nhnl_active_name" not in st.session_state:
-        st.session_state["nhnl_active_name"] = "Magnitude International Ltd"
-    if "nhnl_active_sector" not in st.session_state:
-        st.session_state["nhnl_active_sector"] = "Industrials • Construction & Engineering"
+
+    # Obtención en Vivo de New Highs & New Lows (Finviz Live Breadth Engine)
+    nhnl_pack = nhle.get_live_new_highs_lows_data(force_refresh=False) if nhle else {}
+    highs_sec_map = nhnl_pack.get("highs_by_sector", nhle.NEW_HIGHS_BY_SECTOR if nhle else {})
+    lows_sec_map = nhnl_pack.get("lows_by_sector", nhle.NEW_LOWS_BY_SECTOR if nhle else {})
+
+    # Mapeo plano de todos los tickers con sus metadatos
+    all_highs = []
+    highs_meta = {}
+    for sec, sdata in highs_sec_map.items():
+        for sym in sdata.get("tickers", []):
+            if sym not in all_highs:
+                all_highs.append(sym)
+            cname = sdata.get("companies", {}).get(sym, f"Stock ({sym})")
+            highs_meta[sym] = {"name": cname, "sector": f"{sec} • 52W High"}
+
+    all_lows = []
+    lows_meta = {}
+    for sec, sdata in lows_sec_map.items():
+        for sym in sdata.get("tickers", []):
+            if sym not in all_lows:
+                all_lows.append(sym)
+            cname = sdata.get("companies", {}).get(sym, f"Stock ({sym})")
+            lows_meta[sym] = {"name": cname, "sector": f"{sec} • 52W Low"}
+
+    # Selección inteligente del activo por defecto (si no existe o si era el placeholder MAGH)
+    if "nhnl_active_ticker" not in st.session_state or st.session_state.get("nhnl_active_ticker") == "MAGH":
+        if all_highs:
+            st.session_state["nhnl_active_ticker"] = all_highs[0]
+            st.session_state["nhnl_active_name"] = highs_meta[all_highs[0]]["name"]
+            st.session_state["nhnl_active_sector"] = highs_meta[all_highs[0]]["sector"]
+        elif all_lows:
+            st.session_state["nhnl_active_ticker"] = all_lows[0]
+            st.session_state["nhnl_active_name"] = lows_meta[all_lows[0]]["name"]
+            st.session_state["nhnl_active_sector"] = lows_meta[all_lows[0]]["sector"]
+        else:
+            st.session_state["nhnl_active_ticker"] = "NVDA"
+            st.session_state["nhnl_active_name"] = "NVIDIA Corporation"
+            st.session_state["nhnl_active_sector"] = "Technology • Semiconductor"
 
     col_nhnl, col_nhnl_chart = st.columns([1.1, 1.3], gap="medium")
 
     with col_nhnl:
-        # Obtención en Vivo de New Highs & New Lows (Finviz Live Breadth Engine)
         btn_rf_nhnl = st.button("🔄 Refrescar New Highs / Lows en Vivo", key="btn_rf_nhnl_live", use_container_width=True)
-        nhnl_pack = nhle.get_live_new_highs_lows_data(force_refresh=btn_rf_nhnl) if nhle else {}
-        
-        nh_count = nhnl_pack.get("highs_total", 150)
-        nl_count = nhnl_pack.get("lows_total", 200)
+        if btn_rf_nhnl and nhle:
+            nhnl_pack = nhle.get_live_new_highs_lows_data(force_refresh=True)
+            st.rerun()
+
+        nh_count = nhnl_pack.get("highs_total", len(all_highs))
+        nl_count = nhnl_pack.get("lows_total", len(all_lows))
 
         total_hl = max(nh_count + nl_count, 1)
         pct_highs = (nh_count / total_hl) * 100
@@ -5314,33 +5348,53 @@ elif "New Highs" in nav_view:
         tab_nh, tab_groups = st.tabs(["🏛️ Desglose por Sectores", "📊 Grupos Líderes vs Rezagados"])
 
         with tab_nh:
-            view_type = st.radio("Mostrar:", ["🟢 New Highs (Máximos de 52 Semanas)", "🔴 New Lows (Mínimos de 52 Semanas)"], horizontal=True)
+            view_type = st.radio("Mostrar:", ["🟢 New Highs (Máximos de 52 Semanas)", "🔴 New Lows (Mínimos de 52 Semanas)"], horizontal=True, key="nhnl_view_mode")
+            
+            # Sincronización automática si el usuario cambia entre Highs y Lows
+            last_vt = st.session_state.get("nhnl_prev_view_mode")
+            if last_vt != view_type:
+                st.session_state["nhnl_prev_view_mode"] = view_type
+                if "New Highs" in view_type and all_highs:
+                    if st.session_state["nhnl_active_ticker"] not in all_highs:
+                        st.session_state["nhnl_active_ticker"] = all_highs[0]
+                        st.session_state["nhnl_active_name"] = highs_meta[all_highs[0]]["name"]
+                        st.session_state["nhnl_active_sector"] = highs_meta[all_highs[0]]["sector"]
+                elif "New Lows" in view_type and all_lows:
+                    if st.session_state["nhnl_active_ticker"] not in all_lows:
+                        st.session_state["nhnl_active_ticker"] = all_lows[0]
+                        st.session_state["nhnl_active_name"] = lows_meta[all_lows[0]]["name"]
+                        st.session_state["nhnl_active_sector"] = lows_meta[all_lows[0]]["sector"]
+
             if "New Highs" in view_type:
-                highs_sec_map = nhnl_pack.get("highs_by_sector", nhle.NEW_HIGHS_BY_SECTOR)
                 first_h_sec = list(highs_sec_map.keys())[0] if highs_sec_map else ""
                 for sector, data in highs_sec_map.items():
-                    with st.expander(f"🟢 **{sector}** — {data['count']} Highs ({data['share']})", expanded=(sector == first_h_sec)):
+                    is_active_sec = any(sym == st.session_state["nhnl_active_ticker"] for sym in data.get("tickers", []))
+                    with st.expander(f"🟢 **{sector}** — {data['count']} Highs ({data['share']})", expanded=(sector == first_h_sec or is_active_sec)):
                         st.caption("Haz clic en cualquier acción para graficar:")
                         cols = st.columns(4)
-                        for i, sym in enumerate(data["tickers"]):
+                        for i, sym in enumerate(data.get("tickers", [])):
                             with cols[i % 4]:
-                                if st.button(sym, key=f"nh_{sector}_{sym}", use_container_width=True):
+                                is_cur = (sym == st.session_state["nhnl_active_ticker"])
+                                btn_lbl = f"▶ {sym}" if is_cur else sym
+                                if st.button(btn_lbl, key=f"nh_{sector}_{sym}", type="primary" if is_cur else "secondary", use_container_width=True):
                                     st.session_state["nhnl_active_ticker"] = sym
-                                    st.session_state["nhnl_active_name"] = f"Stock ({sym})"
+                                    st.session_state["nhnl_active_name"] = data.get("companies", {}).get(sym, f"Stock ({sym})")
                                     st.session_state["nhnl_active_sector"] = f"{sector} • 52W High"
                                     st.rerun()
             else:
-                lows_sec_map = nhnl_pack.get("lows_by_sector", nhle.NEW_LOWS_BY_SECTOR)
                 first_l_sec = list(lows_sec_map.keys())[0] if lows_sec_map else ""
                 for sector, data in lows_sec_map.items():
-                    with st.expander(f"🔴 **{sector}** — {data['count']} Lows ({data['share']})", expanded=(sector == first_l_sec)):
+                    is_active_sec = any(sym == st.session_state["nhnl_active_ticker"] for sym in data.get("tickers", []))
+                    with st.expander(f"🔴 **{sector}** — {data['count']} Lows ({data['share']})", expanded=(sector == first_l_sec or is_active_sec)):
                         st.caption("Haz clic en cualquier acción para graficar:")
                         cols = st.columns(4)
-                        for i, sym in enumerate(data["tickers"]):
+                        for i, sym in enumerate(data.get("tickers", [])):
                             with cols[i % 4]:
-                                if st.button(sym, key=f"nl_{sector}_{sym}", use_container_width=True):
+                                is_cur = (sym == st.session_state["nhnl_active_ticker"])
+                                btn_lbl = f"▼ {sym}" if is_cur else sym
+                                if st.button(btn_lbl, key=f"nl_{sector}_{sym}", type="primary" if is_cur else "secondary", use_container_width=True):
                                     st.session_state["nhnl_active_ticker"] = sym
-                                    st.session_state["nhnl_active_name"] = f"Stock ({sym})"
+                                    st.session_state["nhnl_active_name"] = data.get("companies", {}).get(sym, f"Stock ({sym})")
                                     st.session_state["nhnl_active_sector"] = f"{sector} • 52W Low"
                                     st.rerun()
 
@@ -5348,25 +5402,55 @@ elif "New Highs" in nav_view:
             cg1, cg2 = st.columns(2)
             with cg1:
                 st.markdown("<strong style='color:#38BDF8;'>Leading Groups (Top Alzas)</strong>", unsafe_allow_html=True)
-                lead_grps = nhnl_pack.get("leading_groups", nhle.LEADING_GROUPS)
+                lead_grps = nhnl_pack.get("leading_groups", nhle.LEADING_GROUPS if nhle else [])
                 for g in lead_grps:
                     st.markdown(f"<div style='font-size:12px; padding:4px 0; border-bottom:1px solid #1F2937; display:flex; justify-content:space-between;'><span>{g['name']}</span><span style='color:#38BDF8; font-weight:bold;'>{g['count']} ({g['pct']})</span></div>", unsafe_allow_html=True)
             with cg2:
                 st.markdown("<strong style='color:#F43F5E;'>Lagging Groups (Top Bajas)</strong>", unsafe_allow_html=True)
-                lag_grps = nhnl_pack.get("lagging_groups", nhle.LAGGING_GROUPS)
+                lag_grps = nhnl_pack.get("lagging_groups", nhle.LAGGING_GROUPS if nhle else [])
                 for g in lag_grps:
                     st.markdown(f"<div style='font-size:12px; padding:4px 0; border-bottom:1px solid #1F2937; display:flex; justify-content:space-between;'><span>{g['name']}</span><span style='color:#F43F5E; font-weight:bold;'>{g['count']} ({g['pct']})</span></div>", unsafe_allow_html=True)
 
     with col_nhnl_chart:
         cur_t = st.session_state["nhnl_active_ticker"]
-        cur_n = st.session_state["nhnl_active_name"]
-        cur_s = st.session_state["nhnl_active_sector"]
+        cur_n = st.session_state.get("nhnl_active_name", f"Stock ({cur_t})")
+        cur_s = st.session_state.get("nhnl_active_sector", "Market Breadth Analysis")
+
+        # Barra de selección rápida y búsqueda manual
+        active_pool = all_highs if "New Highs" in view_type else all_lows
+        active_meta = highs_meta if "New Highs" in view_type else lows_meta
+
+        c_srch, c_drop = st.columns([1.1, 2.2])
+        with c_srch:
+            manual_in = st.text_input("🔍 Ticker Manual:", value="", placeholder="Ej: NVDA...", key="nhnl_quick_search").strip().upper()
+            if manual_in and manual_in != cur_t:
+                st.session_state["nhnl_active_ticker"] = manual_in
+                st.session_state["nhnl_active_name"] = f"Stock ({manual_in})"
+                st.session_state["nhnl_active_sector"] = "Manual Direct Chart"
+                st.rerun()
+
+        with c_drop:
+            pool_opts = active_pool if active_pool else [cur_t]
+            cur_pool_idx = pool_opts.index(cur_t) if cur_t in pool_opts else 0
+            sel_sym = st.selectbox(
+                f"⚡ Activos 52W ({len(pool_opts)}):",
+                options=pool_opts,
+                index=cur_pool_idx,
+                key="nhnl_pool_selector",
+                format_func=lambda s: f"{s} • {active_meta.get(s, {}).get('name', '')[:28]}" if s in active_meta else s
+            )
+            if sel_sym and sel_sym != cur_t:
+                st.session_state["nhnl_active_ticker"] = sel_sym
+                st.session_state["nhnl_active_name"] = active_meta.get(sel_sym, {}).get("name", f"Stock ({sel_sym})")
+                st.session_state["nhnl_active_sector"] = active_meta.get(sel_sym, {}).get("sector", "52W Universe")
+                st.rerun()
 
         tf_cols = st.columns([1, 1, 1, 1, 1, 1, 1, 3])
         tf_options = ["5m", "15m", "1h", "4h", "1D", "1W", "1M"]
         for idx, tf in enumerate(tf_options):
             with tf_cols[idx]:
-                if st.button(tf, key=f"btn_nhnl_tf_{tf}", use_container_width=True):
+                is_cur_tf = (tf == st.session_state["nhnl_tf"])
+                if st.button(tf, key=f"btn_nhnl_tf_{tf}", type="primary" if is_cur_tf else "secondary", use_container_width=True):
                     st.session_state["nhnl_tf"] = tf
                     st.rerun()
 
@@ -5376,7 +5460,12 @@ elif "New Highs" in nav_view:
             company_name=cur_n,
             sector_info=cur_s
         )
-        st.plotly_chart(fig_nhnl, use_container_width=True, config={"displayModeBar": True})
+        st.plotly_chart(
+            fig_nhnl,
+            use_container_width=True,
+            config={"displayModeBar": True},
+            key=f"nhnl_chart_{cur_t}_{st.session_state['nhnl_tf']}"
+        )
         
         st.markdown(f"""
             <div style="background:#111827; border:1px solid #1F2937; border-radius:8px; padding:12px 16px; margin-top:8px;">
@@ -5392,7 +5481,6 @@ elif "New Highs" in nav_view:
                 </div>
             </div>
         """, unsafe_allow_html=True)
-
 
 # =========================================================================
 # VISTA 3: COT POSITIONING (COMMITMENTS OF TRADERS)

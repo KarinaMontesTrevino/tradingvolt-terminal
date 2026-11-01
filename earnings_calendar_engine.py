@@ -371,15 +371,7 @@ def get_stock_ohlcv(symbol: str, timeframe: str = "1D") -> pd.DataFrame:
             df.columns = df.columns.get_level_values(0)
                 
         if df.empty or len(df) < 5:
-            dates = pd.date_range(end=datetime.now(), periods=100, freq='D')
-            base_p = 50.0
-            noise = np.cumsum(np.random.normal(0, 1.2, 100))
-            closes = np.maximum(5.0, base_p + noise)
-            highs = closes * (1 + np.random.uniform(0.005, 0.03, 100))
-            lows = closes * (1 - np.random.uniform(0.005, 0.03, 100))
-            opens = (highs + lows) / 2
-            vols = np.random.randint(500000, 5000000, 100)
-            df = pd.DataFrame({'Open': opens, 'High': highs, 'Low': lows, 'Close': closes, 'Volume': vols}, index=dates)
+            return pd.DataFrame()
             
         # Calcular Indicadores Técnicos Clave
         df['EMA10'] = df['Close'].ewm(span=10, adjust=False).mean()
