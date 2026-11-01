@@ -5287,14 +5287,12 @@ elif "New Highs" in nav_view:
     col_nhnl, col_nhnl_chart = st.columns([1.1, 1.3], gap="medium")
 
     with col_nhnl:
-        # Barra de Amplitud de Mercado New Highs vs New Lows en Vivo (Calculada en Tiempo Real)
-        live_b = mde.fetch_market_breadth(provider=provider_str, alpaca_key=alpaca_key, alpaca_secret=alpaca_secret) if mde else None
-        if live_b and "new_highs_lows" in live_b:
-            nh_count = live_b["new_highs_lows"]["highs"]
-            nl_count = live_b["new_highs_lows"]["lows"]
-        else:
-            nh_count = getattr(nhle, 'NEW_HIGHS_TOTAL', 138)
-            nl_count = getattr(nhle, 'NEW_LOWS_TOTAL', 183)
+        # Obtención en Vivo de New Highs & New Lows (Finviz Live Breadth Engine)
+        btn_rf_nhnl = st.button("🔄 Refrescar New Highs / Lows en Vivo", key="btn_rf_nhnl_live", use_container_width=True)
+        nhnl_pack = nhle.get_live_new_highs_lows_data(force_refresh=btn_rf_nhnl) if nhle else {}
+        
+        nh_count = nhnl_pack.get("highs_total", 150)
+        nl_count = nhnl_pack.get("lows_total", 200)
 
         total_hl = max(nh_count + nl_count, 1)
         pct_highs = (nh_count / total_hl) * 100
@@ -5324,8 +5322,10 @@ elif "New Highs" in nav_view:
         with tab_nh:
             view_type = st.radio("Mostrar:", ["🟢 New Highs (Máximos de 52 Semanas)", "🔴 New Lows (Mínimos de 52 Semanas)"], horizontal=True)
             if "New Highs" in view_type:
-                for sector, data in nhle.NEW_HIGHS_BY_SECTOR.items():
-                    with st.expander(f"🟢 **{sector}** — {data['count']} Highs ({data['share']})", expanded=(sector == "Energy")):
+                highs_sec_map = nhnl_pack.get("highs_by_sector", nhle.NEW_HIGHS_BY_SECTOR)
+                first_h_sec = list(highs_sec_map.keys())[0] if highs_sec_map else ""
+                for sector, data in highs_sec_map.items():
+                    with st.expander(f"🟢 **{sector}** — {data['count']} Highs ({data['share']})", expanded=(sector == first_h_sec)):
                         st.caption("Haz clic en cualquier acción para graficar:")
                         cols = st.columns(4)
                         for i, sym in enumerate(data["tickers"]):
@@ -5336,8 +5336,10 @@ elif "New Highs" in nav_view:
                                     st.session_state["nhnl_active_sector"] = f"{sector} • 52W High"
                                     st.rerun()
             else:
-                for sector, data in nhle.NEW_LOWS_BY_SECTOR.items():
-                    with st.expander(f"🔴 **{sector}** — {data['count']} Lows ({data['share']})", expanded=(sector == "Capital Goods")):
+                lows_sec_map = nhnl_pack.get("lows_by_sector", nhle.NEW_LOWS_BY_SECTOR)
+                first_l_sec = list(lows_sec_map.keys())[0] if lows_sec_map else ""
+                for sector, data in lows_sec_map.items():
+                    with st.expander(f"🔴 **{sector}** — {data['count']} Lows ({data['share']})", expanded=(sector == first_l_sec)):
                         st.caption("Haz clic en cualquier acción para graficar:")
                         cols = st.columns(4)
                         for i, sym in enumerate(data["tickers"]):
@@ -5352,11 +5354,13 @@ elif "New Highs" in nav_view:
             cg1, cg2 = st.columns(2)
             with cg1:
                 st.markdown("<strong style='color:#38BDF8;'>Leading Groups (Top Alzas)</strong>", unsafe_allow_html=True)
-                for g in nhle.LEADING_GROUPS:
+                lead_grps = nhnl_pack.get("leading_groups", nhle.LEADING_GROUPS)
+                for g in lead_grps:
                     st.markdown(f"<div style='font-size:12px; padding:4px 0; border-bottom:1px solid #1F2937; display:flex; justify-content:space-between;'><span>{g['name']}</span><span style='color:#38BDF8; font-weight:bold;'>{g['count']} ({g['pct']})</span></div>", unsafe_allow_html=True)
             with cg2:
                 st.markdown("<strong style='color:#F43F5E;'>Lagging Groups (Top Bajas)</strong>", unsafe_allow_html=True)
-                for g in nhle.LAGGING_GROUPS:
+                lag_grps = nhnl_pack.get("lagging_groups", nhle.LAGGING_GROUPS)
+                for g in lag_grps:
                     st.markdown(f"<div style='font-size:12px; padding:4px 0; border-bottom:1px solid #1F2937; display:flex; justify-content:space-between;'><span>{g['name']}</span><span style='color:#F43F5E; font-weight:bold;'>{g['count']} ({g['pct']})</span></div>", unsafe_allow_html=True)
 
     with col_nhnl_chart:
