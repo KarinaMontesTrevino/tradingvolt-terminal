@@ -1,0 +1,3103 @@
+{
+  "metadata": {
+    "title": "Base de Datos de Estudios Cuantitativos: Richard Dennis Turtle Trading System",
+    "author": "TradingVolt Quantitative Research Desk",
+    "updated_at": "2026-11-01",
+    "universe": [
+      "Gold Futures (GC=F)",
+      "Nasdaq 100 ETF (QQQ)",
+      "Nasdaq 100 Futures (NQ=F)",
+      "S&P 500 ETF (SPY)",
+      "S&P 500 Futures (ES=F)",
+      "Crude Oil Futures (CL=F)",
+      "Silver Futures (SI=F)",
+      "Copper Futures (HG=F)",
+      "Soybean Futures (ZS=F)",
+      "Corn Futures (ZC=F)",
+      "Natural Gas Futures (NG=F)"
+    ],
+    "description": "Auditor\u00eda emp\u00edrica y simulaci\u00f3n barra a barra del sistema can\u00f3nico de seguimiento de tendencias con dimensionamiento por volatilidad N y piramidaci\u00f3n hasta 4 unidades."
+  },
+  "studies": {
+    "GC=F": {
+      "label": "Gold Futures (GC=F)",
+      "symbol": "GC=F",
+      "system_2_metrics": {
+        "Total_Return_Pct": 555.64,
+        "CAGR_Pct": 24.45,
+        "Annualized_Vol_Pct": 33.68,
+        "Sharpe_Ratio": 0.76,
+        "Max_Drawdown_Pct": -50.1,
+        "Calmar_Ratio": 0.49,
+        "Total_Trades": 43,
+        "Win_Rate_Pct": 27.91,
+        "Profit_Factor": 2.71,
+        "Avg_Win": 68558.54,
+        "Avg_Loss": 9808.34,
+        "Win_Loss_Ratio": 6.99
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 747.83,
+        "CAGR_Pct": 28.23,
+        "Annualized_Vol_Pct": 31.84,
+        "Sharpe_Ratio": 0.88,
+        "Max_Drawdown_Pct": -31.91,
+        "Calmar_Ratio": 0.88,
+        "Total_Trades": 25,
+        "Win_Rate_Pct": 44.0,
+        "Profit_Factor": 5.86,
+        "Avg_Win": 81970.89,
+        "Avg_Loss": 10989.2,
+        "Win_Loss_Ratio": 7.46
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": 92.05,
+        "CAGR_Pct": 7.75,
+        "Annualized_Vol_Pct": 30.66,
+        "Sharpe_Ratio": 0.33,
+        "Max_Drawdown_Pct": -47.53,
+        "Calmar_Ratio": 0.16,
+        "Total_Trades": 104,
+        "Win_Rate_Pct": 21.15,
+        "Profit_Factor": 1.21,
+        "Avg_Win": 18578.11,
+        "Avg_Loss": 4121.95,
+        "Win_Loss_Ratio": 4.51
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2024-07-16",
+          "Exit_Date": "2024-07-19",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 2463.56,
+          "Exit_Price": 2401.61,
+          "PnL": -8549.84,
+          "Return_Pct": -3.48,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2024-08-01",
+          "Exit_Date": "2024-08-05",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 2503.05,
+          "Exit_Price": 2434.05,
+          "PnL": -8487.1,
+          "Return_Pct": -3.57,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2024-08-16",
+          "Exit_Date": "2024-11-11",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 2558.87,
+          "Exit_Price": 2650.3,
+          "PnL": 20845.37,
+          "Return_Pct": 9.1,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2025-01-24",
+          "Exit_Date": "2025-05-14",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 2810.43,
+          "Exit_Price": 3209.4,
+          "PnL": 109715.85,
+          "Return_Pct": 43.92,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2025-08-07",
+          "Exit_Date": "2025-08-11",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 3489.75,
+          "Exit_Price": 3395.62,
+          "PnL": -12425.08,
+          "Return_Pct": -3.46,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-09-02",
+          "Exit_Date": "2026-03-18",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 3601.22,
+          "Exit_Price": 4868.5,
+          "PnL": 354837.51,
+          "Return_Pct": 102.23,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-03-23",
+          "Exit_Date": "2026-03-31",
+          "Direction": "SHORT",
+          "Units": 1,
+          "Avg_Entry": 4284.3,
+          "Exit_Price": 4634.78,
+          "PnL": -14019.25,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-06-10",
+          "Exit_Date": "2026-06-15",
+          "Direction": "SHORT",
+          "Units": 1,
+          "Avg_Entry": 4100.0,
+          "Exit_Price": 4334.47,
+          "PnL": -13599.06,
+          "Return_Pct": -1.98,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-06-24",
+          "Exit_Date": "2026-08-05",
+          "Direction": "SHORT",
+          "Units": 2,
+          "Avg_Entry": 4014.63,
+          "Exit_Price": 4237.45,
+          "PnL": -23396.86,
+          "Return_Pct": -3.47,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-08-19",
+          "Exit_Date": "2026-08-28",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 4654.65,
+          "Exit_Price": 4525.57,
+          "PnL": -32271.74,
+          "Return_Pct": -4.96,
+          "Exit_Reason": "STOP_LOSS_2N"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2025-09-03",
+          "type": "PYRAMID_U2",
+          "price": 3600.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2025-09-05",
+          "type": "PYRAMID_U3",
+          "price": 3625.05,
+          "direction": "LONG"
+        },
+        {
+          "date": "2025-09-08",
+          "type": "PYRAMID_U4",
+          "price": 3650.36,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-18",
+          "type": "EXIT",
+          "price": 4868.5,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-23",
+          "type": "ENTRY_U1",
+          "price": 4284.3,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-31",
+          "type": "EXIT",
+          "price": 4634.78,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-10",
+          "type": "ENTRY_U1",
+          "price": 4100.0,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-15",
+          "type": "EXIT",
+          "price": 4334.47,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-24",
+          "type": "ENTRY_U1",
+          "price": 4046.2,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-25",
+          "type": "PYRAMID_U2",
+          "price": 3982.45,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-08-05",
+          "type": "EXIT",
+          "price": 4237.45,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-08-19",
+          "type": "ENTRY_U1",
+          "price": 4577.3,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-21",
+          "type": "PYRAMID_U2",
+          "price": 4629.38,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-24",
+          "type": "PYRAMID_U3",
+          "price": 4681.99,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-25",
+          "type": "PYRAMID_U4",
+          "price": 4734.13,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-28",
+          "type": "EXIT",
+          "price": 4525.57,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-22",
+          "type": "ENTRY_U1",
+          "price": 4091.2,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-10-23",
+          "type": "PYRAMID_U2",
+          "price": 4042.2,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-10-26",
+          "type": "PYRAMID_U3",
+          "price": 4000.27,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-10-30",
+          "type": "PYRAMID_U4",
+          "price": 3960.16,
+          "direction": "SHORT"
+        }
+      ]
+    },
+    "QQQ": {
+      "label": "Nasdaq 100 ETF (QQQ)",
+      "symbol": "QQQ",
+      "system_2_metrics": {
+        "Total_Return_Pct": 51.32,
+        "CAGR_Pct": 4.93,
+        "Annualized_Vol_Pct": 27.94,
+        "Sharpe_Ratio": 0.24,
+        "Max_Drawdown_Pct": -35.03,
+        "Calmar_Ratio": 0.14,
+        "Total_Trades": 54,
+        "Win_Rate_Pct": 24.07,
+        "Profit_Factor": 1.29,
+        "Avg_Win": 17296.39,
+        "Avg_Loss": 4254.75,
+        "Win_Loss_Ratio": 4.07
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 208.91,
+        "CAGR_Pct": 14.01,
+        "Annualized_Vol_Pct": 22.69,
+        "Sharpe_Ratio": 0.61,
+        "Max_Drawdown_Pct": -28.5,
+        "Calmar_Ratio": 0.49,
+        "Total_Trades": 29,
+        "Win_Rate_Pct": 37.93,
+        "Profit_Factor": 2.7,
+        "Avg_Win": 30183.58,
+        "Avg_Loss": 6839.31,
+        "Win_Loss_Ratio": 4.41
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": -52.16,
+        "CAGR_Pct": -8.09,
+        "Annualized_Vol_Pct": 29.67,
+        "Sharpe_Ratio": -0.2,
+        "Max_Drawdown_Pct": -58.83,
+        "Calmar_Ratio": -0.14,
+        "Total_Trades": 119,
+        "Win_Rate_Pct": 24.37,
+        "Profit_Factor": 0.76,
+        "Avg_Win": 5788.73,
+        "Avg_Loss": 2447.99,
+        "Win_Loss_Ratio": 2.36
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-02-14",
+          "Exit_Date": "2025-02-24",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 533.75,
+          "Exit_Price": 517.62,
+          "PnL": -2596.77,
+          "Return_Pct": -1.99,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-02-28",
+          "Exit_Date": "2025-05-01",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 489.03,
+          "Exit_Price": 480.05,
+          "PnL": 5070.24,
+          "Return_Pct": 3.97,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2025-05-14",
+          "Exit_Date": "2025-11-18",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 525.17,
+          "Exit_Price": 594.38,
+          "PnL": 35089.83,
+          "Return_Pct": 26.4,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-01-27",
+          "Exit_Date": "2026-01-29",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 630.6,
+          "Exit_Price": 617.06,
+          "PnL": -5550.53,
+          "Return_Pct": -3.3,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-02-17",
+          "Exit_Date": "2026-02-25",
+          "Direction": "SHORT",
+          "Units": 1,
+          "Avg_Entry": 592.74,
+          "Exit_Price": 612.62,
+          "PnL": -3240.42,
+          "Return_Pct": -1.99,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-03-03",
+          "Exit_Date": "2026-03-10",
+          "Direction": "SHORT",
+          "Units": 1,
+          "Avg_Entry": 591.33,
+          "Exit_Price": 610.93,
+          "PnL": -3175.81,
+          "Return_Pct": -1.99,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-03-19",
+          "Exit_Date": "2026-04-08",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 579.34,
+          "Exit_Price": 607.41,
+          "PnL": -17346.21,
+          "Return_Pct": -11.12,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-04-15",
+          "Exit_Date": "2026-06-09",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 642.76,
+          "Exit_Price": 693.76,
+          "PnL": 25910.04,
+          "Return_Pct": 18.68,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-07-27",
+          "Exit_Date": "2026-08-03",
+          "Direction": "SHORT",
+          "Units": 3,
+          "Avg_Entry": 674.62,
+          "Exit_Price": 696.1,
+          "PnL": -7368.42,
+          "Return_Pct": -4.48,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-09-21",
+          "Exit_Date": "2026-10-14",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 743.43,
+          "Exit_Price": 732.43,
+          "PnL": -6828.08,
+          "Return_Pct": -4.34,
+          "Exit_Reason": "STOP_LOSS_2N"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2026-03-19",
+          "type": "ENTRY_U1",
+          "price": 587.51,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-20",
+          "type": "PYRAMID_U2",
+          "price": 582.53,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-26",
+          "type": "PYRAMID_U3",
+          "price": 577.53,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-27",
+          "type": "PYRAMID_U4",
+          "price": 569.59,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-08",
+          "type": "EXIT",
+          "price": 607.41,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-15",
+          "type": "ENTRY_U1",
+          "price": 634.44,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-16",
+          "type": "PYRAMID_U2",
+          "price": 639.98,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-17",
+          "type": "PYRAMID_U3",
+          "price": 645.42,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-22",
+          "type": "PYRAMID_U4",
+          "price": 650.65,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-09",
+          "type": "EXIT",
+          "price": 693.76,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-07-27",
+          "type": "ENTRY_U1",
+          "price": 681.77,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-07-28",
+          "type": "PYRAMID_U2",
+          "price": 674.6,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-07-29",
+          "type": "PYRAMID_U3",
+          "price": 667.43,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-08-03",
+          "type": "EXIT",
+          "price": 696.1,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-09-21",
+          "type": "ENTRY_U1",
+          "price": 733.82,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-22",
+          "type": "PYRAMID_U2",
+          "price": 740.98,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-23",
+          "type": "PYRAMID_U3",
+          "price": 746.97,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-02",
+          "type": "PYRAMID_U4",
+          "price": 751.82,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-14",
+          "type": "EXIT",
+          "price": 732.43,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-30",
+          "type": "ENTRY_U1",
+          "price": 697.21,
+          "direction": "SHORT"
+        }
+      ]
+    },
+    "NQ=F": {
+      "label": "Nasdaq 100 Futures (NQ=F)",
+      "symbol": "NQ=F",
+      "system_2_metrics": {
+        "Total_Return_Pct": 1.18,
+        "CAGR_Pct": 0.14,
+        "Annualized_Vol_Pct": 22.61,
+        "Sharpe_Ratio": 0.03,
+        "Max_Drawdown_Pct": -34.95,
+        "Calmar_Ratio": 0.0,
+        "Total_Trades": 57,
+        "Win_Rate_Pct": 22.81,
+        "Profit_Factor": 1.01,
+        "Avg_Win": 9532.81,
+        "Avg_Loss": 2794.99,
+        "Win_Loss_Ratio": 3.41
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 84.21,
+        "CAGR_Pct": 7.36,
+        "Annualized_Vol_Pct": 19.72,
+        "Sharpe_Ratio": 0.36,
+        "Max_Drawdown_Pct": -25.56,
+        "Calmar_Ratio": 0.29,
+        "Total_Trades": 33,
+        "Win_Rate_Pct": 33.33,
+        "Profit_Factor": 1.84,
+        "Avg_Win": 16729.32,
+        "Avg_Loss": 4536.71,
+        "Win_Loss_Ratio": 3.69
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": -32.78,
+        "CAGR_Pct": -4.44,
+        "Annualized_Vol_Pct": 23.17,
+        "Sharpe_Ratio": -0.17,
+        "Max_Drawdown_Pct": -40.96,
+        "Calmar_Ratio": -0.11,
+        "Total_Trades": 113,
+        "Win_Rate_Pct": 26.55,
+        "Profit_Factor": 0.81,
+        "Avg_Win": 4655.85,
+        "Avg_Loss": 2083.29,
+        "Win_Loss_Ratio": 2.23
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-02-27",
+          "Exit_Date": "2025-05-01",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 20383.13,
+          "Exit_Price": 20044.25,
+          "PnL": 2711.06,
+          "Return_Pct": 2.76,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2025-05-15",
+          "Exit_Date": "2025-08-01",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 21859.99,
+          "Exit_Price": 22779.75,
+          "PnL": 5518.55,
+          "Return_Pct": 5.47,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2025-08-12",
+          "Exit_Date": "2025-08-20",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 23924.2,
+          "Exit_Price": 23369.82,
+          "PnL": -3326.29,
+          "Return_Pct": -3.13,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-09-12",
+          "Exit_Date": "2025-11-18",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 24288.88,
+          "Exit_Price": 24626.0,
+          "PnL": 4045.45,
+          "Return_Pct": 3.93,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-01-27",
+          "Exit_Date": "2026-02-02",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 26141.52,
+          "Exit_Price": 25469.36,
+          "PnL": -2688.67,
+          "Return_Pct": -2.51,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-03-09",
+          "Exit_Date": "2026-04-01",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 23744.59,
+          "Exit_Price": 24232.41,
+          "PnL": -3902.58,
+          "Return_Pct": -3.74,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-04-15",
+          "Exit_Date": "2026-06-09",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 26805.72,
+          "Exit_Price": 28663.0,
+          "PnL": 9286.38,
+          "Return_Pct": 9.24,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-06-22",
+          "Exit_Date": "2026-06-24",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 30807.75,
+          "Exit_Price": 29483.81,
+          "PnL": -1323.94,
+          "Return_Pct": -1.21,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-07-27",
+          "Exit_Date": "2026-08-03",
+          "Direction": "SHORT",
+          "Units": 3,
+          "Avg_Entry": 27875.32,
+          "Exit_Price": 28883.9,
+          "PnL": -3025.75,
+          "Return_Pct": -2.79,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-09-21",
+          "Exit_Date": "2026-10-14",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 30857.28,
+          "Exit_Price": 30299.13,
+          "PnL": -4465.21,
+          "Return_Pct": -4.24,
+          "Exit_Reason": "STOP_LOSS_2N"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2026-03-27",
+          "type": "PYRAMID_U3",
+          "price": 23647.11,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-30",
+          "type": "PYRAMID_U4",
+          "price": 23189.5,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-01",
+          "type": "EXIT",
+          "price": 24232.41,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-15",
+          "type": "ENTRY_U1",
+          "price": 26349.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-17",
+          "type": "PYRAMID_U2",
+          "price": 26607.66,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-21",
+          "type": "PYRAMID_U3",
+          "price": 26858.98,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-22",
+          "type": "PYRAMID_U4",
+          "price": 27106.49,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-09",
+          "type": "EXIT",
+          "price": 28663.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-22",
+          "type": "ENTRY_U1",
+          "price": 30807.75,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-24",
+          "type": "EXIT",
+          "price": 29483.81,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-07-27",
+          "type": "ENTRY_U1",
+          "price": 28212.5,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-07-28",
+          "type": "PYRAMID_U2",
+          "price": 27874.9,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-07-29",
+          "type": "PYRAMID_U3",
+          "price": 27538.56,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-08-03",
+          "type": "EXIT",
+          "price": 28883.9,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-09-21",
+          "type": "ENTRY_U1",
+          "price": 30343.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-22",
+          "type": "PYRAMID_U2",
+          "price": 30780.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-23",
+          "type": "PYRAMID_U3",
+          "price": 31031.07,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-02",
+          "type": "PYRAMID_U4",
+          "price": 31275.05,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-14",
+          "type": "EXIT",
+          "price": 30299.13,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-30",
+          "type": "ENTRY_U1",
+          "price": 28763.75,
+          "direction": "SHORT"
+        }
+      ]
+    },
+    "SPY": {
+      "label": "S&P 500 ETF (SPY)",
+      "symbol": "SPY",
+      "system_2_metrics": {
+        "Total_Return_Pct": -7.64,
+        "CAGR_Pct": -0.92,
+        "Annualized_Vol_Pct": 28.28,
+        "Sharpe_Ratio": 0.04,
+        "Max_Drawdown_Pct": -58.04,
+        "Calmar_Ratio": -0.02,
+        "Total_Trades": 57,
+        "Win_Rate_Pct": 22.81,
+        "Profit_Factor": 0.94,
+        "Avg_Win": 9438.63,
+        "Avg_Loss": 2962.43,
+        "Win_Loss_Ratio": 3.19
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 91.37,
+        "CAGR_Pct": 7.83,
+        "Annualized_Vol_Pct": 21.59,
+        "Sharpe_Ratio": 0.37,
+        "Max_Drawdown_Pct": -38.76,
+        "Calmar_Ratio": 0.2,
+        "Total_Trades": 39,
+        "Win_Rate_Pct": 30.77,
+        "Profit_Factor": 1.85,
+        "Avg_Win": 16524.12,
+        "Avg_Loss": 3959.87,
+        "Win_Loss_Ratio": 4.17
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": -33.9,
+        "CAGR_Pct": -4.62,
+        "Annualized_Vol_Pct": 30.17,
+        "Sharpe_Ratio": -0.07,
+        "Max_Drawdown_Pct": -59.52,
+        "Calmar_Ratio": -0.08,
+        "Total_Trades": 114,
+        "Win_Rate_Pct": 26.32,
+        "Profit_Factor": 0.86,
+        "Avg_Win": 7179.28,
+        "Avg_Loss": 2970.9,
+        "Win_Loss_Ratio": 2.42
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-01-22",
+          "Exit_Date": "2025-01-27",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 597.02,
+          "Exit_Price": 583.35,
+          "PnL": -3281.17,
+          "Return_Pct": -4.02,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-02-14",
+          "Exit_Date": "2025-02-24",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 599.01,
+          "Exit_Price": 585.94,
+          "PnL": -1555.78,
+          "Return_Pct": -1.99,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-03-04",
+          "Exit_Date": "2025-05-02",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 558.37,
+          "Exit_Price": 555.52,
+          "PnL": 1090.91,
+          "Return_Pct": 1.42,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2025-06-03",
+          "Exit_Date": "2025-11-18",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 592.76,
+          "Exit_Price": 654.15,
+          "PnL": 21734.16,
+          "Return_Pct": 27.91,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2025-12-23",
+          "Exit_Date": "2026-01-20",
+          "Direction": "LONG",
+          "Units": 3,
+          "Avg_Entry": 685.88,
+          "Exit_Price": 676.21,
+          "PnL": -4265.35,
+          "Return_Pct": -4.28,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-01-27",
+          "Exit_Date": "2026-02-04",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 690.7,
+          "Exit_Price": 678.05,
+          "PnL": -1896.08,
+          "Return_Pct": -1.99,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-03-09",
+          "Exit_Date": "2026-04-08",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 654.4,
+          "Exit_Price": 672.98,
+          "PnL": -7861.77,
+          "Return_Pct": -8.41,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-04-15",
+          "Exit_Date": "2026-06-09",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 700.03,
+          "Exit_Price": 727.84,
+          "PnL": 10234.48,
+          "Return_Pct": 11.96,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-08-03",
+          "Exit_Date": "2026-09-01",
+          "Direction": "LONG",
+          "Units": 3,
+          "Avg_Entry": 763.69,
+          "Exit_Price": 758.64,
+          "PnL": -1582.01,
+          "Return_Pct": -1.65,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-10-06",
+          "Exit_Date": "2026-10-15",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 778.15,
+          "Exit_Price": 764.54,
+          "PnL": -1878.11,
+          "Return_Pct": -1.99,
+          "Exit_Reason": "STOP_LOSS_2N"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2026-01-09",
+          "type": "PYRAMID_U3",
+          "price": 688.84,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-01-20",
+          "type": "EXIT",
+          "price": 676.21,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-01-27",
+          "type": "ENTRY_U1",
+          "price": 690.7,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-02-04",
+          "type": "EXIT",
+          "price": 678.05,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-09",
+          "type": "ENTRY_U1",
+          "price": 661.23,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-13",
+          "type": "PYRAMID_U2",
+          "price": 656.78,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-19",
+          "type": "PYRAMID_U3",
+          "price": 651.88,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-20",
+          "type": "PYRAMID_U4",
+          "price": 647.46,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-08",
+          "type": "EXIT",
+          "price": 672.98,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-15",
+          "type": "ENTRY_U1",
+          "price": 692.43,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-16",
+          "type": "PYRAMID_U2",
+          "price": 697.53,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-17",
+          "type": "PYRAMID_U3",
+          "price": 702.58,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-21",
+          "type": "PYRAMID_U4",
+          "price": 707.06,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-09",
+          "type": "EXIT",
+          "price": 727.84,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-03",
+          "type": "ENTRY_U1",
+          "price": 756.57,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-04",
+          "type": "PYRAMID_U2",
+          "price": 761.1,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-05",
+          "type": "PYRAMID_U3",
+          "price": 773.93,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-01",
+          "type": "EXIT",
+          "price": 758.64,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-06",
+          "type": "ENTRY_U1",
+          "price": 778.15,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-15",
+          "type": "EXIT",
+          "price": 764.54,
+          "direction": "LONG"
+        }
+      ]
+    },
+    "ES=F": {
+      "label": "S&P 500 Futures (ES=F)",
+      "symbol": "ES=F",
+      "system_2_metrics": {
+        "Total_Return_Pct": -36.14,
+        "CAGR_Pct": -5.08,
+        "Annualized_Vol_Pct": 23.67,
+        "Sharpe_Ratio": -0.19,
+        "Max_Drawdown_Pct": -52.69,
+        "Calmar_Ratio": -0.1,
+        "Total_Trades": 61,
+        "Win_Rate_Pct": 21.31,
+        "Profit_Factor": 0.72,
+        "Avg_Win": 7039.58,
+        "Avg_Loss": 2659.46,
+        "Win_Loss_Ratio": 2.65
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 14.47,
+        "CAGR_Pct": 1.58,
+        "Annualized_Vol_Pct": 18.61,
+        "Sharpe_Ratio": 0.07,
+        "Max_Drawdown_Pct": -38.37,
+        "Calmar_Ratio": 0.04,
+        "Total_Trades": 42,
+        "Win_Rate_Pct": 26.19,
+        "Profit_Factor": 1.12,
+        "Avg_Win": 11898.84,
+        "Avg_Loss": 3755.54,
+        "Win_Loss_Ratio": 3.17
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": -54.41,
+        "CAGR_Pct": -8.59,
+        "Annualized_Vol_Pct": 25.42,
+        "Sharpe_Ratio": -0.31,
+        "Max_Drawdown_Pct": -62.06,
+        "Calmar_Ratio": -0.14,
+        "Total_Trades": 112,
+        "Win_Rate_Pct": 25.89,
+        "Profit_Factor": 0.7,
+        "Avg_Win": 4349.86,
+        "Avg_Loss": 2180.1,
+        "Win_Loss_Ratio": 2.0
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-08-28",
+          "Exit_Date": "2025-09-02",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 6508.75,
+          "Exit_Price": 6380.38,
+          "PnL": -1412.02,
+          "Return_Pct": -1.87,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-09-05",
+          "Exit_Date": "2025-10-10",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 6571.23,
+          "Exit_Price": 6554.0,
+          "PnL": -775.51,
+          "Return_Pct": -1.05,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2025-10-24",
+          "Exit_Date": "2025-11-05",
+          "Direction": "LONG",
+          "Units": 3,
+          "Avg_Entry": 6871.2,
+          "Exit_Price": 6762.96,
+          "PnL": -2922.31,
+          "Return_Pct": -3.98,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-12-23",
+          "Exit_Date": "2026-01-20",
+          "Direction": "LONG",
+          "Units": 3,
+          "Avg_Entry": 6992.39,
+          "Exit_Price": 6885.95,
+          "PnL": -2873.91,
+          "Return_Pct": -4.08,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-01-28",
+          "Exit_Date": "2026-02-02",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 7036.25,
+          "Exit_Price": 6888.49,
+          "PnL": -1329.84,
+          "Return_Pct": -1.97,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-03-03",
+          "Exit_Date": "2026-04-08",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 6630.8,
+          "Exit_Price": 6721.85,
+          "PnL": -2276.22,
+          "Return_Pct": -3.44,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-04-15",
+          "Exit_Date": "2026-06-09",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 7129.88,
+          "Exit_Price": 7354.25,
+          "PnL": 4711.73,
+          "Return_Pct": 7.37,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-08-03",
+          "Exit_Date": "2026-09-01",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 7729.72,
+          "Exit_Price": 7636.31,
+          "PnL": -2335.3,
+          "Return_Pct": -3.4,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-09-21",
+          "Exit_Date": "2026-10-01",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 7838.5,
+          "Exit_Price": 7686.62,
+          "PnL": -1215.06,
+          "Return_Pct": -1.83,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-10-06",
+          "Exit_Date": "2026-10-16",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 7848.5,
+          "Exit_Price": 7689.64,
+          "PnL": -1270.88,
+          "Return_Pct": -1.95,
+          "Exit_Reason": "STOP_LOSS_2N"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2026-02-02",
+          "type": "EXIT",
+          "price": 6888.49,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-03",
+          "type": "ENTRY_U1",
+          "price": 6720.25,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-09",
+          "type": "PYRAMID_U2",
+          "price": 6669.53,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-16",
+          "type": "PYRAMID_U3",
+          "price": 6608.5,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-23",
+          "type": "PYRAMID_U4",
+          "price": 6510.0,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-08",
+          "type": "EXIT",
+          "price": 6721.85,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-15",
+          "type": "ENTRY_U1",
+          "price": 7043.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-17",
+          "type": "PYRAMID_U2",
+          "price": 7098.9,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-20",
+          "type": "PYRAMID_U3",
+          "price": 7154.77,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-27",
+          "type": "PYRAMID_U4",
+          "price": 7207.36,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-09",
+          "type": "EXIT",
+          "price": 7354.25,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-03",
+          "type": "ENTRY_U1",
+          "price": 7632.25,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-04",
+          "type": "PYRAMID_U2",
+          "price": 7682.8,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-05",
+          "type": "PYRAMID_U3",
+          "price": 7772.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-13",
+          "type": "PYRAMID_U4",
+          "price": 7817.23,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-01",
+          "type": "EXIT",
+          "price": 7636.31,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-21",
+          "type": "ENTRY_U1",
+          "price": 7838.5,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-01",
+          "type": "EXIT",
+          "price": 7686.62,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-06",
+          "type": "ENTRY_U1",
+          "price": 7848.5,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-16",
+          "type": "EXIT",
+          "price": 7689.64,
+          "direction": "LONG"
+        }
+      ]
+    },
+    "CL=F": {
+      "label": "Crude Oil Futures (CL=F)",
+      "symbol": "CL=F",
+      "system_2_metrics": {
+        "Total_Return_Pct": -14.89,
+        "CAGR_Pct": -1.86,
+        "Annualized_Vol_Pct": 40.6,
+        "Sharpe_Ratio": 0.09,
+        "Max_Drawdown_Pct": -76.7,
+        "Calmar_Ratio": -0.02,
+        "Total_Trades": 54,
+        "Win_Rate_Pct": 16.67,
+        "Profit_Factor": 0.93,
+        "Avg_Win": 21589.51,
+        "Avg_Loss": 4648.74,
+        "Win_Loss_Ratio": 4.64
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 13.21,
+        "CAGR_Pct": 1.45,
+        "Annualized_Vol_Pct": 23.95,
+        "Sharpe_Ratio": 0.1,
+        "Max_Drawdown_Pct": -45.52,
+        "Calmar_Ratio": 0.03,
+        "Total_Trades": 24,
+        "Win_Rate_Pct": 29.17,
+        "Profit_Factor": 1.23,
+        "Avg_Win": 10120.7,
+        "Avg_Loss": 3390.28,
+        "Win_Loss_Ratio": 2.99
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": 58.34,
+        "CAGR_Pct": 5.4,
+        "Annualized_Vol_Pct": 36.33,
+        "Sharpe_Ratio": 0.27,
+        "Max_Drawdown_Pct": -65.83,
+        "Calmar_Ratio": 0.08,
+        "Total_Trades": 94,
+        "Win_Rate_Pct": 23.4,
+        "Profit_Factor": 1.21,
+        "Avg_Win": 15112.14,
+        "Avg_Loss": 3819.29,
+        "Win_Loss_Ratio": 3.96
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-06-23",
+          "Exit_Date": "2025-06-24",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 78.0,
+          "Exit_Price": 67.74,
+          "PnL": -3406.32,
+          "Return_Pct": -3.49,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-09-05",
+          "Exit_Date": "2025-09-26",
+          "Direction": "SHORT",
+          "Units": 1,
+          "Avg_Entry": 61.94,
+          "Exit_Price": 65.36,
+          "PnL": -1883.46,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-10-01",
+          "Exit_Date": "2025-10-24",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 60.23,
+          "Exit_Price": 62.32,
+          "PnL": -4731.87,
+          "Return_Pct": -5.12,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-12-16",
+          "Exit_Date": "2025-12-23",
+          "Direction": "SHORT",
+          "Units": 2,
+          "Avg_Entry": 55.79,
+          "Exit_Price": 58.23,
+          "PnL": -2863.05,
+          "Return_Pct": -3.26,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-01-27",
+          "Exit_Date": "2026-02-02",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 63.79,
+          "Exit_Price": 61.86,
+          "PnL": -3699.51,
+          "Return_Pct": -4.36,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-02-19",
+          "Exit_Date": "2026-03-03",
+          "Direction": "LONG",
+          "Units": 3,
+          "Avg_Entry": 69.65,
+          "Exit_Price": 70.81,
+          "PnL": 1348.01,
+          "Return_Pct": 1.66,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-03-03",
+          "Exit_Date": "2026-04-17",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 77.27,
+          "Exit_Price": 84.37,
+          "PnL": 8734.67,
+          "Return_Pct": 10.59,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-06-15",
+          "Exit_Date": "2026-07-17",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 76.12,
+          "Exit_Price": 81.27,
+          "PnL": -3238.04,
+          "Return_Pct": -3.55,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-09-08",
+          "Exit_Date": "2026-09-21",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 97.51,
+          "Exit_Price": 96.28,
+          "PnL": -1122.76,
+          "Return_Pct": -1.28,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-10-20",
+          "Exit_Date": "2026-10-21",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 106.75,
+          "Exit_Price": 98.19,
+          "PnL": -1737.68,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2026-02-27",
+          "type": "PYRAMID_U2",
+          "price": 67.5,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-02",
+          "type": "PYRAMID_U3",
+          "price": 75.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-03",
+          "type": "EXIT",
+          "price": 70.81,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-03",
+          "type": "ENTRY_U1",
+          "price": 75.33,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-04",
+          "type": "PYRAMID_U2",
+          "price": 76.66,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-05",
+          "type": "PYRAMID_U3",
+          "price": 78.03,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-06",
+          "type": "PYRAMID_U4",
+          "price": 79.51,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-17",
+          "type": "EXIT",
+          "price": 84.37,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-15",
+          "type": "ENTRY_U1",
+          "price": 80.56,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-16",
+          "type": "PYRAMID_U2",
+          "price": 77.62,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-17",
+          "type": "PYRAMID_U3",
+          "price": 74.68,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-24",
+          "type": "PYRAMID_U4",
+          "price": 71.92,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-07-17",
+          "type": "EXIT",
+          "price": 81.27,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-09-08",
+          "type": "ENTRY_U1",
+          "price": 93.5,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-09",
+          "type": "PYRAMID_U2",
+          "price": 95.38,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-10",
+          "type": "PYRAMID_U3",
+          "price": 97.27,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-11",
+          "type": "PYRAMID_U4",
+          "price": 104.32,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-21",
+          "type": "EXIT",
+          "price": 96.28,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-20",
+          "type": "ENTRY_U1",
+          "price": 106.75,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-21",
+          "type": "EXIT",
+          "price": 98.19,
+          "direction": "LONG"
+        }
+      ]
+    },
+    "SI=F": {
+      "label": "Silver Futures (SI=F)",
+      "symbol": "SI=F",
+      "system_2_metrics": {
+        "Total_Return_Pct": 75.51,
+        "CAGR_Pct": 6.76,
+        "Annualized_Vol_Pct": 40.89,
+        "Sharpe_Ratio": 0.32,
+        "Max_Drawdown_Pct": -69.5,
+        "Calmar_Ratio": 0.1,
+        "Total_Trades": 65,
+        "Win_Rate_Pct": 15.38,
+        "Profit_Factor": 1.28,
+        "Avg_Win": 23507.08,
+        "Avg_Loss": 3348.3,
+        "Win_Loss_Ratio": 7.02
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 142.89,
+        "CAGR_Pct": 10.87,
+        "Annualized_Vol_Pct": 37.31,
+        "Sharpe_Ratio": 0.42,
+        "Max_Drawdown_Pct": -62.59,
+        "Calmar_Ratio": 0.17,
+        "Total_Trades": 36,
+        "Win_Rate_Pct": 19.44,
+        "Profit_Factor": 2.14,
+        "Avg_Win": 38338.69,
+        "Avg_Loss": 4326.91,
+        "Win_Loss_Ratio": 8.86
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": 145.01,
+        "CAGR_Pct": 10.8,
+        "Annualized_Vol_Pct": 41.63,
+        "Sharpe_Ratio": 0.41,
+        "Max_Drawdown_Pct": -56.49,
+        "Calmar_Ratio": 0.19,
+        "Total_Trades": 114,
+        "Win_Rate_Pct": 18.42,
+        "Profit_Factor": 1.28,
+        "Avg_Win": 19928.46,
+        "Avg_Loss": 3517.16,
+        "Win_Loss_Ratio": 5.67
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-02-04",
+          "Exit_Date": "2025-02-25",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 33.27,
+          "Exit_Price": 32.12,
+          "PnL": -2255.74,
+          "Return_Pct": -3.8,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-03-13",
+          "Exit_Date": "2025-04-03",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 34.68,
+          "Exit_Price": 34.07,
+          "PnL": -2250.45,
+          "Return_Pct": -3.94,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-04-04",
+          "Exit_Date": "2025-04-08",
+          "Direction": "SHORT",
+          "Units": 2,
+          "Avg_Entry": 29.41,
+          "Exit_Price": 30.08,
+          "PnL": -965.25,
+          "Return_Pct": -1.76,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-06-05",
+          "Exit_Date": "2025-06-20",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 36.18,
+          "Exit_Price": 35.78,
+          "PnL": -1315.42,
+          "Return_Pct": -2.44,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-07-10",
+          "Exit_Date": "2025-07-15",
+          "Direction": "LONG",
+          "Units": 3,
+          "Avg_Entry": 37.92,
+          "Exit_Price": 37.78,
+          "PnL": -370.08,
+          "Return_Pct": -0.7,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-07-22",
+          "Exit_Date": "2025-07-30",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 39.14,
+          "Exit_Price": 37.86,
+          "PnL": -1044.03,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-08-29",
+          "Exit_Date": "2026-02-05",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 40.5,
+          "Exit_Price": 73.17,
+          "PnL": 119130.65,
+          "Return_Pct": 232.69,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-03-19",
+          "Exit_Date": "2026-04-08",
+          "Direction": "SHORT",
+          "Units": 2,
+          "Avg_Entry": 66.73,
+          "Exit_Price": 76.19,
+          "PnL": -5645.77,
+          "Return_Pct": -3.31,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-06-23",
+          "Exit_Date": "2026-08-05",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 58.75,
+          "Exit_Price": 62.45,
+          "PnL": -9435.45,
+          "Return_Pct": -5.73,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-08-28",
+          "Exit_Date": "2026-08-31",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 70.95,
+          "Exit_Price": 66.01,
+          "PnL": -4332.38,
+          "Return_Pct": -2.79,
+          "Exit_Reason": "STOP_LOSS_2N"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2025-07-30",
+          "type": "EXIT",
+          "price": 37.86,
+          "direction": "LONG"
+        },
+        {
+          "date": "2025-08-29",
+          "type": "ENTRY_U1",
+          "price": 39.41,
+          "direction": "LONG"
+        },
+        {
+          "date": "2025-09-02",
+          "type": "PYRAMID_U2",
+          "price": 40.19,
+          "direction": "LONG"
+        },
+        {
+          "date": "2025-09-03",
+          "type": "PYRAMID_U3",
+          "price": 41.15,
+          "direction": "LONG"
+        },
+        {
+          "date": "2025-09-05",
+          "type": "PYRAMID_U4",
+          "price": 41.45,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-02-05",
+          "type": "EXIT",
+          "price": 73.17,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-19",
+          "type": "ENTRY_U1",
+          "price": 68.71,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-23",
+          "type": "PYRAMID_U2",
+          "price": 64.74,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-08",
+          "type": "EXIT",
+          "price": 76.19,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-23",
+          "type": "ENTRY_U1",
+          "price": 61.95,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-24",
+          "type": "PYRAMID_U2",
+          "price": 59.39,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-29",
+          "type": "PYRAMID_U3",
+          "price": 58.09,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-07-16",
+          "type": "PYRAMID_U4",
+          "price": 55.92,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-08-05",
+          "type": "EXIT",
+          "price": 62.45,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-08-28",
+          "type": "ENTRY_U1",
+          "price": 70.95,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-31",
+          "type": "EXIT",
+          "price": 66.01,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-14",
+          "type": "ENTRY_U1",
+          "price": 56.74,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-10-22",
+          "type": "PYRAMID_U2",
+          "price": 56.08,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-10-23",
+          "type": "PYRAMID_U3",
+          "price": 53.71,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-10-29",
+          "type": "PYRAMID_U4",
+          "price": 53.06,
+          "direction": "SHORT"
+        }
+      ]
+    },
+    "HG=F": {
+      "label": "Copper Futures (HG=F)",
+      "symbol": "HG=F",
+      "system_2_metrics": {
+        "Total_Return_Pct": 17.7,
+        "CAGR_Pct": 1.91,
+        "Annualized_Vol_Pct": 32.66,
+        "Sharpe_Ratio": 0.16,
+        "Max_Drawdown_Pct": -53.39,
+        "Calmar_Ratio": 0.04,
+        "Total_Trades": 63,
+        "Win_Rate_Pct": 17.46,
+        "Profit_Factor": 1.07,
+        "Avg_Win": 23647.12,
+        "Avg_Loss": 4667.1,
+        "Win_Loss_Ratio": 5.07
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 42.1,
+        "CAGR_Pct": 4.17,
+        "Annualized_Vol_Pct": 27.25,
+        "Sharpe_Ratio": 0.21,
+        "Max_Drawdown_Pct": -41.43,
+        "Calmar_Ratio": 0.1,
+        "Total_Trades": 41,
+        "Win_Rate_Pct": 14.63,
+        "Profit_Factor": 1.31,
+        "Avg_Win": 29891.05,
+        "Avg_Loss": 3921.23,
+        "Win_Loss_Ratio": 7.62
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": 23.24,
+        "CAGR_Pct": 2.42,
+        "Annualized_Vol_Pct": 36.84,
+        "Sharpe_Ratio": 0.19,
+        "Max_Drawdown_Pct": -63.94,
+        "Calmar_Ratio": 0.04,
+        "Total_Trades": 118,
+        "Win_Rate_Pct": 18.64,
+        "Profit_Factor": 1.06,
+        "Avg_Win": 18324.36,
+        "Avg_Loss": 3957.24,
+        "Win_Loss_Ratio": 4.63
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-07-30",
+          "Exit_Date": "2025-08-29",
+          "Direction": "SHORT",
+          "Units": 2,
+          "Avg_Entry": 4.5,
+          "Exit_Price": 4.51,
+          "PnL": -257.23,
+          "Return_Pct": -0.2,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2025-10-27",
+          "Exit_Date": "2025-10-30",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 5.21,
+          "Exit_Price": 5.06,
+          "PnL": -4551.26,
+          "Return_Pct": -3.49,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-12-01",
+          "Exit_Date": "2026-02-02",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 5.3,
+          "Exit_Price": 5.62,
+          "PnL": 19523.22,
+          "Return_Pct": 15.52,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-03-18",
+          "Exit_Date": "2026-04-08",
+          "Direction": "SHORT",
+          "Units": 3,
+          "Avg_Entry": 5.42,
+          "Exit_Price": 5.76,
+          "PnL": -10034.51,
+          "Return_Pct": -6.9,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-04-22",
+          "Exit_Date": "2026-04-29",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 6.12,
+          "Exit_Price": 5.89,
+          "PnL": -2705.75,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-05-06",
+          "Exit_Date": "2026-06-23",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 6.2,
+          "Exit_Price": 6.18,
+          "PnL": -1155.53,
+          "Return_Pct": -0.87,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-08-05",
+          "Exit_Date": "2026-08-18",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 6.69,
+          "Exit_Price": 6.5,
+          "PnL": -4432.59,
+          "Return_Pct": -3.37,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-08-26",
+          "Exit_Date": "2026-08-28",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 6.75,
+          "Exit_Price": 6.57,
+          "PnL": -2539.98,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-09-08",
+          "Exit_Date": "2026-09-10",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 6.77,
+          "Exit_Price": 6.6,
+          "PnL": -4455.8,
+          "Return_Pct": -3.58,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-09-22",
+          "Exit_Date": "2026-09-28",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 6.81,
+          "Exit_Price": 6.57,
+          "PnL": -2577.74,
+          "Return_Pct": -2.15,
+          "Exit_Reason": "STOP_LOSS_2N"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2026-03-19",
+          "type": "PYRAMID_U2",
+          "price": 5.42,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-03-20",
+          "type": "PYRAMID_U3",
+          "price": 5.34,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-08",
+          "type": "EXIT",
+          "price": 5.76,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-22",
+          "type": "ENTRY_U1",
+          "price": 6.12,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-29",
+          "type": "EXIT",
+          "price": 5.89,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-05-06",
+          "type": "ENTRY_U1",
+          "price": 6.12,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-05-07",
+          "type": "PYRAMID_U2",
+          "price": 6.18,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-05-08",
+          "type": "PYRAMID_U3",
+          "price": 6.23,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-05-11",
+          "type": "PYRAMID_U4",
+          "price": 6.29,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-23",
+          "type": "EXIT",
+          "price": 6.18,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-05",
+          "type": "ENTRY_U1",
+          "price": 6.65,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-06",
+          "type": "PYRAMID_U2",
+          "price": 6.72,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-18",
+          "type": "EXIT",
+          "price": 6.5,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-26",
+          "type": "ENTRY_U1",
+          "price": 6.75,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-28",
+          "type": "EXIT",
+          "price": 6.57,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-08",
+          "type": "ENTRY_U1",
+          "price": 6.75,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-09",
+          "type": "PYRAMID_U2",
+          "price": 6.8,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-10",
+          "type": "EXIT",
+          "price": 6.6,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-22",
+          "type": "ENTRY_U1",
+          "price": 6.81,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-28",
+          "type": "EXIT",
+          "price": 6.57,
+          "direction": "LONG"
+        }
+      ]
+    },
+    "ZS=F": {
+      "label": "Soybean Futures (ZS=F)",
+      "symbol": "ZS=F",
+      "system_2_metrics": {
+        "Total_Return_Pct": 102.65,
+        "CAGR_Pct": 8.55,
+        "Annualized_Vol_Pct": 24.95,
+        "Sharpe_Ratio": 0.37,
+        "Max_Drawdown_Pct": -53.27,
+        "Calmar_Ratio": 0.16,
+        "Total_Trades": 52,
+        "Win_Rate_Pct": 17.31,
+        "Profit_Factor": 1.33,
+        "Avg_Win": 45993.32,
+        "Avg_Loss": 7239.22,
+        "Win_Loss_Ratio": 6.35
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 139.59,
+        "CAGR_Pct": 10.69,
+        "Annualized_Vol_Pct": 20.01,
+        "Sharpe_Ratio": 0.51,
+        "Max_Drawdown_Pct": -41.01,
+        "Calmar_Ratio": 0.26,
+        "Total_Trades": 29,
+        "Win_Rate_Pct": 17.24,
+        "Profit_Factor": 1.81,
+        "Avg_Win": 62424.57,
+        "Avg_Loss": 7188.9,
+        "Win_Loss_Ratio": 8.68
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": 52.13,
+        "CAGR_Pct": 4.92,
+        "Annualized_Vol_Pct": 29.57,
+        "Sharpe_Ratio": 0.24,
+        "Max_Drawdown_Pct": -60.22,
+        "Calmar_Ratio": 0.08,
+        "Total_Trades": 107,
+        "Win_Rate_Pct": 24.3,
+        "Profit_Factor": 1.12,
+        "Avg_Win": 16115.07,
+        "Avg_Loss": 4633.9,
+        "Win_Loss_Ratio": 3.48
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-04-04",
+          "Exit_Date": "2025-04-09",
+          "Direction": "SHORT",
+          "Units": 2,
+          "Avg_Entry": 974.04,
+          "Exit_Price": 1002.82,
+          "PnL": -8894.31,
+          "Return_Pct": -3.62,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-05-12",
+          "Exit_Date": "2025-06-02",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 1063.43,
+          "Exit_Price": 1038.76,
+          "PnL": -7795.74,
+          "Return_Pct": -3.29,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-06-16",
+          "Exit_Date": "2025-06-25",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 1075.0,
+          "Exit_Price": 1044.95,
+          "PnL": -4567.76,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-07-10",
+          "Exit_Date": "2025-07-18",
+          "Direction": "SHORT",
+          "Units": 2,
+          "Avg_Entry": 1001.27,
+          "Exit_Price": 1028.61,
+          "PnL": -7709.66,
+          "Return_Pct": -3.44,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-07-28",
+          "Exit_Date": "2025-08-12",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 981.83,
+          "Exit_Price": 999.53,
+          "PnL": -10458.4,
+          "Return_Pct": -4.83,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-10-27",
+          "Exit_Date": "2025-12-08",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 1068.79,
+          "Exit_Price": 1093.25,
+          "PnL": 15457.06,
+          "Return_Pct": 7.5,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-02-18",
+          "Exit_Date": "2026-04-08",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 1155.04,
+          "Exit_Price": 1145.25,
+          "PnL": -5043.28,
+          "Return_Pct": -2.28,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-06-04",
+          "Exit_Date": "2026-07-06",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 1126.2,
+          "Exit_Price": 1147.95,
+          "PnL": -10548.53,
+          "Return_Pct": -4.87,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-07-20",
+          "Exit_Date": "2026-07-27",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 1235.72,
+          "Exit_Price": 1213.2,
+          "PnL": -10135.96,
+          "Return_Pct": -4.92,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-08-26",
+          "Exit_Date": "2026-10-01",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 1263.82,
+          "Exit_Price": 1279.25,
+          "PnL": 6710.51,
+          "Return_Pct": 3.42,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2026-02-18",
+          "type": "ENTRY_U1",
+          "price": 1142.25,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-02-26",
+          "type": "PYRAMID_U2",
+          "price": 1150.77,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-02-27",
+          "type": "PYRAMID_U3",
+          "price": 1159.54,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-02",
+          "type": "PYRAMID_U4",
+          "price": 1168.25,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-04-08",
+          "type": "EXIT",
+          "price": 1145.25,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-04",
+          "type": "ENTRY_U1",
+          "price": 1140.5,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-05",
+          "type": "PYRAMID_U2",
+          "price": 1130.25,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-08",
+          "type": "PYRAMID_U3",
+          "price": 1121.25,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-09",
+          "type": "PYRAMID_U4",
+          "price": 1112.35,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-07-06",
+          "type": "EXIT",
+          "price": 1147.95,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-07-20",
+          "type": "ENTRY_U1",
+          "price": 1222.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-07-22",
+          "type": "PYRAMID_U2",
+          "price": 1231.17,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-07-23",
+          "type": "PYRAMID_U3",
+          "price": 1240.41,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-07-24",
+          "type": "PYRAMID_U4",
+          "price": 1249.48,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-07-27",
+          "type": "EXIT",
+          "price": 1213.2,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-26",
+          "type": "ENTRY_U1",
+          "price": 1250.5,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-27",
+          "type": "PYRAMID_U2",
+          "price": 1259.51,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-28",
+          "type": "PYRAMID_U3",
+          "price": 1268.58,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-31",
+          "type": "PYRAMID_U4",
+          "price": 1277.75,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-01",
+          "type": "EXIT",
+          "price": 1279.25,
+          "direction": "LONG"
+        }
+      ]
+    },
+    "ZC=F": {
+      "label": "Corn Futures (ZC=F)",
+      "symbol": "ZC=F",
+      "system_2_metrics": {
+        "Total_Return_Pct": 66.24,
+        "CAGR_Pct": 6.08,
+        "Annualized_Vol_Pct": 26.46,
+        "Sharpe_Ratio": 0.28,
+        "Max_Drawdown_Pct": -44.6,
+        "Calmar_Ratio": 0.14,
+        "Total_Trades": 55,
+        "Win_Rate_Pct": 21.82,
+        "Profit_Factor": 1.31,
+        "Avg_Win": 23447.57,
+        "Avg_Loss": 5003.08,
+        "Win_Loss_Ratio": 4.69
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": 162.58,
+        "CAGR_Pct": 11.87,
+        "Annualized_Vol_Pct": 22.46,
+        "Sharpe_Ratio": 0.52,
+        "Max_Drawdown_Pct": -32.65,
+        "Calmar_Ratio": 0.36,
+        "Total_Trades": 29,
+        "Win_Rate_Pct": 20.69,
+        "Profit_Factor": 2.03,
+        "Avg_Win": 53438.66,
+        "Avg_Loss": 6871.61,
+        "Win_Loss_Ratio": 7.78
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": 76.75,
+        "CAGR_Pct": 6.73,
+        "Annualized_Vol_Pct": 29.71,
+        "Sharpe_Ratio": 0.3,
+        "Max_Drawdown_Pct": -52.82,
+        "Calmar_Ratio": 0.13,
+        "Total_Trades": 105,
+        "Win_Rate_Pct": 22.86,
+        "Profit_Factor": 1.13,
+        "Avg_Win": 18426.56,
+        "Avg_Loss": 4819.37,
+        "Win_Loss_Ratio": 3.82
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-10-27",
+          "Exit_Date": "2025-11-17",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 436.21,
+          "Exit_Price": 428.81,
+          "PnL": -9473.34,
+          "Return_Pct": -4.67,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2025-12-18",
+          "Exit_Date": "2025-12-30",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 447.56,
+          "Exit_Price": 439.94,
+          "PnL": -9340.56,
+          "Return_Pct": -4.83,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-01-13",
+          "Exit_Date": "2026-01-28",
+          "Direction": "SHORT",
+          "Units": 1,
+          "Avg_Entry": 420.0,
+          "Exit_Price": 433.19,
+          "PnL": -3680.34,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-03-09",
+          "Exit_Date": "2026-03-10",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 453.0,
+          "Exit_Price": 434.75,
+          "PnL": -5420.25,
+          "Return_Pct": -3.01,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-03-16",
+          "Exit_Date": "2026-03-17",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 464.75,
+          "Exit_Price": 450.56,
+          "PnL": -3490.74,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-03-19",
+          "Exit_Date": "2026-03-31",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 467.94,
+          "Exit_Price": 454.49,
+          "PnL": -5942.63,
+          "Return_Pct": -3.47,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-05-04",
+          "Exit_Date": "2026-05-06",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 473.75,
+          "Exit_Price": 459.22,
+          "PnL": -3298.9,
+          "Return_Pct": -1.99,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-05-18",
+          "Exit_Date": "2026-05-21",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 477.18,
+          "Exit_Price": 461.36,
+          "PnL": -5868.74,
+          "Return_Pct": -3.62,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-06-03",
+          "Exit_Date": "2026-07-06",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 428.15,
+          "Exit_Price": 437.82,
+          "PnL": -6559.08,
+          "Return_Pct": -4.2,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-08-18",
+          "Exit_Date": "2026-09-30",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 475.48,
+          "Exit_Price": 503.0,
+          "PnL": 16459.19,
+          "Return_Pct": 10.99,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2026-03-16",
+          "type": "ENTRY_U1",
+          "price": 464.75,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-17",
+          "type": "EXIT",
+          "price": 450.56,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-19",
+          "type": "ENTRY_U1",
+          "price": 466.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-23",
+          "type": "PYRAMID_U2",
+          "price": 469.84,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-03-31",
+          "type": "EXIT",
+          "price": 454.49,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-05-04",
+          "type": "ENTRY_U1",
+          "price": 473.75,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-05-06",
+          "type": "EXIT",
+          "price": 459.22,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-05-18",
+          "type": "ENTRY_U1",
+          "price": 475.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-05-19",
+          "type": "PYRAMID_U2",
+          "price": 479.55,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-05-21",
+          "type": "EXIT",
+          "price": 461.36,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-03",
+          "type": "ENTRY_U1",
+          "price": 438.0,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-04",
+          "type": "PYRAMID_U2",
+          "price": 431.0,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-05",
+          "type": "PYRAMID_U3",
+          "price": 424.0,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-06-08",
+          "type": "PYRAMID_U4",
+          "price": 419.39,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-07-06",
+          "type": "EXIT",
+          "price": 437.82,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-08-18",
+          "type": "ENTRY_U1",
+          "price": 468.0,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-19",
+          "type": "PYRAMID_U2",
+          "price": 472.95,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-20",
+          "type": "PYRAMID_U3",
+          "price": 477.95,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-08-21",
+          "type": "PYRAMID_U4",
+          "price": 482.93,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-09-30",
+          "type": "EXIT",
+          "price": 503.0,
+          "direction": "LONG"
+        }
+      ]
+    },
+    "NG=F": {
+      "label": "Natural Gas Futures (NG=F)",
+      "symbol": "NG=F",
+      "system_2_metrics": {
+        "Total_Return_Pct": -52.39,
+        "CAGR_Pct": -8.26,
+        "Annualized_Vol_Pct": 30.97,
+        "Sharpe_Ratio": -0.19,
+        "Max_Drawdown_Pct": -74.43,
+        "Calmar_Ratio": -0.11,
+        "Total_Trades": 62,
+        "Win_Rate_Pct": 17.74,
+        "Profit_Factor": 0.69,
+        "Avg_Win": 10526.28,
+        "Avg_Loss": 3297.67,
+        "Win_Loss_Ratio": 3.19
+      },
+      "system_2_long_only_metrics": {
+        "Total_Return_Pct": -20.33,
+        "CAGR_Pct": -2.61,
+        "Annualized_Vol_Pct": 29.06,
+        "Sharpe_Ratio": -0.01,
+        "Max_Drawdown_Pct": -62.9,
+        "Calmar_Ratio": -0.04,
+        "Total_Trades": 38,
+        "Win_Rate_Pct": 18.42,
+        "Profit_Factor": 0.85,
+        "Avg_Win": 16051.47,
+        "Avg_Loss": 4280.37,
+        "Win_Loss_Ratio": 3.75
+      },
+      "system_1_metrics": {
+        "Total_Return_Pct": -29.88,
+        "CAGR_Pct": -3.98,
+        "Annualized_Vol_Pct": 33.9,
+        "Sharpe_Ratio": -0.01,
+        "Max_Drawdown_Pct": -55.47,
+        "Calmar_Ratio": -0.07,
+        "Total_Trades": 110,
+        "Win_Rate_Pct": 26.36,
+        "Profit_Factor": 0.88,
+        "Avg_Win": 7594.52,
+        "Avg_Loss": 3087.92,
+        "Win_Loss_Ratio": 2.46
+      },
+      "recent_trades_sample": [
+        {
+          "Entry_Date": "2025-10-30",
+          "Exit_Date": "2025-12-11",
+          "Direction": "LONG",
+          "Units": 4,
+          "Avg_Entry": 4.06,
+          "Exit_Price": 4.24,
+          "PnL": 2479.3,
+          "Return_Pct": 3.6,
+          "Exit_Reason": "DONCHIAN_EXIT"
+        },
+        {
+          "Entry_Date": "2026-01-09",
+          "Exit_Date": "2026-01-20",
+          "Direction": "SHORT",
+          "Units": 2,
+          "Avg_Entry": 3.12,
+          "Exit_Price": 3.62,
+          "PnL": -2509.88,
+          "Return_Pct": -3.52,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-01-22",
+          "Exit_Date": "2026-01-23",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 5.5,
+          "Exit_Price": 4.78,
+          "PnL": -1376.53,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-01-26",
+          "Exit_Date": "2026-01-29",
+          "Direction": "LONG",
+          "Units": 3,
+          "Avg_Entry": 6.39,
+          "Exit_Price": 3.74,
+          "PnL": -11366.23,
+          "Return_Pct": -16.85,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-02-17",
+          "Exit_Date": "2026-05-11",
+          "Direction": "SHORT",
+          "Units": 4,
+          "Avg_Entry": 2.69,
+          "Exit_Price": 2.92,
+          "PnL": -1838.05,
+          "Return_Pct": -3.28,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-05-29",
+          "Exit_Date": "2026-06-10",
+          "Direction": "LONG",
+          "Units": 2,
+          "Avg_Entry": 3.35,
+          "Exit_Price": 3.1,
+          "PnL": -1889.77,
+          "Return_Pct": -3.48,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-06-26",
+          "Exit_Date": "2026-07-09",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 3.4,
+          "Exit_Price": 3.11,
+          "PnL": -1047.51,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-07-28",
+          "Exit_Date": "2026-08-19",
+          "Direction": "SHORT",
+          "Units": 2,
+          "Avg_Entry": 2.65,
+          "Exit_Price": 2.85,
+          "PnL": -1759.13,
+          "Return_Pct": -3.43,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-10-13",
+          "Exit_Date": "2026-10-16",
+          "Direction": "LONG",
+          "Units": 1,
+          "Avg_Entry": 3.32,
+          "Exit_Price": 3.06,
+          "PnL": -991.39,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        },
+        {
+          "Entry_Date": "2026-10-26",
+          "Exit_Date": "2026-10-28",
+          "Direction": "SHORT",
+          "Units": 1,
+          "Avg_Entry": 2.54,
+          "Exit_Price": 2.82,
+          "PnL": -971.32,
+          "Return_Pct": -2.0,
+          "Exit_Reason": "STOP_LOSS_2N"
+        }
+      ],
+      "recent_actions_sample": [
+        {
+          "date": "2026-01-27",
+          "type": "PYRAMID_U2",
+          "price": 6.65,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-01-28",
+          "type": "PYRAMID_U3",
+          "price": 6.92,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-01-29",
+          "type": "EXIT",
+          "price": 3.74,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-02-17",
+          "type": "ENTRY_U1",
+          "price": 3.01,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-02-26",
+          "type": "PYRAMID_U2",
+          "price": 2.78,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-09",
+          "type": "PYRAMID_U3",
+          "price": 2.66,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-04-23",
+          "type": "PYRAMID_U4",
+          "price": 2.58,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-05-11",
+          "type": "EXIT",
+          "price": 2.92,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-05-29",
+          "type": "ENTRY_U1",
+          "price": 3.32,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-01",
+          "type": "PYRAMID_U2",
+          "price": 3.39,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-10",
+          "type": "EXIT",
+          "price": 3.1,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-06-26",
+          "type": "ENTRY_U1",
+          "price": 3.4,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-07-09",
+          "type": "EXIT",
+          "price": 3.11,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-07-28",
+          "type": "ENTRY_U1",
+          "price": 2.68,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-08-06",
+          "type": "PYRAMID_U2",
+          "price": 2.62,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-08-19",
+          "type": "EXIT",
+          "price": 2.85,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-10-13",
+          "type": "ENTRY_U1",
+          "price": 3.32,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-16",
+          "type": "EXIT",
+          "price": 3.06,
+          "direction": "LONG"
+        },
+        {
+          "date": "2026-10-26",
+          "type": "ENTRY_U1",
+          "price": 2.54,
+          "direction": "SHORT"
+        },
+        {
+          "date": "2026-10-28",
+          "type": "EXIT",
+          "price": 2.82,
+          "direction": "SHORT"
+        }
+      ]
+    }
+  }
+}

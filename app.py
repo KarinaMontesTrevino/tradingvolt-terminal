@@ -160,6 +160,11 @@ try:
 except ImportError:
     rne = None
 try:
+    import turtle_trading_engine as tte
+    importlib.reload(tte)
+except ImportError:
+    tte = None
+try:
     import quant_data_pipeline as qdp
     importlib.reload(qdp)
 except ImportError:
@@ -1238,7 +1243,8 @@ with st.sidebar:
         "⚡ Intraday Strength Watch (Bubble Map)",
         "🔄 Relative Rotation Graphs (RRG Desk)",
         "🏛️ Insider & Institutional Ownership (SEC 3, 4 & 13F)",
-        "🔔 NYSE Order Imbalance Tracker (NOI Auctions)"
+        "🔔 NYSE Order Imbalance Tracker (NOI Auctions)",
+        "🐢 Turtle Trading System Lab (Richard Dennis Canonical Rules)"
     ]
     cur_nav_idx = 0
     if "nav_view_sidebar" in st.session_state and st.session_state["nav_view_sidebar"] in nav_options:
@@ -7278,3 +7284,240 @@ elif "Relative Rotation Graphs" in nav_view or "RRG Desk" in nav_view:
             * **📆 RRG de 1 Año con Datos Semanales (Cola de 10 semanas):** Elimina el ruido intradiario y revela la tendencia institucional dominante de fondo.
             * **⚡ Setup de Alta Convicción (Alineación Multi-Timeframe):** Cuando una acción se encuentra en el cuadrante **Líder (Verde)** en el gráfico semanal (1 Año) y en el gráfico diario (3 Meses) gira desde *Debilitándose* o *Mejorando* de vuelta hacia **Líder (Noreste 0°-90°)**, ofrece el punto óptimo de continuación institucional.
             """)
+
+
+# =========================================================================
+# VISTA: TURTLE TRADING SYSTEM LAB (RICHARD DENNIS & WILLIAM ECKHARDT)
+# =========================================================================
+elif "Turtle Trading" in nav_view or "Tortugas" in nav_view:
+    st.markdown('''
+        <div style="background: linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(30, 41, 59, 0.95)); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 12px; padding: 20px; margin-bottom: 24px; box-shadow: 0 8px 32px rgba(16, 185, 129, 0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 style="margin: 0; color: #FFFFFF; font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+                        <span>🐢</span> Turtle Trading System Lab &amp; Visualizer
+                    </h2>
+                    <p style="margin: 5px 0 0 0; color: #94A3B8; font-size: 13px;">
+                        Auditoría Canónica de Richard Dennis &amp; William Eckhardt • Canales Donchian • Dimensionamiento N (Wilder ATR 20) • Piramidación +0.5N • Stops 2N • Base de Datos de Estudios
+                    </p>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                    <span style="background: rgba(16, 185, 129, 0.15); border: 1px solid #10B981; color: #10B981; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">● REGLAS CANÓNICAS 1983</span>
+                    <span style="background: rgba(56, 189, 248, 0.15); border: 1px solid #38BDF8; color: #38BDF8; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700;">VOLATILITY N (ATR 20)</span>
+                </div>
+            </div>
+        </div>
+    ''', unsafe_allow_html=True)
+
+    ASSETS_LAB = {
+        '🥇 Oro (Gold Futures GC=F)': 'GC=F',
+        '💻 Nasdaq 100 ETF (QQQ)': 'QQQ',
+        '💻 Nasdaq 100 Futures (NQ=F)': 'NQ=F',
+        '🇺🇸 S&P 500 ETF (SPY)': 'SPY',
+        '🇺🇸 S&P 500 Futures (ES=F)': 'ES=F',
+        '🛢️ Petróleo Crudo (Crude Oil CL=F)': 'CL=F',
+        '🥈 Plata (Silver Futures SI=F)': 'SI=F',
+        '🔩 Cobre (Copper Futures HG=F)': 'HG=F',
+        '🌾 Soja (Soybean Futures ZS=F)': 'ZS=F',
+        '🌽 Maíz (Corn Futures ZC=F)': 'ZC=F',
+        '⚠️ Gas Natural (Natural Gas NG=F)': 'NG=F'
+    }
+
+    c_ctrl1, c_ctrl2, c_ctrl3, c_ctrl4 = st.columns([1.5, 1.2, 1.2, 1.0])
+    with c_ctrl1:
+        sel_asset_label = st.selectbox(
+            "Seleccionar Mercado:",
+            options=list(ASSETS_LAB.keys()),
+            index=0,
+            key="turtle_sel_asset"
+        )
+        sel_sym = ASSETS_LAB[sel_asset_label]
+
+    with c_ctrl2:
+        sel_sys = st.selectbox(
+            "Sistema de Canales:",
+            options=["Sistema 2 (55D Breakout / 20D Exit)", "Sistema 1 (20D Breakout / 10D Exit)"],
+            index=0,
+            key="turtle_sel_sys"
+        )
+        sys_code = 2 if "Sistema 2" in sel_sys else 1
+
+    with c_ctrl3:
+        sel_mode = st.selectbox(
+            "Dirección Permitida:",
+            options=["Long & Short (Canónico Bidireccional)", "Long-Only (Solo Largos)"],
+            index=0,
+            key="turtle_sel_mode"
+        )
+        mode_code = "LONG_AND_SHORT" if "Bidireccional" in sel_mode else "LONG_ONLY"
+
+    with c_ctrl4:
+        sel_lookback = st.selectbox(
+            "Periodo Histórico:",
+            options=["8 Años (2018-2026)", "5 Años (2021-2026)", "2 Años (2024-2026)"],
+            index=0,
+            key="turtle_sel_period"
+        )
+        period_str = "8y" if "8 Años" in sel_lookback else ("5y" if "5 Años" in sel_lookback else "2y")
+
+    # Descargar datos o usar caché
+    with st.spinner(f"Cargando cotizaciones históricas y calculando canales Donchian para {sel_sym}..."):
+        df_asset = tte.load_market_ohlcv(sel_sym, period=period_str) if tte else pd.DataFrame()
+
+    if df_asset.empty:
+        st.error(f"No se pudieron descargar datos de mercado para {sel_sym}. Intenta con otro activo.")
+    else:
+        df_sim, eq_df, trades_df, actions, metrics = tte.simulate_turtle_trades(
+            df_asset, system=sys_code, mode=mode_code, risk_pct_per_unit=0.01, max_units=4
+        )
+
+        # HUD Métricas Superiores
+        m_cagr = metrics.get("CAGR_Pct", 0.0)
+        m_dd = metrics.get("Max_Drawdown_Pct", 0.0)
+        m_sharpe = metrics.get("Sharpe_Ratio", 0.0)
+        m_wr = metrics.get("Win_Rate_Pct", 0.0)
+        m_pf = metrics.get("Profit_Factor", 0.0)
+        m_wl = metrics.get("Win_Loss_Ratio", 0.0)
+        m_trades = metrics.get("Total_Trades", 0)
+
+        st.markdown(f'''
+            <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 20px;">
+                <div class="canslim-hud-big" style="border-left: 3px solid {'#00FF87' if m_cagr >= 10 else ('#38BDF8' if m_cagr >= 0 else '#FF2E63')};">
+                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">CAGR Anualizado</div>
+                    <div style="font-size: 22px; font-weight: 900; color: {'#00FF87' if m_cagr >= 10 else ('#38BDF8' if m_cagr >= 0 else '#FF2E63')}; margin-top: 4px;">{m_cagr:+.2f}%</div>
+                    <div style="font-size: 11px; color: #94A3B8;">Tasa Compuesta</div>
+                </div>
+                <div class="canslim-hud-big" style="border-left: 3px solid {'#EF4444' if abs(m_dd) >= 50 else '#F59E0B'};">
+                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Max Drawdown</div>
+                    <div style="font-size: 22px; font-weight: 900; color: #EF4444; margin-top: 4px;">{m_dd:.2f}%</div>
+                    <div style="font-size: 11px; color: #94A3B8;">Caída Pico a Valle</div>
+                </div>
+                <div class="canslim-hud-big" style="border-left: 3px solid #38BDF8;">
+                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Sharpe Ratio</div>
+                    <div style="font-size: 22px; font-weight: 900; color: #38BDF8; margin-top: 4px;">{m_sharpe:.2f}</div>
+                    <div style="font-size: 11px; color: #94A3B8;">Retorno Ajustado</div>
+                </div>
+                <div class="canslim-hud-big" style="border-left: 3px solid #EAB308;">
+                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Win Rate</div>
+                    <div style="font-size: 22px; font-weight: 900; color: #EAB308; margin-top: 4px;">{m_wr:.1f}%</div>
+                    <div style="font-size: 11px; color: #94A3B8;">{m_trades} Trades Totales</div>
+                </div>
+                <div class="canslim-hud-big" style="border-left: 3px solid {'#00FF87' if m_pf >= 1.5 else '#F59E0B'};">
+                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Profit Factor</div>
+                    <div style="font-size: 22px; font-weight: 900; color: #00FF87; margin-top: 4px;">{m_pf:.2f}</div>
+                    <div style="font-size: 11px; color: #94A3B8;">Ganancia / Pérdida</div>
+                </div>
+                <div class="canslim-hud-big" style="border-left: 3px solid #A855F7;">
+                    <div style="font-size: 11px; font-weight: 700; color: #94A3B8; text-transform: uppercase;">Win / Loss Ratio</div>
+                    <div style="font-size: 22px; font-weight: 900; color: #A855F7; margin-top: 4px;">{m_wl:.2f} : 1</div>
+                    <div style="font-size: 11px; color: #94A3B8;">Asimetría de Riesgo</div>
+                </div>
+            </div>
+        ''', unsafe_allow_html=True)
+
+        tab_tchart, tab_tequity, tab_ttrades, tab_tdb = st.tabs([
+            "📈 Gráfico Táctico Canónico (Entradas, Piramidación & Stops)",
+            "📊 Curva de Equity & Análisis de Drawdown",
+            "📋 Registro Detallado de Operaciones (Trade Log)",
+            "🗄️ Base de Datos de Estudios Cuantitativos Precompilados"
+        ])
+
+        with tab_tchart:
+            st.markdown(f"##### 🎯 Visualización Canónica de Operaciones • {sel_asset_label}")
+            st.caption("🟢 **Triángulo Verde**: Entrada Unidad 1 (Breakout) • 🔵 **Rombo Azul**: Piramidación (+0.5N) • 🛑 **Línea Roja**: Stop Loss (2N) • 🔻 **Cruz**: Salida (Donchian o Stop)")
+            
+            fig_t = tte.build_turtle_chart(df_sim, actions, symbol=sel_sym, title_extra=f"[{sel_sys} • {sel_mode}]")
+            st.plotly_chart(fig_t, use_container_width=True, key=f"turtle_chart_{sel_sym}_{sys_code}_{mode_code}")
+
+        with tab_tequity:
+            col_eq1, col_eq2 = st.columns([2, 1])
+            with col_eq1:
+                st.markdown("##### 📈 Evolución del Capital ($100,000 Inicial)")
+                fig_eq = go.Figure()
+                fig_eq.add_trace(go.Scatter(
+                    x=eq_df.index, y=eq_df['Equity'],
+                    mode='lines', line=dict(color='#00FF87', width=2),
+                    name='Turtle Strategy Equity'
+                ))
+                fig_eq.update_layout(
+                    template="plotly_dark",
+                    paper_bgcolor="#0A0E17",
+                    plot_bgcolor="#0A0E17",
+                    height=380,
+                    margin=dict(l=10, r=20, t=10, b=10),
+                    yaxis=dict(side="right", tickprefix="$")
+                )
+                st.plotly_chart(fig_eq, use_container_width=True, key=f"turtle_eq_chart_{sel_sym}")
+
+            with col_eq2:
+                st.markdown("##### 💡 Diagnóstico del Desempeño:")
+                st.markdown(f'''
+                    • **Retorno Total Acumulado**: <strong>{metrics.get("Total_Return_Pct", 0.0):+.2f}%</strong><br>
+                    • **Ganancia Promedio por Trade Ganador**: <span style="color:#00FF87; font-weight:700;">+${metrics.get("Avg_Win", 0.0):,.2f}</span><br>
+                    • **Pérdida Promedio por Trade Perdedor**: <span style="color:#FF2E63; font-weight:700;">-${metrics.get("Avg_Loss", 0.0):,.2f}</span><br>
+                    • **Asimetría Matemática**: El sistema gana <strong>{m_wl:.2f} veces</strong> más cuando acierta de lo que pierde cuando falla.<br>
+                    • **Conclusión**: Con un Win Rate de {m_wr:.1f}%, el sistema demuestra que la rentabilidad del *Trend Following* proviene de recortar pérdidas al 2N y dejar correr los grandes movimientos con piramidación.
+                ''', unsafe_allow_html=True)
+
+        with tab_ttrades:
+            st.markdown(f"##### 📋 Historial Completo de Operaciones ({len(trades_df)} trades cerrados)")
+            if not trades_df.empty:
+                st.dataframe(
+                    trades_df.rename(columns={
+                        'Entry_Date': 'Fecha Entrada',
+                        'Exit_Date': 'Fecha Salida',
+                        'Direction': 'Dirección',
+                        'Units': 'Unidades',
+                        'Avg_Entry': 'Entrada Media ($)',
+                        'Exit_Price': 'Salida ($)',
+                        'PnL': 'PnL Monetario ($)',
+                        'Return_Pct': 'Retorno (%)',
+                        'Exit_Reason': 'Motivo Salida'
+                    }),
+                    use_container_width=True,
+                    height=450,
+                    hide_index=True
+                )
+                csv_data = trades_df.to_csv(index=False).encode('utf-8')
+                st.download_button(
+                    label="📥 Descargar Historial de Operaciones (.CSV)",
+                    data=csv_data,
+                    file_name=f"Turtle_Trades_{sel_sym}_{datetime.now().strftime('%Y%m%d')}.csv",
+                    mime="text/csv",
+                    use_container_width=True
+                )
+            else:
+                st.info("No se generaron trades cerrados en el periodo seleccionado.")
+
+        with tab_tdb:
+            st.markdown("##### 🗄️ Base de Datos de Estudios Cuantitativos Precompilados (Multi-Activo 2018 - 2026)")
+            st.caption("Resultados precalculados para toda la canasta de seguimiento de tendencias analizada:")
+            
+            s_db = tte.get_study_database()
+            studies_dict = s_db.get("studies", {})
+            if studies_dict:
+                table_rows = []
+                for s_key, s_data in studies_dict.items():
+                    m_s2 = s_data.get("system_2_metrics", {})
+                    m_s2_lo = s_data.get("system_2_long_only_metrics", {})
+                    table_rows.append({
+                        "Activo": s_data.get("label", s_key),
+                        "CAGR Canónico S2 (L&S)": f"{m_s2.get('CAGR_Pct', 0.0):+.2f}%",
+                        "CAGR Long-Only S2": f"{m_s2_lo.get('CAGR_Pct', 0.0):+.2f}%",
+                        "Max DD (L&S)": f"{m_s2.get('Max_Drawdown_Pct', 0.0):.2f}%",
+                        "Profit Factor": f"{m_s2.get('Profit_Factor', 0.0):.2f}",
+                        "Win / Loss Ratio": f"{m_s2.get('Win_Loss_Ratio', 0.0):.2f} : 1",
+                        "Trades Totales": m_s2.get('Total_Trades', 0)
+                    })
+                st.dataframe(pd.DataFrame(table_rows), use_container_width=True, hide_index=True)
+
+            st.markdown(r'''
+                ---
+                #### 📜 Las 6 Reglas Canónicas de Richard Dennis:
+                1. **Definición de Volatilidad N**: $N = Wilder\'s\ ATR(20)$. Representa el rango medio diario verdadero.
+                2. **Dimensionamiento por Volatilidad**: $1\ Unidad = \frac{1\%\ \text{de Cuenta}}{N \times \text{Multiplicador}}$. Igualdad de riesgo en cada mercado.
+                3. **Canal Donchian de Entrada**: Sistema 1 entra en rotura de 20 días. Sistema 2 entra en rotura de 55 días.
+                4. **Piramidación Estricta**: Cada vez que el precio avanza $+0.5 \times N$ a favor, se añade 1 unidad (hasta 4 unidades máximo).
+                5. **Stop Loss a 2N Dinámico**: El stop se sitúa a $2.0 \times N$ de la última entrada. Al añadir una unidad, todos los stops anteriores se elevan en $+0.5 \times N$.
+                6. **Salida Donchian**: Se cierra la posición cuando el precio rompe el mínimo de 10 días (Sistema 1) o de 20 días (Sistema 2).
+            ''')
