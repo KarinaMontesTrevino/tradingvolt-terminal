@@ -23,7 +23,8 @@ from datetime import datetime
 import urllib.request
 import urllib.error
 
-CACHE_FILE = os.path.join(r"C:\Users\kim17\.gemini\antigravity\scratch\trading_screener", "labor_market_cache.json")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_FILE = os.path.join(BASE_DIR, "labor_market_cache.json")
 CACHE_TTL = 86400  # 24 horas (los datos de empleo son mensuales)
 
 # Conjunto histórico de referencia institucional (2022 - 2026)

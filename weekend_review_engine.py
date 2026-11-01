@@ -18,8 +18,10 @@ import os
 import subprocess
 from datetime import datetime
 
-OUTPUT_DIR = r"C:\Users\kim17\.gemini\antigravity\scratch\trading_screener"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+OUTPUT_DIR = BASE_DIR
 MASTER_TEMPLATE_PATH = os.path.join(OUTPUT_DIR, "tradingvolt_weekend_review_master.html")
+os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
 def compile_pdf_from_html(html_path: str, pdf_path: str) -> bool:

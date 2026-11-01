@@ -62,7 +62,8 @@ THEMATIC_ETFS = {
     "IBIT": {"name": "Bitcoin Spot", "theme": "Crypto Assets", "color": "#F59E0B"}
 }
 
-CACHE_FILE = os.path.join(r"C:\Users\kim17\.gemini\antigravity\scratch\trading_screener", "rrg_cache.json")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+CACHE_FILE = os.path.join(BASE_DIR, "rrg_cache.json")
 
 
 def get_quadrant(rs_ratio: float, rs_mom: float) -> Tuple[str, str, str]:
