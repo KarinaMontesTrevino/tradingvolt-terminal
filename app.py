@@ -5690,18 +5690,64 @@ elif "NAAIM" in nav_view or "AAII" in nav_view:
     st.markdown('<div class="brand-sub">EXPOSICIÓN INSTITUCIONAL VS SENTIMIENTO MINORISTA • SEÑALES CONTRARIAS • REVERSE ENGINEERED FROM DEEPVUE</div>', unsafe_allow_html=True)
     st.write("")
 
+    # Cargar datos dinámicos desde la caché JSON
+    naaim_curr = sie.get_naaim_data()
+    aaii_curr = sie.get_aaii_data()
+
+    # Barra de Control y Actualizador Semanal
+    ctrl_col1, ctrl_col2 = st.columns([2.5, 1.0])
+    with ctrl_col1:
+        st.caption(f"📅 **Última Actualización Registrada:** NAAIM ({naaim_curr.get('last_report', 'N/D')}) • AAII ({aaii_curr.get('last_update', 'N/D')})")
+
+    with st.expander("⚙️ Actualizar Reporte Semanal (Jueves)", expanded=False):
+        st.markdown("<p style='font-size:12px; color:#94A3B8; margin-bottom:10px;'>Ingresa los datos del nuevo reporte semanal publicado cada jueves para recalcular Z-Scores, percentiles y spreads automáticamente:</p>", unsafe_allow_html=True)
+        u_col1, u_col2, u_col3, u_col4, u_col5 = st.columns(5)
+        with u_col1:
+            new_date = st.date_input("Fecha del Reporte:", value=datetime.now())
+        with u_col2:
+            new_naaim = st.number_input("NAAIM Exposure (%):", min_value=0.0, max_value=200.0, value=float(naaim_curr.get("current_index", 87.7)), step=0.1)
+        with u_col3:
+            new_bull = st.number_input("AAII Bullish (%):", min_value=0.0, max_value=100.0, value=float(aaii_curr.get("bullish", 38.7)), step=0.1)
+        with u_col4:
+            new_neutral = st.number_input("AAII Neutral (%):", min_value=0.0, max_value=100.0, value=float(aaii_curr.get("neutral", 19.7)), step=0.1)
+        with u_col5:
+            new_bear = st.number_input("AAII Bearish (%):", min_value=0.0, max_value=100.0, value=float(aaii_curr.get("bearish", 41.6)), step=0.1)
+
+        if st.button("💾 Guardar y Recalcular Métricas Semanales", type="primary", use_container_width=True):
+            ok, msg = sie.update_sentiment_record(
+                naaim_val=new_naaim,
+                aaii_bull=new_bull,
+                aaii_neutral=new_neutral,
+                aaii_bear=new_bear,
+                report_date=datetime.combine(new_date, datetime.min.time())
+            )
+            if ok:
+                st.success(msg)
+                st.rerun()
+            else:
+                st.error("Error al guardar en caché local.")
+
+    st.write("")
+
     col_naaim, col_aaii = st.columns([1.2, 1.0], gap="large")
 
     with col_naaim:
-        st.markdown("""
+        stance_str = naaim_curr.get("stance", "Neutral")
+        stance_color = "#38BDF8"
+        if "Greed" in stance_str or "Bullish" in stance_str:
+            stance_color = "#10B981"
+        elif "Fear" in stance_str or "Defensive" in stance_str:
+            stance_color = "#EF4444"
+
+        st.markdown(f"""
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <div style="display:flex; gap:10px; align-items:center;">
                     <span style="font-size:16px; font-weight:bold; color:#F8FAFC;">NAAIM Exposure</span>
-                    <span style="background:rgba(56, 189, 248, 0.15); color:#38BDF8; padding:3px 10px; border-radius:6px; font-size:12px; font-weight:600;">Neutral</span>
+                    <span style="background:rgba(56, 189, 248, 0.15); color:{stance_color}; padding:3px 10px; border-radius:6px; font-size:12px; font-weight:600;">{stance_str}</span>
                 </div>
                 <div style="text-align:right;">
-                    <span style="font-size:20px; font-weight:bold; color:#38BDF8;">87.7</span>
-                    <span style="font-size:12px; color:#64748B;">Exposure Index • Oct 21, 2026</span>
+                    <span style="font-size:20px; font-weight:bold; color:#38BDF8;">{naaim_curr.get('current_index', 87.7):.1f}</span>
+                    <span style="font-size:12px; color:#64748B;">Exposure Index • {naaim_curr.get('last_report', '')}</span>
                 </div>
             </div>
         """, unsafe_allow_html=True)
@@ -5712,31 +5758,31 @@ elif "NAAIM" in nav_view or "AAII" in nav_view:
         # 4 Chips de métricas de NAAIM
         nk1, nk2, nk3, nk4 = st.columns(4)
         with nk1:
-            st.metric("Percentile", sie.NAAIM_DATA["percentile"])
+            st.metric("Percentile", naaim_curr.get("percentile", "75%"))
         with nk2:
-            st.metric("Z-Score", f"{sie.NAAIM_DATA['z_score']:+.2f}")
+            st.metric("Z-Score", f"{naaim_curr.get('z_score', 0.72):+.2f}")
         with nk3:
-            st.metric("4W Chg", f"{sie.NAAIM_DATA['change_4w']:+.1f}")
+            st.metric("4W Chg", f"{naaim_curr.get('change_4w', -0.4):+.1f}")
         with nk4:
-            st.metric("Range", sie.NAAIM_DATA["historical_range"])
+            st.metric("Range", naaim_curr.get("historical_range", "13 - 108"))
 
-        st.info(f"💡 **Lectura Institucional:** {sie.NAAIM_DATA['interpretation']}")
+        st.info(f"💡 **Lectura Institucional:** {naaim_curr.get('interpretation', '')}")
 
     with col_aaii:
         st.markdown(f"""
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                 <span style="font-size:16px; font-weight:bold; color:#F8FAFC;">AAII Sentiment</span>
-                <span style="font-size:12px; color:#64748B;">Updated {sie.AAII_DATA['last_update']}</span>
+                <span style="font-size:12px; color:#64748B;">Updated {aaii_curr.get('last_update', '')}</span>
             </div>
         """, unsafe_allow_html=True)
 
         ak1, ak2, ak3 = st.columns(3)
         with ak1:
-            st.metric("BULLISH", f"{sie.AAII_DATA['bullish']:.1f}%", f"{sie.AAII_DATA['bullish_1w_chg']:+.1f} pts 1W")
+            st.metric("BULLISH", f"{aaii_curr.get('bullish', 38.7):.1f}%", f"{aaii_curr.get('bullish_1w_chg', 0.0):+.1f} pts 1W")
         with ak2:
-            st.metric("BEARISH", f"{sie.AAII_DATA['bearish']:.1f}%", f"{sie.AAII_DATA['bearish_1w_chg']:+.1f} pts 1W")
+            st.metric("BEARISH", f"{aaii_curr.get('bearish', 41.6):.1f}%", f"{aaii_curr.get('bearish_1w_chg', 0.0):+.1f} pts 1W")
         with ak3:
-            st.metric("BULL - BEAR SPREAD", f"{sie.AAII_DATA['spread']:+.1f} pts", f"{sie.AAII_DATA['spread_4w_chg']:+.1f} pts 4W")
+            st.metric("BULL - BEAR SPREAD", f"{aaii_curr.get('spread', -2.9):+.1f} pts", f"{aaii_curr.get('spread_4w_chg', 0.0):+.1f} pts 4W")
 
         st.caption("Últimas 4 encuestas semanales (Bullish verde, Neutral gris, Bearish rojo):")
         fig_aaii = sie.render_aaii_horizontal_bars()
@@ -5746,7 +5792,7 @@ elif "NAAIM" in nav_view or "AAII" in nav_view:
             <div style="background:#0F172A; border:1px solid #1E293B; border-radius:8px; padding:14px; margin-top:8px;">
                 <div style="color:#38BDF8; font-weight:700; font-size:12px; margin-bottom:6px;">TRADER READ:</div>
                 <div style="color:#CBD5E1; font-size:12px; line-height:1.6;">
-                    {sie.AAII_DATA['trader_read']}
+                    {aaii_curr.get('trader_read', '')}
                 </div>
             </div>
         """, unsafe_allow_html=True)
