@@ -246,6 +246,51 @@ def update_sentiment_record(naaim_val: float, aaii_bull: float, aaii_neutral: fl
     return success, f"Reporte semanal ({date_str_full}) guardado con éxito. NAAIM: {naaim_val}% | AAII Spread: {new_spread:+.1f}%"
 
 
+def fetch_aaii_from_nasdaq(api_key: str) -> tuple:
+    """
+    Descarga el último informe oficial de AAII Sentiment Survey desde
+    Nasdaq Data Link usando la API key del usuario.
+    """
+    if not api_key or not api_key.strip():
+        return False, "La API Key de Nasdaq Data Link está vacía."
+    
+    try:
+        import quandl
+        quandl.ApiConfig.api_key = api_key.strip()
+        df = quandl.get("AAII/AAII_SENTIMENT", rows=1)
+        
+        if df is None or df.empty:
+            return False, "Nasdaq Data Link devolvió un dataset vacío para AAII/AAII_SENTIMENT."
+        
+        latest_row = df.iloc[-1]
+        report_date = df.index[-1]
+        
+        # Nasdaq entrega los valores en porcentaje (ej 38.7 o 0.387 según la versión)
+        bull = float(latest_row.get("Bullish", 0.0))
+        neutral = float(latest_row.get("Neutral", 0.0))
+        bear = float(latest_row.get("Bearish", 0.0))
+        
+        if bull < 1.0 and bull > 0: bull *= 100.0
+        if neutral < 1.0 and neutral > 0: neutral *= 100.0
+        if bear < 1.0 and bear > 0: bear *= 100.0
+
+        # Mantener el valor de NAAIM actual
+        naaim_curr = get_naaim_data()
+        naaim_val = naaim_curr.get("current_index", 87.7)
+
+        ok, msg = update_sentiment_record(
+            naaim_val=naaim_val,
+            aaii_bull=bull,
+            aaii_neutral=neutral,
+            aaii_bear=bear,
+            report_date=report_date
+        )
+
+        return True, f"¡Éxito! Encuesta AAII descargada de Nasdaq Data Link: Bullish {bull:.1f}% | Bearish {bear:.1f}% | Neutral {neutral:.1f}% (Fecha: {report_date.strftime('%b %d, %Y')})"
+    except Exception as e:
+        return False, f"Error al consultar Nasdaq Data Link: {e}"
+
+
 def generate_naaim_timeseries(num_weeks: int = 156) -> pd.DataFrame:
     """Obtiene la serie de tiempo de NAAIM para graficar."""
     naaim_dict = get_naaim_data()

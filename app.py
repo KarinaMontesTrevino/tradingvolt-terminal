@@ -1374,7 +1374,19 @@ with st.sidebar:
 
     st.divider()
 
-    # 2. Notificaciones Discord
+    # 2.5 Nasdaq Data Link API Key (para AAII y Macro Sentiment)
+    st.subheader("📊 Nasdaq Data Link")
+    nasdaq_key_sidebar = st.text_input(
+        "API Key (AAII Sentiment):",
+        value=config.get("nasdaq_api_key", ""),
+        type="password",
+        help="Clave gratuita de data.nasdaq.com/account/profile"
+    )
+    if nasdaq_key_sidebar != config.get("nasdaq_api_key", ""):
+        save_config({"nasdaq_api_key": nasdaq_key_sidebar})
+        st.toast("API Key de Nasdaq guardada.", icon="💾")
+
+        # 2. Notificaciones Discord
     st.subheader("🔔 Alertas Discord")
     discord_url = st.text_input(
         "Webhook URL:",
@@ -5699,7 +5711,34 @@ elif "NAAIM" in nav_view or "AAII" in nav_view:
     with ctrl_col1:
         st.caption(f"📅 **Última Actualización Registrada:** NAAIM ({naaim_curr.get('last_report', 'N/D')}) • AAII ({aaii_curr.get('last_update', 'N/D')})")
 
-    with st.expander("⚙️ Actualizar Reporte Semanal (Jueves)", expanded=False):
+    with st.expander("⚙️ Configuración de API & Actualizador Semanal (Jueves)", expanded=False):
+        # 1. SECCIÓN DE API KEY NASDAQ DATA LINK
+        st.markdown("<div style='font-size:12px; font-weight:bold; color:#38BDF8; margin-bottom:6px;'>🔑 Conexión Nasdaq Data Link (Para Auto-Descarga de AAII):</div>", unsafe_allow_html=True)
+        k_c1, k_c2 = st.columns([3, 1])
+        with k_c1:
+            nasdaq_input = st.text_input("Pegar API Key de data.nasdaq.com:", value=config.get("nasdaq_api_key", ""), type="password", key="nasdaq_desk_key", placeholder="Pega tu clave gratuita aquí...")
+        with k_c2:
+            st.write("")
+            st.write("")
+            if st.button("💾 Guardar Clave", key="btn_save_nasdaq_desk", use_container_width=True):
+                save_config({"nasdaq_api_key": nasdaq_input})
+                st.success("¡Clave guardada con éxito en config.json!")
+                st.rerun()
+
+        # Botón de auto-descarga si hay clave configurada
+        curr_key = config.get("nasdaq_api_key", "")
+        if curr_key:
+            if st.button("🚀 Auto-Descargar Último Reporte AAII desde Nasdaq Data Link", key="btn_fetch_aaii_nasdaq", type="secondary", use_container_width=True):
+                with st.spinner("Descargando último reporte oficial de AAII..."):
+                    ok_fetch, msg_fetch = sie.fetch_aaii_from_nasdaq(curr_key)
+                    if ok_fetch:
+                        st.success(msg_fetch)
+                        st.rerun()
+                    else:
+                        st.error(msg_fetch)
+
+        st.markdown("<div style='border-top:1px solid #1E293B; margin:14px 0 10px 0;'></div>", unsafe_allow_html=True)
+        st.markdown("<div style='font-size:12px; font-weight:bold; color:#F8FAFC; margin-bottom:6px;'>📝 Entrada Rápida / Respaldo Manual (Jueves):</div>", unsafe_allow_html=True)
         st.markdown("<p style='font-size:12px; color:#94A3B8; margin-bottom:10px;'>Ingresa los datos del nuevo reporte semanal publicado cada jueves para recalcular Z-Scores, percentiles y spreads automáticamente:</p>", unsafe_allow_html=True)
         u_col1, u_col2, u_col3, u_col4, u_col5 = st.columns(5)
         with u_col1:
