@@ -257,10 +257,26 @@ def fetch_aaii_from_nasdaq(api_key: str) -> tuple:
     try:
         import quandl
         quandl.ApiConfig.api_key = api_key.strip()
-        df = quandl.get("AAII/AAII_SENTIMENT", rows=1)
+        
+        df = None
+        last_err = ""
+        for code in ["AAII/AAII_SENTIMENT", "AAII/SENTIMENT"]:
+            try:
+                df = quandl.get(code, rows=1)
+                if df is not None and not df.empty:
+                    break
+            except Exception as e:
+                last_err = str(e)
+                continue
         
         if df is None or df.empty:
-            return False, "Nasdaq Data Link devolvió un dataset vacío para AAII/AAII_SENTIMENT."
+            if "403" in last_err:
+                return False, (
+                    "Error 403 de Nasdaq Data Link: "
+                    "1) Verifica haber confirmado tu correo de registro de data.nasdaq.com. "
+                    "2) Asegúrate de haber entrado a https://data.nasdaq.com/data/AAII-AAII_SENTIMENT y tener el dataset suscrito (es gratuito)."
+                )
+            return False, f"Nasdaq Data Link no devolvió datos: {last_err}"
         
         latest_row = df.iloc[-1]
         report_date = df.index[-1]
