@@ -184,6 +184,11 @@ try:
     importlib.reload(dvw)
 except ImportError:
     dvw = None
+try:
+    import monte_carlo_engine as mce
+    importlib.reload(mce)
+except ImportError:
+    mce = None
 import urllib.parse
 import streamlit.components.v1 as components
 
@@ -1231,6 +1236,7 @@ with st.sidebar:
         "📈 New Highs & New Lows (Breadth)",
         "📊 COT Positioning (Futures)",
         "🧠 NAAIM / AAII Sentiment Desk",
+        "🎲 Simulador Monte Carlo (Líderes & Mag 7)",
         "🌐 Calendario Económico",
         "🏛️ Fed Labor Market & Sahm Rule Monitor",
         "📊 Stage Analysis (Sectores & Activos)",
@@ -5838,6 +5844,214 @@ elif "NAAIM" in nav_view or "AAII" in nav_view:
 
 
 # =========================================================================
+
+# =========================================================================
+# VISTA: SIMULADOR MONTE CARLO (7 MAGNÍFICAS & LÍDERES SEMIS / IA)
+# =========================================================================
+elif "Monte Carlo" in nav_view:
+    st.markdown('<div class="brand-title">🎲 Simulador Monte Carlo de Alta Precisión</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brand-sub">MODELADO ESTOCÁSTICO INSTITUCIONAL (GBM) • 7 MAGNÍFICAS, SEMICONDUCTORES & INFRAESTRUCTURA DE IA</div>', unsafe_allow_html=True)
+    st.write("")
+
+    if mce is None:
+        st.error("No se pudo cargar el motor monte_carlo_engine.py.")
+    else:
+        # Panel de Controles
+        with st.container():
+            c_preset, c_days, c_sims, c_drift = st.columns([1.6, 1.0, 1.0, 1.4])
+            
+            with c_preset:
+                preset_choice = st.selectbox(
+                    "Canasta de Activos:",
+                    [
+                        "Todos los 18 Líderes",
+                        "Las 7 Magníficas",
+                        "Semis & AI Hardware",
+                        "AI Neocloud & Hyperscalers",
+                        "Personalizada"
+                    ],
+                    index=0,
+                    key="mc_preset_choice"
+                )
+
+            with c_days:
+                horizon_days = st.selectbox(
+                    "Horizonte Temporal:",
+                    [30, 60, 90, 180, 252],
+                    index=1, # 60 días
+                    format_func=lambda d: f"{d} días ({d//21} meses)" if d < 252 else "252 días (1 año)",
+                    key="mc_horizon_days"
+                )
+
+            with c_sims:
+                num_sims = st.selectbox(
+                    "Trayectorias:",
+                    [2000, 5000, 10000],
+                    index=1,
+                    key="mc_num_sims"
+                )
+
+            with c_drift:
+                drift_type = st.selectbox(
+                    "Modelo de Deriva (Drift):",
+                    [
+                        ("historical", "Empírico (Momentum 1A)"),
+                        ("risk_free", "Tasa Libre de Riesgo (4.5%)"),
+                        ("neutral", "Neutral (Drift Cero)")
+                    ],
+                    index=0,
+                    format_func=lambda x: x[1],
+                    key="mc_drift_type"
+                )[0]
+
+        # Canasta personalizada si aplica
+        if preset_choice == "Personalizada":
+            all_opts = mce.DEFAULT_TICKERS["Todos los 18 Líderes"]
+            selected_tickers = st.multiselect(
+                "Selecciona los activos a modelar:",
+                options=all_opts,
+                default=["NVDA", "AAPL", "MSFT", "TSM", "AMD", "ALAB", "CRWV", "NBIS"],
+                key="mc_custom_tickers"
+            )
+        else:
+            selected_tickers = mce.DEFAULT_TICKERS.get(preset_choice, mce.DEFAULT_TICKERS["Todos los 18 Líderes"])
+
+        if not selected_tickers:
+            st.warning("Selecciona al menos un activo para iniciar la simulación.")
+        else:
+            with st.spinner(f"Ejecutando {num_sims:,} simulaciones estocásticas para {len(selected_tickers)} activos..."):
+                prices_df = mce.fetch_historical_prices(selected_tickers, period="1y")
+                
+                if prices_df.empty:
+                    st.error("No se pudieron descargar cotizaciones históricas para estos activos.")
+                else:
+                    batch_res = mce.run_batch_monte_carlo(
+                        prices_df=prices_df,
+                        days=horizon_days,
+                        n_sims=num_sims,
+                        drift_mode=drift_type
+                    )
+                    sim_dict = batch_res.get("results", {})
+                    summary_df = batch_res.get("summary_df", pd.DataFrame())
+                    corr_df = batch_res.get("corr_matrix", pd.DataFrame())
+
+            # Resumen Ejecutivo Superior
+            if not summary_df.empty:
+                lowest_vol_row = summary_df.loc[summary_df["Volatilidad Anual"].idxmin()]
+                highest_ret_row = summary_df.loc[summary_df["Retorno Esperado (P50)"].idxmax()]
+                worst_var_row = summary_df.loc[summary_df["VaR 95%"].idxmax()]
+
+                col_h1, col_h2, col_h3, col_h4 = st.columns(4)
+                with col_h1:
+                    st.markdown(f"""
+                    <div class="hud-card" style="border-left: 3px solid #00FF87;">
+                        <div class="hud-label">🛡️ ACTIVO MÁS ESTABLE</div>
+                        <div class="hud-value" style="color:#00FF87;">{lowest_vol_row['Ticker']}</div>
+                        <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
+                            Volatilidad: {lowest_vol_row['Volatilidad Anual']:.1f}% | VaR: -{lowest_vol_row['VaR 95%']:.1f}%
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                with col_h2:
+                    st.markdown(f"""
+                    <div class="hud-card" style="border-left: 3px solid #00F0FF;">
+                        <div class="hud-label">🚀 MAYOR RETORNO MEDIANO</div>
+                        <div class="hud-value" style="color:#00F0FF;">{highest_ret_row['Ticker']}</div>
+                        <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
+                            P50 ({horizon_days}d): {highest_ret_row['Retorno Esperado (P50)']:+.1f}%
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                with col_h3:
+                    st.markdown(f"""
+                    <div class="hud-card" style="border-left: 3px solid #FF4B4B;">
+                        <div class="hud-label">⚠️ MAYOR TAIL RISK (VaR 95%)</div>
+                        <div class="hud-value" style="color:#FF4B4B;">{worst_var_row['Ticker']}</div>
+                        <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
+                            Peor 5%: -{worst_var_row['VaR 95%']:.1f}% (CVaR -{worst_var_row['CVaR 95% (Tail Risk)']:.1f}%)
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                with col_h4:
+                    avg_prob_profit = summary_df["Prob. Ganancia"].mean()
+                    st.markdown(f"""
+                    <div class="hud-card" style="border-left: 3px solid #FFD600;">
+                        <div class="hud-label">🎯 PROB. MEDIA DE BENEFICIO</div>
+                        <div class="hud-value" style="color:#FFD600;">{avg_prob_profit:.1f}%</div>
+                        <div style="font-size:11px; color:#94A3B8; margin-top:2px;">
+                            Promedio canasta a {horizon_days} días
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+                st.write("")
+
+                # Tabs de visualización
+                t_table, t_single, t_corr = st.tabs([
+                    "📊 Matriz Comparativa de Riesgo / Retorno",
+                    "📈 Cono de Dispersión & Spaghetti (Activo Individual)",
+                    "🧬 Matriz de Correlación Cruzada"
+                ])
+
+                with t_table:
+                    st.subheader(f"Comparativa Cuantitativa de la Canasta ({horizon_days} días proyectados)")
+                    st.caption("Percentiles calculados mediante Movimiento Browniano Geométrico con cálculo estocástico de Ito:")
+                    
+                    disp_df = summary_df.copy()
+                    disp_df["Precio Actual"] = disp_df["Precio Actual"].apply(lambda v: f"${v:.2f}")
+                    disp_df["Volatilidad Anual"] = disp_df["Volatilidad Anual"].apply(lambda v: f"{v:.1f}%")
+                    disp_df["Retorno Esperado (P50)"] = disp_df["Retorno Esperado (P50)"].apply(lambda v: f"{v:+.1f}%")
+                    disp_df["P50 (Mediana)"] = disp_df["P50 (Mediana)"].apply(lambda v: f"${v:.2f}")
+                    disp_df["Rango P5 (Crash 5%)"] = disp_df["Rango P5 (Crash 5%)"].apply(lambda v: f"${v:.2f}")
+                    disp_df["Rango P95 (Euforia)"] = disp_df["Rango P95 (Euforia)"].apply(lambda v: f"${v:.2f}")
+                    disp_df["VaR 95%"] = disp_df["VaR 95%"].apply(lambda v: f"-{v:.1f}%")
+                    disp_df["CVaR 95% (Tail Risk)"] = disp_df["CVaR 95% (Tail Risk)"].apply(lambda v: f"-{v:.1f}%")
+                    disp_df["Prob. Ganancia"] = disp_df["Prob. Ganancia"].apply(lambda v: f"{v:.1f}%")
+                    disp_df["Prob. Caída >20%"] = disp_df["Prob. Caída >20%"].apply(lambda v: f"{v:.1f}%")
+
+                    st.dataframe(disp_df, width="stretch", hide_index=True)
+
+                with t_single:
+                    active_tick = st.selectbox(
+                        "Selecciona un activo para inspeccionar sus trayectorias y distribución:",
+                        options=list(sim_dict.keys()),
+                        index=0,
+                        key="mc_single_ticker_select"
+                    )
+
+                    if active_tick in sim_dict:
+                        s_data = sim_dict[active_tick]
+                        
+                        col_fig1, col_fig2 = st.columns([1.6, 1.0])
+                        with col_fig1:
+                            fan_fig = mce.create_spaghetti_fan_chart(s_data, active_tick)
+                            st.plotly_chart(fan_fig, use_container_width=True)
+
+                        with col_fig2:
+                            hist_fig = mce.create_distribution_histogram(s_data, active_tick)
+                            st.plotly_chart(hist_fig, use_container_width=True)
+
+                        # Métricas específicas del activo
+                        col_m1, col_m2, col_m3, col_m4 = st.columns(4)
+                        with col_m1:
+                            st.metric("Precio Actual", f"${s_data['s0']:.2f}")
+                        with col_m2:
+                            st.metric(f"Mediana P50 ({horizon_days}d)", f"${s_data['p50']:.2f}", f"{s_data['median_return']:+.1f}%")
+                        with col_m3:
+                            st.metric("VaR 95% (Pérdida Máx 95%)", f"-{s_data['var_95_pct']:.1f}%")
+                        with col_m4:
+                            st.metric("Probabilidad de Subir >20%", f"{s_data['prob_gain_20']:.1f}%")
+
+                with t_corr:
+                    st.subheader("Matriz de Correlación Cruzada Diaria (1 Año)")
+                    st.caption("Identifica si tus activos se mueven juntos en bloque o si aportan diversificación real al portafolio:")
+                    if not corr_df.empty:
+                        corr_fig = mce.create_correlation_heatmap(corr_df)
+                        st.plotly_chart(corr_fig, use_container_width=True)
+
 # VISTA 5: CALENDARIO ECONÓMICO & MACRO DESK
 # =========================================================================
 elif "Económico" in nav_view or "Economic" in nav_view:
