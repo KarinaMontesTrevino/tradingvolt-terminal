@@ -2714,439 +2714,212 @@ elif nav_view == "⚡ Screener Cuantitativo":
     }
 
     # PANEL DE CONTROL INSTITUCIONAL (ESTRATEGIA + UNIVERSO)
-    col_ctrl1, col_ctrl2 = st.columns([1.6, 1.4])
-    with col_ctrl1:
-        st.markdown("""
-        <div style="margin-bottom: 4px;">
-            <span style="font-size: 11px; font-weight: 700; color: #00F0FF; text-transform: uppercase; letter-spacing: 1px;">
-                1. Estrategia Cuantitativa (Filtro)
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
-        screener_names = list(SCREENERS.keys())
+    # 1. Filtros Disponibles (excluyendo universos crudos)
+    screener_names = [k for k in SCREENERS.keys() if "Deepvue Universe" not in k and "Scanner Personalizado" not in k]
+
+    col_flt, col_cnt = st.columns([3.2, 1.0])
+    with col_flt:
         selected_screener_name = st.selectbox(
-            "Seleccionar Filtro Institucional:",
+            "🎯 Selecciona el Filtro Cuantitativo (Estrategia):",
             screener_names,
             index=0,
-            label_visibility="collapsed"
+            key="sel_screener_main_strategy"
         )
-
     current_screener = SCREENERS[selected_screener_name]
-    num_benchmark = len(current_screener["benchmark_tickers"])
 
-    with col_ctrl2:
-        st.markdown("""
-        <div style="margin-bottom: 4px;">
-            <span style="font-size: 11px; font-weight: 700; color: #00FF87; text-transform: uppercase; letter-spacing: 1px;">
-                2. Universo a Escanear (Mercado)
-            </span>
+    # 2. Obtener lista oficial de candidatos que CUMPLEN este filtro
+    base_tickers = list(current_screener.get("benchmark_tickers", []))
+    
+    # Enriquecer en caliente con detecciones frescas de los snapshots del día si aplica
+    if dse is not None:
+        try:
+            for snap_k in ["OPEN", "PRE", "CLOSE"]:
+                snap_cands = dse.get_latest_snapshot(snap_k).get("candidates", [])
+                for cand in snap_cands:
+                    sym = cand.get("symbol")
+                    pat = str(cand.get("pattern", "")).upper()
+                    chg = float(cand.get("change_pct", 0.0))
+                    rvol = float(cand.get("rvol", 1.0))
+                    if not sym or sym in base_tickers:
+                        continue
+                    if "Pivot Breakout" in selected_screener_name and ("BREAKOUT" in pat or "PIVOT" in pat):
+                        base_tickers.insert(0, sym)
+                    elif "Episodic Pivot" in selected_screener_name and ("EPISODIC" in pat or (chg >= 4.0 and rvol >= 1.3)):
+                        base_tickers.insert(0, sym)
+                    elif "Gappers" in selected_screener_name and chg >= 3.0:
+                        base_tickers.insert(0, sym)
+        except Exception:
+            pass
+
+    with col_cnt:
+        st.markdown(f'''
+        <div class="hud-card" style="border-left: 3px solid #00F0FF; margin-top: 24px; padding: 8px 12px;">
+            <div class="hud-label">CANDIDATOS CALIFICADOS</div>
+            <div class="hud-value" style="color: #00F0FF; font-size: 18px;">{len(base_tickers)} ACTIVOS</div>
         </div>
-        """, unsafe_allow_html=True)
+        ''', unsafe_allow_html=True)
 
-        active_radar_data = are.get_active_radar() if are else {"tickers": [], "count": 0, "source": "Screener"}
-        radar_count_now = active_radar_data.get("count", len(active_radar_data.get("tickers", [])))
-        radar_src_now = active_radar_data.get("source", "Screener")
+    # 3. Tarjeta de Criterios y Parámetros Oficiales
+    criteria_badges = " ".join([f'<span class="badge-neon-bull">✓ {c}</span>' for c in current_screener.get("criteria", [])])
+    feed_badge = '<span class="badge-neon-bull">● TIEMPO REAL IEX / YAHOO</span>' if use_alpaca else '<span class="badge-neon-cyan">● TIEMPO REAL YAHOO FEED</span>'
 
-        full_mkt_cnt = len(getattr(engine, 'FULL_US_MARKET_TICKERS', eu.US_BROAD_MARKET_TICKERS))
-        sp1500_cnt = len(getattr(eu, 'SP1500_COMPLETE_TICKERS', [])) or 1506
-        r2k_cnt = len(getattr(eu, 'RUSSELL2000_COMPLETE_TICKERS', [])) or 2075
-        nasdaq_comp_cnt = len(getattr(eu, 'NASDAQ_COMPOSITE_COMPLETE_TICKERS', [])) or 3258
-        dow30_cnt = len(getattr(eu, 'DOW30_COMPLETE_TICKERS', [])) or 30
-
-        universe_options = [
-            "🔔 Snapshot Oficial OPEN (Apertura 10:15 AM - Sub-Segundo <0.05s)",
-            "🌅 Snapshot Oficial PRE (Pre-Market 8:30 AM - Sub-Segundo <0.05s)",
-            "🌙 Snapshot Oficial CLOSE (Cierre 4:15 PM - Sub-Segundo <0.05s)",
-            f"🚀 High Momentum & Leaders Universe ({len(eu.HIGH_MOMENTUM_EXPANDED_TICKERS)} acciones - Rápido 5-8s)",
-            f"🇺🇸 S&P 1500 Composite ({sp1500_cnt:,} acciones - Líquidas 15-20s)",
-            f"🏆 S&P 500 Completo ({len(eu.SP500_COMPLETE_TICKERS)} acciones)",
-            f"💻 Nasdaq 100 Completo ({len(eu.NASDAQ100_COMPLETE_TICKERS)} acciones - Instantáneo)",
-            f"🐻 Russell 2000 Completo ({r2k_cnt:,} small-caps)",
-            f"🌐 Nasdaq Composite Líquido ({nasdaq_comp_cnt:,} acciones)",
-            f"🏛️ Dow Jones 30 ({dow30_cnt} blue-chips)",
-            f"🏢 S&P 400 Mid-Cap Growth ({len(eu.SP400_MIDCAP_TICKERS)} acciones)",
-            f"⚡ S&P 600 Small-Cap Momentum ({len(eu.SP600_SMALLCAP_TICKERS)} acciones)",
-            "👑 Finviz Feed: New 52-Week Highs (Señal Oficial Finviz)",
-            "🚀 Finviz Feed: Top Gainers (Máximas Ganancias Finviz)",
-            "🌊 Finviz Feed: Unusual Volume (Flujo Anómalo Finviz)",
-            "⚡ Finviz Feed: Multiple Tops Breakouts (Finviz)",
-            f"🌎 Todo el Mercado EE.UU. ({full_mkt_cnt:,} acciones - Exhaustivo 1-2m)",
-            "📡 Mercado en Vivo: Top Gappers, Movers & Momentum (+950 activos en juego)",
-            f"🎯 Radar Activo Compartido ({radar_count_now} activos de {radar_src_now})",
-            "✏️ Personalizado (Escribir tickers)"
-        ]
-
-        selected_universe_option = st.selectbox(
-            "Seleccionar Universo:",
-            universe_options,
-            index=0,
-            label_visibility="collapsed"
-        )
-
-    # Determinar ticker list a escanear (Por defecto SIEMPRE el Mercado Completo EE.UU.)
-    if "Snapshot Oficial OPEN" in selected_universe_option:
-        snap_open = dse.get_latest_snapshot("OPEN") if dse else {}
-        ticker_list = [c["symbol"] for c in snap_open.get("candidates", [])] or ["ADT", "BHC", "GKOS", "PRCH"]
-        universe_label = f"🔔 Snapshot Oficial OPEN ({len(ticker_list)} activos pre-calculados)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Snapshot Oficial PRE" in selected_universe_option:
-        snap_pre = dse.get_latest_snapshot("PRE") if dse else {}
-        ticker_list = [c["symbol"] for c in snap_pre.get("candidates", [])] or ["NVDA", "TSLA", "PLTR"]
-        universe_label = f"🌅 Snapshot Oficial PRE ({len(ticker_list)} activos pre-calculados)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Snapshot Oficial CLOSE" in selected_universe_option:
-        snap_close = dse.get_latest_snapshot("CLOSE") if dse else {}
-        ticker_list = [c["symbol"] for c in snap_close.get("candidates", [])] or ["NVDA", "AAPL", "MSFT"]
-        universe_label = f"🌙 Snapshot Oficial CLOSE ({len(ticker_list)} activos pre-calculados)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Todo el Mercado" in selected_universe_option or "Mercado Completo" in selected_universe_option:
-        ticker_list = getattr(engine, 'FULL_US_MARKET_TICKERS', eu.US_BROAD_MARKET_TICKERS)
-        universe_label = f"🌎 Todo el Mercado EE.UU. ({len(ticker_list):,} activos)"
-        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
-    elif "Russell 2000" in selected_universe_option:
-        ticker_list = getattr(eu, 'RUSSELL2000_COMPLETE_TICKERS', [])
-        universe_label = f"🐻 Russell 2000 ({len(ticker_list):,} activos)"
-        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
-    elif "Nasdaq Composite" in selected_universe_option:
-        ticker_list = getattr(eu, 'NASDAQ_COMPOSITE_COMPLETE_TICKERS', [])
-        universe_label = f"🌐 Nasdaq Composite ({len(ticker_list):,} activos)"
-        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
-    elif "S&P 1500" in selected_universe_option:
-        ticker_list = getattr(eu, 'SP1500_COMPLETE_TICKERS', [])
-        universe_label = f"🇺🇸 S&P 1500 Composite ({len(ticker_list):,} activos)"
-        ticker_count_display = f"{len(ticker_list):,} ACTIVOS"
-    elif "Dow Jones" in selected_universe_option or "Dow 30" in selected_universe_option:
-        ticker_list = getattr(eu, 'DOW30_COMPLETE_TICKERS', [])
-        universe_label = f"🏛️ Dow Jones 30 ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Mercado en Vivo" in selected_universe_option:
-        ticker_list = "LIVE_MOVERS"
-        universe_label = "📡 Mercado en Vivo (Top Gappers, Movers & Momentum en Tiempo Real)"
-        ticker_count_display = "EN VIVO (~950+)"
-    elif "S&P 500 Completo" in selected_universe_option:
-        ticker_list = eu.SP500_COMPLETE_TICKERS
-        universe_label = f"🏆 S&P 500 Completo ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Nasdaq 100 Completo" in selected_universe_option:
-        ticker_list = eu.NASDAQ100_COMPLETE_TICKERS
-        universe_label = f"💻 Nasdaq 100 Completo ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "S&P 400" in selected_universe_option:
-        ticker_list = eu.SP400_MIDCAP_TICKERS
-        universe_label = f"🏢 S&P 400 Mid-Cap ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "S&P 600" in selected_universe_option:
-        ticker_list = eu.SP600_SMALLCAP_TICKERS
-        universe_label = f"⚡ S&P 600 Small-Cap ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "High Momentum" in selected_universe_option:
-        ticker_list = eu.HIGH_MOMENTUM_EXPANDED_TICKERS
-        universe_label = f"🚀 High Momentum & Growth ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Finviz Feed: New 52-Week Highs" in selected_universe_option:
-        ticker_list = (ffe.get_finviz_signal_candidates("👑 New 52-Week Highs (Rupturas de Máximos)") if ffe else []) or ["OSPN", "GDYN", "CDNA", "ACCO", "DFIN"]
-        universe_label = f"👑 Finviz 52w New Highs ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Finviz Feed: Top Gainers" in selected_universe_option:
-        ticker_list = (ffe.get_finviz_signal_candidates("🚀 Top Gainers (Máximas Ganancias)") if ffe else []) or ["ONEG", "CHOW", "SLGB", "GDYN", "FMC"]
-        universe_label = f"🚀 Finviz Top Gainers ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Finviz Feed: Unusual Volume" in selected_universe_option:
-        ticker_list = (ffe.get_finviz_signal_candidates("🌊 Unusual Volume (Volumen Inusual Institucional)") if ffe else []) or ["ONEG", "HUBC", "ABOS", "BDMD"]
-        universe_label = f"🌊 Finviz Unusual Volume ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Finviz Feed: Multiple Tops" in selected_universe_option:
-        ticker_list = (ffe.get_finviz_signal_candidates("⚡ Multiple Tops / Breakouts (Rupturas de Resistencia)") if ffe else []) or ["FROG", "TORO", "RXO", "BTX"]
-        universe_label = f"⚡ Finviz Multiple Tops Breakouts ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    elif "Radar Activo Compartido" in selected_universe_option:
-        ticker_list = are.get_active_radar_tickers(max_items=200) if are else ["NVDA", "PLTR", "TSLA"]
-        universe_label = f"🎯 Radar Activo Compartido ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-    else:
-        custom_input = st.text_input(
-            "Ingresa tickers separados por coma:",
-            value="INTC, NVDA, TSLA, AAPL, AMD, PLTR, MSTR, COIN, SMCI"
-        )
-        ticker_list = [t.strip().upper() for t in custom_input.split(",") if t.strip()]
-        universe_label = f"Personalizado ({len(ticker_list)} activos)"
-        ticker_count_display = f"{len(ticker_list)} ACTIVOS"
-
-    st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
-
-    # Card informativa del filtro activo
-    criteria_badges = " ".join([f'<span class="badge-neon-bull">✓ {c}</span>' for c in current_screener["criteria"]])
-    feed_badge = '<span class="badge-neon-bull">● ALPACA REAL-TIME (IEX)</span>' if use_alpaca else '<span class="badge-neon-cyan">● YAHOO FINANCE FEED</span>'
-
-    st.markdown(f"""
-    <div style="background: #0E121A; border: 1px solid #1C2433; border-radius: 8px; padding: 14px 18px; margin-bottom: 14px;">
+    st.markdown(f'''
+    <div style="background: #0E121A; border: 1px solid #1C2433; border-radius: 8px; padding: 14px 18px; margin-bottom: 12px;">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
             <div style="display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 17px; font-weight: 800; color: #FFFFFF;">{current_screener['title']}</span>
+                <span style="font-size: 16px; font-weight: 800; color: #FFFFFF;">{current_screener['title']}</span>
                 {feed_badge}
             </div>
-            <div style="font-size: 12px; color: #94A3B8; font-family: 'JetBrains Mono', monospace;">
-                Universo: <strong style="color: #00F0FF;">{universe_label}</strong>
-            </div>
+            <span class="badge-neon-cyan">{current_screener.get('badge', 'FILTRO OFICIAL')}</span>
         </div>
-        <div style="font-size: 13px; color: #94A3B8; line-height: 1.5; margin-bottom: 10px;">
+        <div style="font-size: 12.5px; color: #94A3B8; line-height: 1.5; margin-bottom: 10px;">
             {current_screener['description']}
         </div>
         <div style="display: flex; gap: 8px; flex-wrap: wrap;">
             {criteria_badges}
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    ''', unsafe_allow_html=True)
 
-    strategy = current_screener["strategy"]
-    is_daytrade = (current_screener["type"] == "Day")
+    # Si es Daily Pivot Breakout, panel expandible de parámetros ajustables
     is_pivot_strategy = ("Pivot Breakout" in selected_screener_name or "Daily Pivot" in selected_screener_name)
-    st.session_state["active_screener_is_pivot"] = is_pivot_strategy
-
-    pivot_params_active = None
     if is_pivot_strategy:
-        with st.expander("⚙️ Daily Pivot Breakout Strategy Indicator (by Mike) — Panel de Parámetros & Indicador", expanded=True):
-            # Fila 1 (idéntica a la captura): Left Strength | Right Strength | Pivot Lookback | ROC Period (days) | Minimum ROC (%)
+        with st.expander("⚙️ Ajustar Parámetros de Ruptura (Mike Indicator: Left/Right, ROC, RVOL, EMA Slope)", expanded=False):
             r1_c1, r1_c2, r1_c3, r1_c4, r1_c5 = st.columns(5)
             with r1_c1:
-                piv_left = st.number_input("Left Strength", min_value=1, max_value=30, value=5, step=1, help="Cuántas velas a la izquierda del pivote deben tener un precio más bajo para confirmar un máximo de pivote válido.")
+                piv_left = st.number_input("Left Strength", min_value=1, max_value=30, value=5, step=1, key="piv_left_sb")
             with r1_c2:
-                piv_right = st.number_input("Right Strength", min_value=1, max_value=30, value=5, step=1, help="Cuántas velas a la derecha del pivote deben tener un precio más bajo para confirmar el pivote.")
+                piv_right = st.number_input("Right Strength", min_value=1, max_value=30, value=5, step=1, key="piv_right_sb")
             with r1_c3:
-                piv_lookback = st.number_input("Pivot Lookback", min_value=20, max_value=250, value=100, step=10, help="Cuántas velas hacia atrás busca pivotes históricos para identificar niveles de breakout.")
+                piv_lookback = st.number_input("Pivot Lookback", min_value=20, max_value=250, value=100, step=10, key="piv_lb_sb")
             with r1_c4:
-                piv_roc_len = st.number_input("ROC Period (days)", min_value=10, max_value=250, value=100, step=5, help="Mide el cambio porcentual de precio en los últimos 100 días.")
+                piv_roc_len = st.number_input("ROC Period (d)", min_value=10, max_value=250, value=100, step=5, key="piv_roc_sb")
             with r1_c5:
-                piv_min_roc = st.number_input("Minimum ROC (%)", min_value=0.0, max_value=200.0, value=30.0, step=2.5, help="El precio debe haber subido al menos un 30% en esos 100 días para que el breakout sea válido.")
+                piv_min_roc = st.number_input("Min ROC (%)", min_value=0.0, max_value=200.0, value=30.0, step=2.5, key="piv_mroc_sb")
 
-            # Fila 2 (idéntica a la captura): RVOL Period (days) | EMA Length | EMA Slope Lookback | EMA Smooth Length | Min EMA Slope %
             r2_c1, r2_c2, r2_c3, r2_c4, r2_c5 = st.columns(5)
             with r2_c1:
-                piv_rvol_len = st.number_input("RVOL Period (days)", min_value=5, max_value=100, value=20, step=5, help="Calcula el volumen promedio de los últimos 20 días como referencia (RVOL > 1.0x).")
+                piv_rvol_len = st.number_input("RVOL Period (d)", min_value=5, max_value=100, value=20, step=5, key="piv_rvol_sb")
             with r2_c2:
-                piv_ema_len = st.number_input("EMA Length", min_value=10, max_value=300, value=100, step=5, help="EMA de 100 períodos que define la dirección de la tendencia principal.")
+                piv_ema_len = st.number_input("EMA Length", min_value=10, max_value=300, value=100, step=5, key="piv_ema_sb")
             with r2_c3:
-                piv_slope_lb = st.number_input("EMA Slope Lookback", min_value=10, max_value=250, value=100, step=5, help="Mide la pendiente porcentual de la EMA mirando 100 velas atrás.")
+                piv_slope_lb = st.number_input("EMA Slope Lookback", min_value=10, max_value=250, value=100, step=5, key="piv_slp_sb")
             with r2_c4:
-                piv_smooth = st.number_input("EMA Smooth Length", min_value=1, max_value=20, value=1, step=1, help="Suavizado de la pendiente (1 = sin suavizado adicional).")
+                piv_smooth = st.number_input("EMA Smooth Length", min_value=1, max_value=20, value=1, step=1, key="piv_smt_sb")
             with r2_c5:
-                piv_min_slope = st.number_input("Min EMA Slope %", min_value=0.0, max_value=150.0, value=20.0, step=1.0, help="La EMA debe tener una inclinación positiva mínima del 20% para que el breakout sea válido.")
-
-            # Fila 3: Enable Momentum Candle Colors | Pivot High (───) | 20% Trailing Stop (•••••••) | Ventana Ruptura | Modo de Señal
-            r3_c1, r3_c2, r3_c3, r3_c4, r3_c5, r3_c6 = st.columns([1.0, 0.85, 0.95, 0.8, 0.75, 1.45])
-            with r3_c1:
-                piv_mom_colors = st.checkbox("Momentum Candle Colors", value=True, help="Colorea las velas según el momentum (como sobre INTC).")
-            with r3_c2:
-                piv_show_ph = st.checkbox("Pivot High (───)", value=True, help="Dibuja la línea horizontal verde continua de los Pivot Highs confirmados.")
-            with r3_c3:
-                piv_show_trail = st.checkbox("20% Trailing Stop (•••)", value=True, help="Dibuja el 20% Trailing Stop en puntos azules desde la señal de entrada.")
-            with r3_c4:
-                piv_show_entry = st.checkbox("Entry Signals", value=True, help="Muestra las etiquetas de entrada en Breakout y salida por Trailing Stop.")
-            with r3_c5:
-                piv_bk_win = st.selectbox("Ruptura en:", ["Último 1 día (Hoy)", "Últimos 2 días", "Últimos 3 días"], index=1, help="Filtra únicamente acciones que hayan cruzado sobre el Pivot High en los últimos 1, 2 o 3 días.")
-            with r3_c6:
-                piv_mode = st.selectbox(
-                    "Modo de Señal",
-                    [
-                        "🔥 Solo Breakouts Recientes (Cruza Pivote + RVOL > 1x)",
-                        "🎯 Breakouts + Acechando Pivote (< 3.5% bajo Pivote)",
-                        "📈 Breakouts + En Trade Activo (< 15d desde Entry)"
-                    ],
-                    index=0,
-                    help="El modo estricto exige cruce reciente sobre un Pivot High intacto con volumen > media 20d."
-                )
-
-            bk_days_val = 1 if "1 día" in piv_bk_win else (2 if "2 días" in piv_bk_win else 3)
-            pivot_params_active = {
-                "left_strength": int(piv_left),
-                "right_strength": int(piv_right),
-                "pivot_lookback": int(piv_lookback),
-                "roc_period": int(piv_roc_len),
-                "min_roc_pct": float(piv_min_roc),
-                "rvol_period": int(piv_rvol_len),
-                "ema_length": int(piv_ema_len),
-                "ema_slope_lookback": int(piv_slope_lb),
-                "ema_smooth_length": int(piv_smooth),
-                "min_ema_slope_pct": float(piv_min_slope),
-                "trailing_stop_pct": 20.0,
-                "enable_momentum_colors": bool(piv_mom_colors),
-                "show_pivot_high": bool(piv_show_ph),
-                "show_trailing_stop": bool(piv_show_trail),
-                "show_entry_signals": bool(piv_show_entry),
-                "min_rvol": 1.0,
-                "breakout_window_days": bk_days_val,
-                "include_near_pivot": ("Acechando Pivote" in piv_mode),
-                "include_active_trade": ("En Trade Activo" in piv_mode),
-            }
-            st.session_state["pivot_strategy_params"] = pivot_params_active
+                piv_min_slope = st.number_input("Min EMA Slope %", min_value=0.0, max_value=150.0, value=20.0, step=1.0, key="piv_mslp_sb")
 
         pine_path = os.path.join(os.path.dirname(__file__), "TradingVolt_Daily_Pivot_Breakout_Mike.pine")
         if os.path.exists(pine_path):
-            with st.expander("🌲 Código Pine Script v5 para TradingView: Daily Pivot Breakout Strategy Indicator [by Mike]", expanded=False):
+            with st.expander("🌲 Código Pine Script v5 para TradingView [by Mike]", expanded=False):
                 with open(pine_path, "r", encoding="utf-8") as f_pine:
                     pine_code_str = f_pine.read()
                 st.download_button(
                     "📥 Descargar Indicador Pine Script (.pine)",
                     data=pine_code_str.encode("utf-8"),
                     file_name="TradingVolt_Daily_Pivot_Breakout_Mike.pine",
-                    mime="text/plain"
+                    mime="text/plain",
+                    key="btn_dl_pine_clean"
                 )
                 st.code(pine_code_str, language="javascript")
 
-    # Botón principal de escaneo + Opción de refresco forzado de cotizaciones
-    st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
-    col_b_scan, col_b_ref = st.columns([4.2, 1.0])
-    with col_b_scan:
-        btn_scan = st.button(
-            f"⚡ EJECUTAR ESCANEO EN MERCADO ({ticker_count_display})",
-            type="primary",
-            use_container_width=True
-        )
-    with col_b_ref:
-        force_fresh_mkt = st.checkbox("🔄 Datos frescos", value=False, help="Marca esta casilla si quieres forzar una nueva descarga desde Yahoo/Alpaca ignorando la caché rápida de 5 minutos.")
+    # 4. Toolbar de Interoperabilidad con Otras Herramientas (Copiar, Monte Carlo, Finviz, CSV)
+    ticker_str_csv = ", ".join(base_tickers)
+    finviz_url = f"https://finviz.com/screener.ashx?v=111&t={','.join(base_tickers[:50])}"
 
-    # Si se pulsa el botón o ya tenemos resultados en sesión
-    piv_key_suffix = f"_{pivot_params_active['breakout_window_days']}_{pivot_params_active['include_near_pivot']}_{pivot_params_active['include_active_trade']}_{pivot_params_active['min_roc_pct']}_{pivot_params_active['min_ema_slope_pct']}" if pivot_params_active else ""
-    scan_state_key = f"scan_results_{selected_screener_name}_{selected_universe_option}{piv_key_suffix}"
-
-    if btn_scan:
-        with st.spinner(f"Escaneando en tiempo real {ticker_count_display} con {strategy} vía {provider_str}..."):
-            start_t = datetime.now()
-            if is_daytrade:
-                results_df = engine.run_daytrade_scanner(
-                    ticker_list,
-                    strategy,
-                    provider=provider_str,
-                    alpaca_key=alpaca_key,
-                    alpaca_secret=alpaca_secret
-                )
-            else:
-                results_df = engine.run_swing_scanner(
-                    ticker_list,
-                    strategy,
-                    provider=provider_str,
-                    alpaca_key=alpaca_key,
-                    alpaca_secret=alpaca_secret,
-                    pivot_params=pivot_params_active,
-                    force_refresh=bool(force_fresh_mkt)
-                )
-            duration = (datetime.now() - start_t).total_seconds()
-            st.session_state[scan_state_key] = (results_df, duration)
-
-    if scan_state_key in st.session_state:
-        results_df, duration = st.session_state[scan_state_key]
-    else:
-        results_df = pd.DataFrame()
-        duration = 0
-
-    if not results_df.empty:
-        if "Ticker" in results_df.columns and are:
-            disc_tickers = results_df["Ticker"].dropna().tolist()
-            are.set_active_radar(
-                tickers=disc_tickers,
-                source_name=f"{selected_screener_name}",
-                description=f"{len(disc_tickers)} activos detectados dinámicamente con {strategy}"
+    with st.container():
+        tb_c1, tb_c2, tb_c3, tb_c4, tb_c5 = st.columns([2.3, 1.1, 1.1, 1.1, 1.0])
+        with tb_c1:
+            st.text_input(
+                "📋 Tickers (Copiar para TradingView / Finviz / TOS):",
+                value=ticker_str_csv,
+                key="txt_screener_tickers_copy",
+                help="Copia estos tickers y pégalos directamente en TradingView (Watchlist), Finviz o ThinkorSwim."
             )
-            if qdp is not None:
-                qdp.save_live_filter_execution(selected_screener_name, disc_tickers, results_df)
-        
-        st.markdown(f"""
-        <div style="background:linear-gradient(90deg, rgba(0, 240, 255, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%); border-left:4px solid #00F0FF; border-radius:6px; padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <div style="font-weight:800; color:#00F0FF; font-size:13px; letter-spacing:0.5px;">📤 RADAR ACTIVO ACTUALIZADO • {len(results_df)} ACTIVOS ENVIADOS AL PIPELINE GLOBAL</div>
-                <div style="color:#94A3B8; font-size:11px; margin-top:2px;">
-                    Disponibles automáticamente en: <strong>🎯 Quant Options & GEX</strong>, <strong>🚀 Terminal CANSLIM (BO60)</strong>, <strong>🕵️‍♂️ Dark Pool Tape</strong> y <strong>🔄 RRG Rotation Desk</strong>.
-                </div>
-            </div>
-            <div style="display:flex; gap:6px;">
-                <span class="badge-neon-bull">AUTOALIMENTACIÓN ACTIVA</span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        with tb_c2:
+            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+            if st.button("🎲 Monte Carlo", key="btn_send_mc_screener", use_container_width=True, help="Envía estos candidatos al Simulador Monte Carlo para proyectar trayectorias y VaR"):
+                st.session_state["mc_custom_tickers"] = base_tickers[:18]
+                st.session_state["_pending_nav_target"] = "🎲 Simulador Monte Carlo (Líderes & Mag 7)"
+                st.rerun()
+        with tb_c3:
+            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+            if st.button("🎯 Radar Global", key="btn_send_radar_screener", use_container_width=True, help="Alimenta el Radar Global para que CANSLIM, Dark Pools, GEX y RRG analicen estos activos"):
+                if are:
+                    are.set_active_radar(
+                        tickers=base_tickers,
+                        source_name=f"{selected_screener_name}",
+                        description=f"{len(base_tickers)} activos calificados bajo {current_screener['strategy']}"
+                    )
+                    st.toast(f"✅ {len(base_tickers)} activos enviados al Radar Global", icon="🎯")
+        with tb_c4:
+            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+            st.markdown(f'''
+            <a href="{finviz_url}" target="_blank" style="display:inline-flex; align-items:center; justify-content:center; width:100%; height:38px; background:#0F172A; border:1px solid #00F0FF; border-radius:6px; color:#00F0FF; font-size:12px; font-weight:700; text-decoration:none;">
+                ↗ EN FINVIZ
+            </a>
+            ''', unsafe_allow_html=True)
+        with tb_c5:
+            st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
+            if st.button("🔄 Refrescar", key="btn_refresh_factors", use_container_width=True, help="Fuerza una recarga fresca de cotizaciones en tiempo real"):
+                if dvw:
+                    dvw.compute_watchlist_factors(base_tickers, force_refresh=True)
+                st.rerun()
 
-        # HUD de métricas rápidas
-        col_m1, col_m2, col_m3, col_m4, col_m5 = st.columns(5)
-        with col_m1:
-            st.markdown(f'<div class="hud-card"><div class="hud-label">COINCIDENCIAS</div><div class="hud-value">{len(results_df)}</div></div>', unsafe_allow_html=True)
-        with col_m2:
-            valid_chg = results_df["Cambio %"].dropna()
-            mean_chg = valid_chg.mean() if not valid_chg.empty else 0.0
-            st.markdown(f'<div class="hud-card"><div class="hud-label">CAMBIO MEDIO</div><div class="hud-value">{mean_chg:+.2f}%</div></div>', unsafe_allow_html=True)
-        with col_m3:
-            rsi_val = f'{results_df["RSI"].mean():.1f}' if "RSI" in results_df.columns else "N/A"
-            st.markdown(f'<div class="hud-card"><div class="hud-label">RSI MEDIO</div><div class="hud-value">{rsi_val}</div></div>', unsafe_allow_html=True)
-        with col_m4:
-            rvol_val = f'{results_df["RVOL"].mean():.2f}x' if "RVOL" in results_df.columns else "N/A"
-            st.markdown(f'<div class="hud-card"><div class="hud-label">RVOL MEDIO</div><div class="hud-value">{rvol_val}</div></div>', unsafe_allow_html=True)
-        with col_m5:
-            st.markdown(f'<div class="hud-card"><div class="hud-label">TIEMPO EJECUCIÓN</div><div class="hud-value">{duration:.2f}s</div></div>', unsafe_allow_html=True)
+    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
-        st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+    # 5. Cargar métricas en tiempo real de los candidatos
+    if dvw is not None:
+        results_df = dvw.compute_watchlist_factors(base_tickers)
+    else:
+        results_df = pd.DataFrame({"Symbol": base_tickers})
+
+    if not results_df.empty and "Symbol" in results_df.columns:
+        results_df = results_df.rename(columns={"Symbol": "Ticker"})
+
+    if results_df.empty:
+        st.warning("No hay activos disponibles para este filtro en este momento.")
+    else:
+        # Enviar automáticamente al Radar Global
+        if are:
+            are.set_active_radar(
+                tickers=base_tickers,
+                source_name=f"{selected_screener_name}",
+                description=f"{len(base_tickers)} activos calificados bajo {current_screener['strategy']}"
+            )
+        if qdp is not None:
+            qdp.save_live_filter_execution(selected_screener_name, base_tickers, results_df)
 
         col_table, col_chart = st.columns([1.1, 1.9], gap="medium")
 
         with col_table:
-            st.markdown("""
+            st.markdown('''
             <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
                 <span style="font-size: 13px; font-weight: 700; color: #FFFFFF; text-transform: uppercase;">
-                    Resultados del Screener
+                    Candidatos Calificados
                 </span>
                 <span style="font-size: 11px; color: #00F0FF; font-weight: 600;">
                     💡 Haz clic en una fila para ver su gráfico
                 </span>
             </div>
-            """, unsafe_allow_html=True)
+            ''', unsafe_allow_html=True)
 
-            compact_cols = ["Ticker", "Precio", "Cambio %"]
-            if "Pivot High ($)" in results_df.columns:
-                compact_cols.append("Pivot High ($)")
-            if "Dist Pivot %" in results_df.columns:
-                compact_cols.append("Dist Pivot %")
-            if "20% Trailing Stop ($)" in results_df.columns:
-                compact_cols.append("20% Trailing Stop ($)")
-            if "ROC (100d) %" in results_df.columns:
-                compact_cols.append("ROC (100d) %")
-            if "EMA 100 Slope %" in results_df.columns:
-                compact_cols.append("EMA 100 Slope %")
-            if "Gap %" in results_df.columns and "Pivot High ($)" not in results_df.columns:
-                compact_cols.append("Gap %")
-            if "RVOL" in results_df.columns:
-                compact_cols.append("RVOL")
-            if "Vela Momentum" in results_df.columns:
-                compact_cols.append("Vela Momentum")
-            if "ADR (10s) %" in results_df.columns and "Pivot High ($)" not in results_df.columns:
-                compact_cols.append("ADR (10s) %")
-            if "Avg $Vol (20s) $M" in results_df.columns:
-                compact_cols.append("Avg $Vol (20s) $M")
-            elif "Vol Dólares ($M)" in results_df.columns:
-                compact_cols.append("Vol Dólares ($M)")
-            if "Posición Rango %" in results_df.columns and "Pivot High ($)" not in results_df.columns:
-                compact_cols.append("Posición Rango %")
-
+            compact_cols = [c for c in ["Ticker", "Precio", "Cambio %", "RV 20d", "RV 50d", "Next Earnings"] if c in results_df.columns]
             table_df = results_df[compact_cols].copy()
 
             col_cfg = {
                 "Ticker": st.column_config.TextColumn("Ticker", help="Símbolo del activo"),
                 "Precio": st.column_config.NumberColumn("Precio", format="$%.2f"),
                 "Cambio %": st.column_config.NumberColumn("Cambio %", format="%+.2f%%"),
-                "Pivot High ($)": st.column_config.NumberColumn("Pivote (5L/5R)", format="$%.2f"),
-                "Dist Pivot %": st.column_config.NumberColumn("Dist Pivote", format="%+.2f%%"),
-                "20% Trailing Stop ($)": st.column_config.NumberColumn("Stop 20% (•••)", format="$%.2f"),
-                "ROC (100d) %": st.column_config.NumberColumn("ROC 100d", format="%+.1f%%"),
-                "EMA 100 Slope %": st.column_config.NumberColumn("EMA100 Slope", format="%+.1f%%"),
-                "Vela Momentum": st.column_config.TextColumn("Vela Momentum"),
-                "Gap %": st.column_config.NumberColumn("Gap %", format="%+.2f%%"),
-                "RVOL": st.column_config.NumberColumn("RVOL 20d", format="%.2fx"),
-                "ADR (10s) %": st.column_config.NumberColumn("ADR (10s) %", format="%.1f%%"),
-                "Avg $Vol (20s) $M": st.column_config.NumberColumn("Vol 20d", format="$%.1fM"),
-                "Vol Dólares ($M)": st.column_config.NumberColumn("Vol $", format="$%.0fM"),
-                "Posición Rango %": st.column_config.NumberColumn("Rango %", format="%.0f%%")
+                "RV 20d": st.column_config.NumberColumn("RVOL 20d", format="%.2fx", help="Volumen Relativo sobre media de 20 días"),
+                "RV 50d": st.column_config.NumberColumn("RS 50d", format="%.2f", help="Fuerza Relativa de 50 días"),
+                "Next Earnings": st.column_config.TextColumn("Próx Earnings", help="Fecha estimada de presentación de resultados")
             }
 
             selection = st.dataframe(
                 table_df,
                 width="stretch",
-                height=460,
+                height=480,
                 hide_index=True,
                 on_select="rerun",
                 selection_mode="single-row",
@@ -3167,20 +2940,20 @@ elif nav_view == "⚡ Screener Cuantitativo":
             st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
             col_disc_act1, col_disc_act2 = st.columns(2)
             with col_disc_act1:
-                if st.button(f"📢 Alerta {selected_ticker}", use_container_width=True):
+                if st.button(f"📢 Alerta {selected_ticker}", use_container_width=True, key="btn_alert_single_t"):
                     if discord_url:
                         row = results_df[results_df["Ticker"] == selected_ticker].iloc[0].to_dict()
-                        ok = discord.send_trade_alert(discord_url, row, scan_type=strategy)
+                        ok = discord.send_trade_alert(discord_url, row, scan_type=current_screener['strategy'])
                         if ok: st.success(f"¡Enviado {selected_ticker}!")
                         else: st.error("Error al enviar.")
                     else:
                         st.error("Configura el Webhook en la barra lateral.")
             with col_disc_act2:
-                if st.button("🚀 Enviar Todo", use_container_width=True):
+                if st.button("🚀 Enviar Todo a Discord", use_container_width=True, key="btn_alert_all_t"):
                     if discord_url:
                         count = 0
                         for _, r in results_df.head(10).iterrows():
-                            if discord.send_trade_alert(discord_url, r.to_dict(), scan_type=strategy):
+                            if discord.send_trade_alert(discord_url, r.to_dict(), scan_type=current_screener['strategy']):
                                 count += 1
                         st.success(f"{count} alertas enviadas a Discord.")
                     else:
@@ -3189,39 +2962,21 @@ elif nav_view == "⚡ Screener Cuantitativo":
         with col_chart:
             render_institutional_chart(selected_ticker, key_suffix="screener_main")
 
-        # Tabla completa expandible con todas las métricas institucionales y exportación CSV
-        st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
-        with st.expander(f"📊 Tabla Cuantitativa Completa ({len(results_df)} activos) & Descarga CSV", expanded=False):
-            st.dataframe(results_df, width="stretch")
-            csv_data = results_df.to_csv(index=False).encode('utf-8')
-            clean_strat = strategy.replace(' ', '_').replace(':', '').replace('>', 'GT').replace('(', '').replace(')', '').replace('$', 'USD_')
-            st.download_button(
-                label="📥 Descargar Resultados Cuantitativos (.CSV)",
-                data=csv_data,
-                file_name=f"TradingVolt_{clean_strat}_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-                mime="text/csv"
-            )
-    else:
-        if btn_scan:
-            st.warning("⚠️ No se encontraron activos que cumplan con todos los criterios bajo los parámetros actuales.")
-        else:
-            st.info("👆 Selecciona tu filtro cuantitativo e inicia el escaneo con el botón principal.")
-
-    # -------------------------------------------------------------------------
-    # WIDGET / DRAWER INSTITUCIONAL DE LISTAS DE FILTROS (ESTILO DEEPVUE MULTI-TAB)
-    # -------------------------------------------------------------------------
-    st.markdown("<div style='height: 20px;'></div>", unsafe_allow_html=True)
-    if dvw is not None:
-        dvw.render_deepvue_multi_tab_drawer(render_chart_fn=render_institutional_chart, key_suffix="screener_main_dv")
-    elif dse is not None:
-        dse.render_snapshot_lists_widget(render_chart_fn=render_institutional_chart, key_suffix="screener_main_widget")
+        # Descarga CSV
+        st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
+        csv_data = results_df.to_csv(index=False).encode('utf-8')
+        clean_strat = selected_screener_name.replace(' ', '_').replace(':', '').replace('>', 'GT')
+        st.download_button(
+            label="📥 Descargar Lista de Candidatos (.CSV)",
+            data=csv_data,
+            file_name=f"TradingVolt_{clean_strat}_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
+            mime="text/csv",
+            key="btn_dl_screener_clean_csv"
+        )
 
 
 # -----------------------------------------------------------------------------
 # VISTA 3: TERMINAL CANSLIM LÍDERES • BREAKOUT DESK (BO60)
-# -----------------------------------------------------------------------------
-# -----------------------------------------------------------------------------
-# VISTA: 📊 MATRIZ DE CONVICCIÓN CRUZADA (BLOOMBERG EQS / DEEPVUE MULTI-DESK)
 # -----------------------------------------------------------------------------
 elif "Convicción Cruzada" in nav_view or "Matriz de Convicción" in nav_view:
     st.markdown("""
