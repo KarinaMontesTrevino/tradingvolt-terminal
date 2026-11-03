@@ -272,9 +272,8 @@ def fetch_aaii_from_nasdaq(api_key: str) -> tuple:
         if df is None or df.empty:
             if "403" in last_err:
                 return False, (
-                    "Error 403 de Nasdaq Data Link: "
-                    "1) Verifica haber confirmado tu correo de registro de data.nasdaq.com. "
-                    "2) Asegúrate de haber entrado a https://data.nasdaq.com/data/AAII-AAII_SENTIMENT y tener el dataset suscrito (es gratuito)."
+                    "Error 403 (Incapsula WAF / Verificación): Nasdaq Data Link activó su firewall antibot para esta IP o tu cuenta aún no valida el email. "
+                    "Te recomendamos ingresar los 3 números semanales en el formulario rápido de arriba (tarda 10 segundos cada jueves) sin depender del bloqueo de Nasdaq."
                 )
             return False, f"Nasdaq Data Link no devolvió datos: {last_err}"
         

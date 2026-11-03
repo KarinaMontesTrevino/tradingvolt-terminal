@@ -1,13 +1,13 @@
 {
   "naaim": {
-    "current_index": 87.7,
-    "stance": "Bullish / Overweight",
-    "last_report": "Nov 02, 2026",
-    "percentile": "63%",
-    "z_score": 0.51,
-    "change_4w": -8.3,
+    "current_index": 74.5,
+    "stance": "Neutral",
+    "last_report": "Oct 28, 2026",
+    "percentile": "39%",
+    "z_score": -0.18,
+    "change_4w": -21.1,
     "historical_range": "40 - 108",
-    "interpretation": "Active exposure is elevated. Systematic momentum is high, but watch for signs of institutional exhaustion.",
+    "interpretation": "Exposure is not near a historical extreme, so the contrarian signal is neutral.",
     "history": [
       {
         "date": "2023-11-01",
@@ -950,19 +950,32 @@
         "naaim": 87.7,
         "spy": 569.32,
         "qqq": 654.98
+      },
+      {
+        "date": "2026-10-28",
+        "naaim": 74.53,
+        "spy": 569.32,
+        "qqq": 654.98
       }
     ]
   },
   "aaii": {
-    "last_update": "Nov 02, 2026",
-    "bullish": 38.7,
-    "bullish_1w_chg": -2.5,
-    "bearish": 41.6,
-    "bearish_1w_chg": 2.9,
-    "neutral": 19.7,
-    "spread": -2.9,
-    "spread_4w_chg": 9.0,
+    "last_update": "Oct 28, 2026",
+    "bullish": 37.8,
+    "bullish_1w_chg": -0.9,
+    "bearish": 41.4,
+    "bearish_1w_chg": -0.2,
+    "neutral": 20.7,
+    "spread": -3.6,
+    "spread_4w_chg": -5.4,
     "surveys": [
+      {
+        "date": "Oct 28",
+        "bullish": 37.8,
+        "neutral": 20.7,
+        "bearish": 41.4,
+        "spread": -3.6
+      },
       {
         "date": "Nov 02",
         "bullish": 38.7,
@@ -983,15 +996,8 @@
         "neutral": 20.8,
         "bearish": 38.7,
         "spread": 1.8
-      },
-      {
-        "date": "Oct 2, 2026",
-        "bullish": 35.2,
-        "neutral": 17.7,
-        "bearish": 47.1,
-        "spread": -11.9
       }
     ],
-    "trader_read": "Sentiment is broadly balanced (Spread -2.9 pts). Neither optimism nor pessimism is unusually crowded. Week-over-week direction may be more useful than the absolute reading. Use AAII as context, not a standalone signal. Confirm extremes with price, breadth, and your risk process."
+    "trader_read": "Sentiment is broadly balanced (Spread -3.6 pts). Neither optimism nor pessimism is unusually crowded. Week-over-week direction may be more useful than the absolute reading. Use AAII as context, not a standalone signal. Confirm extremes with price, breadth, and your risk process."
   }
 }
