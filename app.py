@@ -594,6 +594,66 @@ def save_config(updated_dict):
     except Exception as e:
         st.error(f"Error guardando configuración: {e}")
 
+# ----------------- REUSABLE TRADINGVIEW WIDGET ENGINE (HIGH PERFORMANCE) -----------------
+def render_tradingview_widget(ticker: str, chart_tf: str = "1D", height: int = 500):
+    """
+    Renderiza el widget oficial avanzado de TradingView con aceleración WebGL del lado del cliente:
+    - Preconfigurado con velas japonesas y volumen
+    - Preconfigurado con SMA 20 (Momentum), SMA 50 (Soporte Institucional) y SMA 200 (Tendencia Mayor)
+    - Cero consumo de CPU/Pandas en Python y carga instantánea a 60 FPS
+    """
+    clean_sym = ticker.strip().upper().replace("-", ".")
+    
+    # Mapeo de temporalidades de TradingView
+    if "1H" in chart_tf:
+        tv_interval = "60"
+    elif "15m" in chart_tf:
+        tv_interval = "15"
+    elif "5m" in chart_tf:
+        tv_interval = "5"
+    else:
+        tv_interval = "D"
+
+    safe_id = re.sub(r'[^a-zA-Z0-9_]', '_', f"tv_chart_{clean_sym}_{tv_interval}")
+
+    tv_html = f"""
+    <div class="tradingview-widget-container" style="height:{height}px;width:100%;border-radius:8px;overflow:hidden;background:#08090C;">
+      <div id="{safe_id}" style="height:100%;width:100%;"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+      <script type="text/javascript">
+      (function() {{
+        try {{
+          new TradingView.widget({{
+            "autosize": true,
+            "symbol": "{clean_sym}",
+            "interval": "{tv_interval}",
+            "timezone": "America/New_York",
+            "theme": "dark",
+            "style": "1",
+            "locale": "es",
+            "toolbar_bg": "#08090C",
+            "enable_publishing": false,
+            "hide_top_toolbar": false,
+            "hide_legend": false,
+            "save_image": false,
+            "backgroundColor": "#08090C",
+            "gridColor": "rgba(255, 255, 255, 0.05)",
+            "container_id": "{safe_id}",
+            "studies": [
+              {{ "id": "MASimple@tv-basicstudies", "inputs": {{ "length": 20 }} }},
+              {{ "id": "MASimple@tv-basicstudies", "inputs": {{ "length": 50 }} }},
+              {{ "id": "MASimple@tv-basicstudies", "inputs": {{ "length": 200 }} }}
+            ]
+          }});
+        }} catch(e) {{
+          console.error("TradingView widget init error:", e);
+        }}
+      }})();
+      </script>
+    </div>
+    """
+    components.html(tv_html, height=height + 12)
+
 # ----------------- REUSABLE CANDLESTICK CHART ENGINE -----------------
 def render_institutional_chart(ticker, key_suffix="chart"):
     """
@@ -607,7 +667,7 @@ def render_institutional_chart(ticker, key_suffix="chart"):
         st.info("Selecciona un ticker para cargar el gráfico institucional.")
         return
     ticker = ticker.strip().upper()
-    col_tf1, col_tf2, col_tf3, col_tf4, col_tf5 = st.columns([1.7, 0.55, 0.75, 0.75, 0.95])
+    col_tf1, col_tf2, col_tf3, col_tf4, col_tf5, col_tf6 = st.columns([1.35, 0.5, 0.65, 0.65, 0.85, 0.85])
     with col_tf1:
         chart_tf = st.radio(
             "Temporalidad del Gráfico:",
@@ -641,6 +701,19 @@ def render_institutional_chart(ticker, key_suffix="chart"):
             key=f"tog_piv_{ticker}_{key_suffix}_{int(default_piv_tog)}",
             help="Daily Pivot Breakout Strategy Indicator: Pivotes (5L/5R, Lookback 100), EMA 100 (Slope ≥ 20%), ROC 100d ≥ 30%, RVOL 20d y Momentum Candle Colors"
         )
+    with col_tf6:
+        needs_custom_quant = show_pivot_breakout or show_key_levels or show_luld
+        use_tv_widget = st.toggle(
+            "⚡ TradingView",
+            value=(not needs_custom_quant),
+            key=f"tog_tv_{ticker}_{key_suffix}",
+            help="Modo Ultra-Rápido con TradingView oficial (Velas + SMA 20, 50, 200 + Volumen). Cero consumo de servidor."
+        )
+
+    # ----------------- ATALLO DE RENDIMIENTO ULTRA-RÁPIDO VIA TRADINGVIEW -----------------
+    if use_tv_widget and not needs_custom_quant:
+        render_tradingview_widget(ticker, chart_tf=chart_tf, height=480)
+        return
 
     if "1D" in chart_tf:
         period, interval = "2y", "1d"
