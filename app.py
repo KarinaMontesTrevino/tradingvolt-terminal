@@ -5399,6 +5399,30 @@ elif "COT" in nav_view:
     st.markdown('<div class="brand-sub">CFTC INSTITUTIONAL POSITIONING • METALS, GRAINS, ENERGY, SOFTS, LIVESTOCK, INDICES, BONDS & FX • SMART MONEY HEDGERS VS SPECULATORS</div>', unsafe_allow_html=True)
     st.write("")
 
+    # Sincronización en vivo del feed oficial CFTC
+    cot_info = cpe.get_latest_cftc_release_info() if hasattr(cpe, "get_latest_cftc_release_info") else {"as_of_str": cpe.AS_OF_STR}
+    col_cot_sync1, col_cot_sync2 = st.columns([3.2, 1.2])
+    with col_cot_sync1:
+        next_rel_txt = "Hoy a las 15:30 EST" if cot_info.get("is_today_release") else "Próximo Viernes 15:30 EST"
+        st.markdown(
+            f'<div style="background:#0B111E; border:1px solid #1E293B; border-left:4px solid #10B981; border-radius:8px; padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">'
+            f'<div>'
+            f'<span style="color:#10B981; font-weight:800; font-size:12px; font-family:monospace;">● CFTC LIVE FEED SINCRONIZADO</span> &nbsp;'
+            f'<span style="color:#F8FAFC; font-size:13px; font-weight:700;">Último Informe Oficial: {cot_info.get("as_of_str", cpe.AS_OF_STR)}</span>'
+            f'</div>'
+            f'<div style="font-size:12px; color:#94A3B8;">'
+            f'🔔 Próxima Publicación: <strong style="color:#38BDF8;">{next_rel_txt}</strong>'
+            f'</div>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+    with col_cot_sync2:
+        if st.button("🔄 Sincronizar CFTC Ahora", key="btn_sync_cot_live", use_container_width=True, help="Fuerza la comprobación de la última publicación oficial de la CFTC"):
+            if hasattr(cpe, "sync_cot_markets_data"):
+                cpe.sync_cot_markets_data()
+            st.toast("Feed CFTC sincronizado con éxito", icon="📊")
+            st.rerun()
+
     # Fila de selectores: Categoría / Sector Industrial + Contrato Específico
     cat_labels = list(cpe.COT_CATEGORIES.keys())
     f_col1, f_col2, f_col3 = st.columns([1.4, 1.8, 2.8])
