@@ -1339,6 +1339,25 @@ with st.sidebar:
     st.markdown('<div class="brand-title">⚡ TradingVolt</div>', unsafe_allow_html=True)
     st.markdown('<div class="brand-sub">INSTITUTIONAL MARKET DESK</div>', unsafe_allow_html=True)
 
+    st.markdown("""
+    <div style="background: rgba(15,23,42,0.85); border: 1px solid #1E293B; border-radius: 8px; padding: 10px 12px; margin: 10px 0 14px 0;">
+        <div style="font-size: 10px; color: #64748B; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">
+            ⚡ TRADINGVOLT SUITE LINKS
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            <a href="http://localhost:8502" target="_blank" style="color: #38BDF8; font-size: 11.5px; font-weight: 700; text-decoration: none; display: flex; justify-content: space-between; align-items: center;">
+                <span>🌪️ VolQuant (Opciones)</span>
+                <span style="background: rgba(56,189,248,0.15); font-size: 10px; padding: 1px 6px; border-radius: 4px;">:8502 ↗</span>
+            </a>
+            <a href="http://localhost:8080" target="_blank" style="color: #10B981; font-size: 11.5px; font-weight: 700; text-decoration: none; display: flex; justify-content: space-between; align-items: center;">
+                <span>🧪 Quant Lab &amp; Portal</span>
+                <span style="background: rgba(16,185,129,0.15); font-size: 10px; padding: 1px 6px; border-radius: 4px;">:8080 ↗</span>
+            </a>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+
     # Manejo de redirección rápida desde botones globales
     if st.session_state.get("_pending_nav_target"):
         st.session_state["nav_view_sidebar"] = st.session_state.pop("_pending_nav_target")
