@@ -25,7 +25,7 @@ from datetime import datetime
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 CACHE_FILE = os.path.join(BASE_DIR, "ticker_banner_cache.json")
-CACHE_TTL_SECONDS = 180  # 3 minutos
+CACHE_TTL_SECONDS = 900  # 15 minutos de caché para evitar bloqueos y rate-limits de Yahoo Finance
 
 CORE_INDICES = [
     {"sym": "SPY", "name": "S&P 500"},
@@ -60,16 +60,19 @@ SAMPLE_MOVERS = [
 def fetch_ticker_data() -> dict:
     """
     Descarga o recupera de la caché los precios y variaciones porcentuales.
+    Diseñado para nunca bloquear la interfaz ante rate-limits de red.
     """
     now = time.time()
+    cached_data = None
     
     # 1. Verificar si la caché es válida
     if os.path.exists(CACHE_FILE):
         try:
             with open(CACHE_FILE, "r", encoding="utf-8") as f:
                 cached = json.load(f)
-                if now - cached.get("timestamp", 0) < CACHE_TTL_SECONDS:
-                    return cached.get("data", {})
+                cached_data = cached.get("data", {})
+                if now - cached.get("timestamp", 0) < CACHE_TTL_SECONDS and cached_data:
+                    return cached_data
         except Exception:
             pass
 
@@ -78,6 +81,7 @@ def fetch_ticker_data() -> dict:
     all_syms = list(dict.fromkeys(all_syms))
     
     quotes = {}
+    fetch_success = False
     try:
         import yfinance as yf
         raw = yf.download(all_syms, period="5d", interval="1d", threads=False, progress=False)
@@ -91,8 +95,19 @@ def fetch_ticker_data() -> dict:
                         prev = float(ser.iloc[-2])
                         pct = ((last / prev) - 1.0) * 100.0 if prev > 0 else 0.0
                         quotes[s] = {"price": round(last, 2), "chg_pct": round(pct, 2)}
+            if quotes:
+                fetch_success = True
     except Exception as e:
         print(f"[Ticker Banner] Warning fetching live data: {e}")
+
+    # Si falló la descarga pero tenemos caché previa, renovamos timestamp y retornamos de inmediato
+    if not fetch_success and cached_data:
+        try:
+            with open(CACHE_FILE, "w", encoding="utf-8") as f:
+                json.dump({"timestamp": now, "data": cached_data}, f)
+        except Exception:
+            pass
+        return cached_data
 
     # Fallbacks calibrados al cierre real
     fallbacks = {

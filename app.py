@@ -41,7 +41,6 @@ import expanded_universes as eu
 import importlib
 try:
     import pure_momentum_universe as _pmu
-    importlib.reload(_pmu)
     PURE_MOMENTUM_231_TICKERS = getattr(_pmu, 'PURE_MOMENTUM_231_TICKERS', getattr(_pmu, 'PURE_MOMENTUM_205_TICKERS', []))
     PURE_MOMENTUM_205_TICKERS = getattr(_pmu, 'PURE_MOMENTUM_205_TICKERS', PURE_MOMENTUM_231_TICKERS)
 except Exception:
@@ -57,147 +56,115 @@ except ImportError:
     get_autonomous_market_leaders = lambda top_n=260: []
 try:
     import quant_options_engine as qoe
-    importlib.reload(qoe)
 except ImportError:
     qoe = None
 try:
     import canslim_terminal_engine as cte
-    importlib.reload(cte)
 except ImportError:
     cte = None
 try:
     import dark_pool_engine as dpe
-    importlib.reload(dpe)
 except ImportError:
     dpe = None
 try:
     import luld_engine as le
-    importlib.reload(le)
 except ImportError:
     le = None
 try:
     import unusual_options_engine as uoe
-    importlib.reload(uoe)
 except ImportError:
     uoe = None
 try:
     import earnings_calendar_engine as ece
-    importlib.reload(ece)
 except ImportError:
     ece = None
 try:
     import new_highs_lows_engine as nhle
-    importlib.reload(nhle)
 except ImportError:
     nhle = None
 try:
     import cot_positioning_engine as cpe
-    importlib.reload(cpe)
 except ImportError:
     cpe = None
 try:
     import sentiment_intelligence_engine as sie
-    importlib.reload(sie)
 except ImportError:
     sie = None
 try:
     import economic_calendar_engine as ecle
-    importlib.reload(ecle)
 except ImportError:
     ecle = None
 try:
     import stage_analysis_engine as sae
-    importlib.reload(sae)
 except ImportError:
     sae = None
 try:
     import industry_ranks_engine as ire
-    importlib.reload(ire)
 except ImportError:
     ire = None
 try:
     import finviz_feed_engine as ffe
-    importlib.reload(ffe)
 except ImportError:
     ffe = None
 try:
     import intraday_strength_engine as ise
-    importlib.reload(ise)
 except ImportError:
     ise = None
 try:
     import insider_institutional_engine as iie
-    importlib.reload(iie)
 except ImportError:
     iie = None
 try:
     import order_imbalance_engine as oie
-    importlib.reload(oie)
 except ImportError:
     oie = None
 try:
     import rrg_engine as rrg
-    importlib.reload(rrg)
 except ImportError:
     rrg = None
 try:
     import labor_market_engine as lme
-    importlib.reload(lme)
 except ImportError:
     lme = None
 try:
     import ticker_banner_engine as tbe
-    importlib.reload(tbe)
 except ImportError:
     tbe = None
 try:
     import active_radar_engine as are
-    importlib.reload(are)
 except ImportError:
     are = None
 try:
     import realtime_news_engine as rne
-    importlib.reload(rne)
 except ImportError:
     rne = None
 try:
     import quant_data_pipeline as qdp
-    importlib.reload(qdp)
 except ImportError:
     qdp = None
 try:
     import daily_briefing_engine as dbe
-    importlib.reload(dbe)
 except ImportError:
     dbe = None
 try:
     import daily_snapshot_engine as dse
-    importlib.reload(dse)
 except ImportError:
     dse = None
 try:
     import cross_reference_engine as cre
-    importlib.reload(cre)
 except ImportError:
     cre = None
 try:
     import deepvue_watchlist_widget as dvw
-    importlib.reload(dvw)
 except ImportError:
     dvw = None
 try:
     import monte_carlo_engine as mce
-    importlib.reload(mce)
 except ImportError:
     mce = None
 import urllib.parse
 import streamlit.components.v1 as components
 
-importlib.reload(engine)
-importlib.reload(discord)
-importlib.reload(mde)
-importlib.reload(kle)
-importlib.reload(eu)
 
 # ----------------- CONFIGURACIÓN DE PÁGINA -----------------
 st.set_page_config(
@@ -656,6 +623,24 @@ def render_tradingview_widget(ticker: str, chart_tf: str = "1D", height: int = 5
     components.html(tv_html, height=height + 12)
 
 # ----------------- REUSABLE CANDLESTICK CHART ENGINE -----------------
+@st.cache_data(ttl=300, show_spinner=False)
+def _fetch_cached_candles(sym: str, p: str, i: str) -> pd.DataFrame:
+    try:
+        tk = yf.Ticker(sym)
+        df = tk.history(period=p, interval=i, auto_adjust=False)
+        if df is not None and not df.empty:
+            return df
+    except Exception:
+        pass
+    try:
+        df = yf.download(sym, period=p, interval=i, threads=False, progress=False)
+        if df is not None and not df.empty:
+            return df
+    except Exception:
+        pass
+    return pd.DataFrame()
+
+
 def render_institutional_chart(ticker, key_suffix="chart"):
     """
     Renderiza el gráfico de velas japonesas profesional continuo con Plotly:
@@ -735,20 +720,7 @@ def render_institutional_chart(ticker, key_suffix="chart"):
 
     with st.spinner(f"Cargando {chart_tf} para {ticker}..."):
         raw_data = pd.DataFrame()
-        try:
-            # 1. Preferir yf.Ticker(ticker).history (evita hilos multitasking de yfinance que fallan en Python 3.14)
-            tk = yf.Ticker(ticker)
-            raw_data = tk.history(period=period, interval=interval, auto_adjust=False)
-        except Exception:
-            raw_data = pd.DataFrame()
-
-        if raw_data is None or raw_data.empty:
-            try:
-                # 2. Fallback a yf.download explícitamente con threads=False
-                raw_data = yf.download(ticker, period=period, interval=interval, threads=False, progress=False)
-            except Exception as e:
-                print(f"Error descargando datos para {ticker}: {e}")
-                raw_data = pd.DataFrame()
+        raw_data = _fetch_cached_candles(ticker, period, interval)
 
         if raw_data is None or raw_data.empty:
             st.warning(f"No se pudieron descargar datos para {ticker}.")
@@ -1501,8 +1473,14 @@ with st.sidebar:
 
 
 # ----------------- TICKER TAPE BANNER ANIMADO EN VIVO -----------------
+@st.cache_data(ttl=600, show_spinner=False)
+def _get_cached_ticker_tape():
+    if tbe:
+        return tbe.render_ticker_tape_html()
+    return ""
+
 if show_ticker_tape and tbe:
-    st.markdown(tbe.render_ticker_tape_html(), unsafe_allow_html=True)
+    st.markdown(_get_cached_ticker_tape(), unsafe_allow_html=True)
 
 # ----------------- BARRA GLOBAL DE SINCRONIZACIÓN & RESUMEN DIARIO 360° -----------------
 if "last_global_sync_str" not in st.session_state:
@@ -1532,11 +1510,11 @@ with gbar_c2:
 
 with gbar_c3:
     auto_sync_map = {
-        "⏱️ Auto-Sync: Cada 3 min": 180,
-        "⏱️ Auto-Sync: Cada 1 min": 60,
+        "⏸️ Auto-Sync: Manual (Recomendado)": 0,
         "⏱️ Auto-Sync: Cada 5 min": 300,
         "⏱️ Auto-Sync: Cada 15 min": 900,
-        "⏸️ Auto-Sync: Manual": 0
+        "⏱️ Auto-Sync: Cada 3 min": 180,
+        "⏱️ Auto-Sync: Cada 1 min": 60
     }
     sel_auto_sync = st.selectbox(
         "Auto-Refresco:",
@@ -2936,17 +2914,25 @@ elif nav_view == "⚡ Screener Cuantitativo":
         with tb_c5:
             st.markdown("<div style='height:28px;'></div>", unsafe_allow_html=True)
             if st.button("🔄 Refrescar", key="btn_refresh_factors", use_container_width=True, help="Fuerza una recarga fresca de cotizaciones en tiempo real"):
-                if dvw:
-                    dvw.compute_watchlist_factors(base_tickers, force_refresh=True)
+                st.session_state["_force_refresh_factors"] = True
                 st.rerun()
 
     st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
-    # 5. Cargar métricas en tiempo real de los candidatos
-    if dvw is not None:
-        results_df = dvw.compute_watchlist_factors(base_tickers)
-    else:
-        results_df = pd.DataFrame({"Symbol": base_tickers})
+    # 5. Cargar métricas en tiempo real de los candidatos (Caché RAM de alta velocidad)
+    @st.cache_data(ttl=300, show_spinner=False)
+    def _get_cached_screener_factors(tickers_tuple):
+        if dvw is not None:
+            return dvw.compute_watchlist_factors(list(tickers_tuple))
+        return pd.DataFrame({"Symbol": list(tickers_tuple)})
+
+    if st.session_state.get("_force_refresh_factors"):
+        st.session_state.pop("_force_refresh_factors", None)
+        _get_cached_screener_factors.clear()
+        if dvw:
+            dvw.compute_watchlist_factors(base_tickers, force_refresh=True)
+
+    results_df = _get_cached_screener_factors(tuple(base_tickers))
 
     if not results_df.empty and "Symbol" in results_df.columns:
         results_df = results_df.rename(columns={"Symbol": "Ticker"})
