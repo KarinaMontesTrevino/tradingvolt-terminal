@@ -641,6 +641,79 @@ def _fetch_cached_candles(sym: str, p: str, i: str) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+# ----------------- REUSABLE TICKER NEWS WIDGET (FINVIZ & INSTITUTIONAL WIRE) -----------------
+@st.cache_data(ttl=300, show_spinner=False)
+def _get_cached_ticker_news(ticker: str) -> list:
+    if ffe and hasattr(ffe, "fetch_ticker_news_unified"):
+        return ffe.fetch_ticker_news_unified(ticker)
+    elif ffe and hasattr(ffe, "get_finviz_news"):
+        df = ffe.get_finviz_news(ticker)
+        if df is not None and not df.empty:
+            res = []
+            for _, r in df.head(10).iterrows():
+                res.append({
+                    "date": str(r.get("Date", "")),
+                    "title": str(r.get("Title", "")),
+                    "link": str(r.get("Link", "")),
+                    "source": "Finviz"
+                })
+            return res
+    return []
+
+def render_ticker_news_widget(ticker: str, default_expanded: bool = False):
+    """
+    Renderiza un feed de titulares en tiempo real con enlaces a la fuente original
+    y acceso directo al perfil de Finviz del ticker seleccionado.
+    """
+    clean_t = ticker.strip().upper().replace(".", "-")
+    finviz_url = f"https://finviz.com/quote.ashx?t={clean_t.replace('-', '.')}"
+    
+    st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
+    with st.expander(f"📰 Titulares & Catalizadores en Vivo: ${clean_t} (Finviz & Institutional Feed)", expanded=default_expanded):
+        news = _get_cached_ticker_news(clean_t)
+        if not news:
+            st.info(f"Sin titulares inmediatos en memoria para **${clean_t}**. Puedes consultar los catalizadores directamente en [Finviz]({finviz_url}).")
+        else:
+            for it in news[:8]:
+                title = it.get("title", "")
+                link = it.get("link", finviz_url)
+                dt = it.get("date", "")
+                src = it.get("source", "Finviz")
+                
+                src_l = src.lower()
+                if "bloomberg" in src_l:
+                    b_bg, b_fg = "rgba(245,158,11,0.18)", "#F59E0B"
+                elif "reuters" in src_l:
+                    b_bg, b_fg = "rgba(249,115,22,0.18)", "#F97316"
+                elif "benzinga" in src_l:
+                    b_bg, b_fg = "rgba(6,182,212,0.18)", "#06B6D4"
+                elif "cnbc" in src_l:
+                    b_bg, b_fg = "rgba(59,130,246,0.18)", "#38BDF8"
+                elif "marketwatch" in src_l or "wsj" in src_l or "barron" in src_l:
+                    b_bg, b_fg = "rgba(16,185,129,0.18)", "#10B981"
+                else:
+                    b_bg, b_fg = "rgba(148,163,184,0.16)", "#94A3B8"
+                
+                st.markdown(
+                    f'<div style="background:rgba(15,23,42,0.7);border:1px solid #1E293B;border-radius:6px;padding:8px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:12px;">'
+                    f'<div style="display:flex;align-items:center;gap:10px;overflow:hidden;flex:1;">'
+                    f'<span style="background:{b_bg};color:{b_fg};font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;white-space:nowrap;letter-spacing:0.04em;">{src.upper()}</span>'
+                    f'<a href="{link}" target="_blank" style="color:#F8FAFC;font-size:12.5px;font-weight:600;text-decoration:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block;">{title}</a>'
+                    f'</div>'
+                    f'<span style="color:#64748B;font-family:monospace;font-size:11px;white-space:nowrap;">{dt}</span>'
+                    f'</div>',
+                    unsafe_allow_html=True
+                )
+        
+        st.markdown(
+            f'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:6px;border-top:1px solid rgba(30,41,59,0.6);">'
+            f'<span style="font-size:11px;color:#64748B;">Fuente: Finviz Live Scrape &amp; Aggregated Financial News Wire</span>'
+            f'<a href="{finviz_url}" target="_blank" style="font-size:11.5px;color:#00F0FF;text-decoration:none;font-weight:700;">↗ Abrir ficha técnica completa en Finviz.com</a>'
+            f'</div>',
+            unsafe_allow_html=True
+        )
+
+
 def render_institutional_chart(ticker, key_suffix="chart"):
     """
     Renderiza el gráfico de velas japonesas profesional continuo con Plotly:
@@ -699,6 +772,7 @@ def render_institutional_chart(ticker, key_suffix="chart"):
     # ----------------- ATALLO DE RENDIMIENTO ULTRA-RÁPIDO VIA TRADINGVIEW -----------------
     if use_tv_widget and not needs_custom_quant:
         render_tradingview_widget(ticker, chart_tf=chart_tf, height=480)
+        render_ticker_news_widget(ticker)
         return
 
     if "1D" in chart_tf:
@@ -1256,6 +1330,8 @@ def render_institutional_chart(ticker, key_suffix="chart"):
             with st.expander(f"🎯 Matriz de Confluencia de Niveles Clave ({ticker})", expanded=False):
                 disp_df = levels_data['summary_df'].drop(columns=['raw_price'], errors='ignore')
                 st.dataframe(disp_df, width="stretch", hide_index=True)
+
+        render_ticker_news_widget(ticker)
 
 
 # ----------------- SIDEBAR: BROKER & CONFIGURACIÓN -----------------

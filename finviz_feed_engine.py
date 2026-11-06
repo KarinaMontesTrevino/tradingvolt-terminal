@@ -165,7 +165,7 @@ def get_finviz_insider_trades(ticker: str) -> Optional[pd.DataFrame]:
 
 def get_finviz_news(ticker: str) -> Optional[pd.DataFrame]:
     """
-    Devuelve las noticias financieras en tiempo real de Finviz.
+    Devuelve las noticias financieras en tiempo real de Finviz como DataFrame.
     """
     if not FINVIZ_FINANCE_AVAILABLE or not FinvizQuote:
         return None
@@ -175,3 +175,103 @@ def get_finviz_news(ticker: str) -> Optional[pd.DataFrame]:
         return df if (df is not None and not df.empty) else None
     except Exception:
         return None
+
+def fetch_ticker_news_unified(ticker: str) -> List[Dict[str, Any]]:
+    """
+    Recupera las noticias y catalizadores más recientes para un ticker con triple redundancia:
+    1. Direct Web Parser de Finviz (https://finviz.com/quote.ashx?t=...)
+    2. finvizfinance si está disponible
+    3. yfinance Ticker.news como respaldo garantizado
+    """
+    if not ticker or not isinstance(ticker, str):
+        return []
+
+    sym = ticker.strip().upper().replace(".", "-")
+    news_items = []
+
+    # 1. Scraping directo resiliente de la tabla de noticias de Finviz
+    try:
+        url = f"https://finviz.com/quote.ashx?t={sym.replace('-', '.')}"
+        resp = requests.get(url, headers=HEADERS, timeout=6)
+        if resp.status_code == 200:
+            soup = bs4.BeautifulSoup(resp.text, "html.parser")
+            table = soup.find(id="news-table")
+            if table:
+                curr_date = ""
+                for tr in table.find_all("tr"):
+                    tds = tr.find_all("td")
+                    if len(tds) < 2:
+                        continue
+                    dt_raw = tds[0].text.strip()
+                    if " " in dt_raw:
+                        curr_date, time_part = dt_raw.split(" ", 1)
+                        full_dt = f"{curr_date} {time_part}"
+                    else:
+                        full_dt = f"{curr_date} {dt_raw}" if curr_date else dt_raw
+
+                    a_tag = tds[1].find("a")
+                    if not a_tag:
+                        continue
+                    title = a_tag.text.strip()
+                    link = a_tag.get("href", "")
+
+                    span_tag = tds[1].find("span")
+                    source = span_tag.text.strip().strip("()") if span_tag else "Finviz"
+
+                    if title:
+                        news_items.append({
+                            "date": full_dt,
+                            "title": title,
+                            "link": link,
+                            "source": source
+                        })
+                    if len(news_items) >= 12:
+                        break
+    except Exception:
+        pass
+
+    # 2. Respaldo vía finvizfinance
+    if not news_items and FINVIZ_FINANCE_AVAILABLE and FinvizQuote:
+        try:
+            stock = FinvizQuote(sym.replace("-", "."))
+            df = stock.ticker_news()
+            if df is not None and not df.empty:
+                for _, r in df.head(12).iterrows():
+                    news_items.append({
+                        "date": str(r.get("Date", "")),
+                        "title": str(r.get("Title", "")),
+                        "link": str(r.get("Link", "")),
+                        "source": "Finviz"
+                    })
+        except Exception:
+            pass
+
+    # 3. Respaldo institucional vía yfinance
+    if not news_items:
+        try:
+            import yfinance as yf
+            tk = yf.Ticker(sym)
+            raw_news = getattr(tk, "news", [])
+            if raw_news:
+                for it in raw_news[:12]:
+                    content = it.get("content", {}) if isinstance(it.get("content"), dict) else it
+                    title = content.get("title") or it.get("title", "")
+                    link = content.get("canonicalUrl", {}).get("url") or it.get("link", "")
+                    provider = content.get("provider", {}).get("displayName") or it.get("publisher", "Yahoo Finance")
+                    pub_time = content.get("pubDate", "")
+                    if not pub_time and "providerPublishTime" in it:
+                        try:
+                            pub_time = datetime.fromtimestamp(it["providerPublishTime"]).strftime("%b-%d %H:%M")
+                        except Exception:
+                            pub_time = ""
+                    if title:
+                        news_items.append({
+                            "date": pub_time or "Reciente",
+                            "title": title,
+                            "link": link,
+                            "source": provider
+                        })
+        except Exception:
+            pass
+
+    return news_items
