@@ -1365,6 +1365,7 @@ with st.sidebar:
     # Selector de navegación en Sidebar
     nav_options = [
         "🏠 Dashboard de Mercado",
+        "⚡ Capitulation & Big Bottom Index",
         "🧠 Resumen Diario 360° (En Vivo)",
         "📰 Top Stories & Breaking News Desk",
         "⚡ Screener Cuantitativo",
@@ -4574,6 +4575,14 @@ elif "Quant Options" in nav_view:
 
 
 # -----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
+# VISTA: ⚡ CAPITULATION & BIG BOTTOM INDEX (INSTITUCIONAL v2.0)
+# -----------------------------------------------------------------------------
+elif "Capitulation" in nav_view or "Big Bottom" in nav_view or "Capitulación" in nav_view:
+    import capitulation_index_engine as cie
+    cie.render_capitulation_dashboard_view()
+
+
 # VISTA 5: DARK POOL & OFF-EXCHANGE INSTITUTIONAL TAPE (100% GRATUITO)
 # -----------------------------------------------------------------------------
 elif "Dark Pool" in nav_view:
