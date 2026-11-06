@@ -26,7 +26,7 @@ import numpy as np
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import yfinance as yf
-from datetime import datetime
+from datetime import datetime, timezone
 import json
 import os
 import html
