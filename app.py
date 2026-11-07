@@ -3131,9 +3131,14 @@ elif nav_view == "⚡ Screener Cuantitativo":
         else:
             pref_cols = [
                 "Ticker", "¿Cumple Hoy?", "Precio", "Cambio %",
-                "Días Verdes (15d)", "Avance 15d", "Vol Prom (20d)",
+                "Días Verdes (15d)", "Avance 15d",
+                "EP Salto %", "EP RVOL", "EP Fecha",
+                "RMV (15d)", "Rendimiento 5d", "Inside Day",
+                "Dist 21 EMA", "ROC (3M)",
+                "Pos Rango Semanal", "Rendimiento Semanal",
+                "Días RS (20d)", "Volumen Acciones",
                 "ROC (100d)", "RVOL (20d)", "EMA Slope", "Pivote ($)", "Dist Pivote (%)",
-                "Dist 52W High", "RSI 14", "Posición Rango", "Vol $ ($M)", "RV 20d", "Next Earnings"
+                "Dist 52W High", "RSI 14", "Posición Rango", "Vol $ ($M)", "Vol Prom (20d)", "SMA 50", "Next Earnings"
             ]
             compact_cols = [c for c in pref_cols if c in results_df.columns and c != "Cumple_Bool"]
             if not compact_cols:
@@ -3148,6 +3153,19 @@ elif nav_view == "⚡ Screener Cuantitativo":
                 "Días Verdes (15d)": st.column_config.TextColumn("Días Verdes", width="small", help="Días alcistas en las últimas 15 sesiones (Umbral: >= 11-12)"),
                 "Avance 15d": st.column_config.TextColumn("Avance 15d", width="small", help="Avance acumulado en 15 sesiones (Umbral: >= +12%)"),
                 "Vol Prom (20d)": st.column_config.TextColumn("Vol Prom 20d", width="small"),
+                "EP Salto %": st.column_config.TextColumn("EP Salto", width="small", help="Magnitud del salto EP (Gap o Ganancia >= +8%)"),
+                "EP RVOL": st.column_config.TextColumn("EP RVOL", width="small", help="Volumen relativo en la sesión de ignición EP"),
+                "EP Fecha": st.column_config.TextColumn("EP Fecha", width="small"),
+                "RMV (15d)": st.column_config.TextColumn("RMV 15d", width="small", help="Range Movement Volatility (Contracción <= 10%)"),
+                "Rendimiento 5d": st.column_config.TextColumn("Rend 5d", width="small"),
+                "Inside Day": st.column_config.TextColumn("Inside Day", width="small"),
+                "Dist 21 EMA": st.column_config.TextColumn("Dist 21 EMA", width="small"),
+                "ROC (3M)": st.column_config.TextColumn("ROC 3M", width="small"),
+                "Pos Rango Semanal": st.column_config.TextColumn("Pos Semanal", width="small"),
+                "Rendimiento Semanal": st.column_config.TextColumn("Rend Sem", width="small"),
+                "Días RS (20d)": st.column_config.TextColumn("Días RS", width="small"),
+                "Volumen Acciones": st.column_config.TextColumn("Volumen Hoy", width="small"),
+                "SMA 50": st.column_config.TextColumn("SMA 50", width="small"),
                 "ROC (100d)": st.column_config.TextColumn("ROC 100d", width="small", help="Rate of Change de 100 días (Umbral: >= 30%)"),
                 "RVOL (20d)": st.column_config.TextColumn("RVOL 20d", width="small", help="Volumen relativo sobre media de 20 días"),
                 "EMA Slope": st.column_config.TextColumn("Slope 100", width="small", help="Pendiente de la EMA 100 (Umbral: >= 20%)"),

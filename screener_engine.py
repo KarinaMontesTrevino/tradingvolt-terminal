@@ -758,7 +758,371 @@ def evaluate_screener_diagnostics(strategy_name: str, tickers: list, params: dic
                 "Última Barra": last_date
             })
 
-        # 4. GENÉRICA / MOVERS / MOMENTUM
+        # 4. EPISODIC PIVOT (QULLAMAGGIE)
+        elif "Episodic" in strategy_name or "EP" in strategy_name:
+            recent_10 = df.tail(11)
+            ep_hit = False
+            ep_date = ""
+            ep_gain = 0.0
+            ep_rvol = 0.0
+            for i in range(1, len(recent_10)):
+                b = recent_10.iloc[i]
+                pb = recent_10.iloc[i - 1]
+                b_gain = ((float(b['Close']) - float(pb['Close'])) / (float(pb['Close']) + 1e-9)) * 100.0
+                b_gap = ((float(b['Open']) - float(pb['Close'])) / (float(pb['Close']) + 1e-9)) * 100.0
+                b_rvol = float(b['Volume']) / (v_avg_20 + 1e-9)
+                b_spread = float(b['High'] - b['Low'])
+                b_pos = ((float(b['Close'] - b['Low'])) / (b_spread + 1e-9)) * 100.0
+                if (b_gain >= 8.0 or b_gap >= 5.0) and b_rvol >= 1.4 and curr_price >= float(b['Low']) * 0.98:
+                    ep_hit = True
+                    ep_date = str(b.name)[:10]
+                    ep_gain = max(b_gain, b_gap)
+                    ep_rvol = b_rvol
+                    break
+            
+            c_liq = curr_price >= 4.0 and (v_avg_20 * curr_price / 1e6) >= 2.0
+            if ep_hit and c_liq:
+                qualifies = True
+                status_badge = f"CUMPLE 100% ⚡ (EP {ep_date}, {ep_gain:+.1f}%)"
+            elif ep_hit:
+                qualifies = True
+                status_badge = "EP SETUP ⏳ (Baja Liquidez)"
+            else:
+                qualifies = False
+                status_badge = "NO CUMPLE ❌ (Sin EP en 10d)"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "EP Salto %": f"{ep_gain:+.1f}%" if ep_hit else "N/A",
+                "EP RVOL": f"{ep_rvol:.2f}x" if ep_hit else "N/A",
+                "EP Fecha": ep_date if ep_hit else "N/A",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "SMA 50": f"${sma_50:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 5. UP ON VOLUME
+        elif "Up on Volume" in strategy_name:
+            day_high = float(df['High'].iloc[-1])
+            day_low = float(df['Low'].iloc[-1])
+            spread = day_high - day_low
+            pos_range = round(((curr_price - day_low) / (spread + 1e-9)) * 100.0, 1)
+            c_up = chg_pct >= 0.5
+            c_range = pos_range >= 50.0
+            c_rvol = rvol_20 >= 1.2
+            c_price = curr_price >= 5.0
+            
+            if c_up and c_range and c_rvol and c_price:
+                qualifies = True
+                status_badge = f"CUMPLE 100% 📈 (UOV {chg_pct:+.1f}%, {rvol_20:.1f}x)"
+            elif c_up and (c_range or c_rvol):
+                qualifies = True
+                status_badge = f"SETUP VOLUMEN ⏳ (RVOL {rvol_20:.1f}x, DCR {pos_range:.0f}%)"
+            else:
+                qualifies = False
+                fails = []
+                if not c_up: fails.append(f"Cambio {chg_pct:+.1f}%")
+                if not c_rvol: fails.append(f"RVOL {rvol_20:.1f}x < 1.2x")
+                if not c_range: fails.append(f"DCR {pos_range:.0f}% < 50%")
+                status_badge = f"NO CUMPLE ❌ ({', '.join(fails)})"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "Posición Rango": f"{pos_range:.1f}%",
+                "SMA 50": f"${sma_50:.2f}",
+                "Vol $ ($M)": f"${round((curr_vol * curr_price) / 1e6, 1)}M",
+                "Última Barra": last_date
+            })
+
+        # 6. VOLUME DRY UP
+        elif "Volume Dry Up" in strategy_name:
+            if len(df) >= 15:
+                rmv_15 = float(((df['High'].tail(15).max() - df['Low'].tail(15).min()) / df['Low'].tail(15).min()) * 100.0)
+            else:
+                rmv_15 = 20.0
+            vol_5d = float(volume.tail(5).mean())
+            c_vdu = rvol_20 <= 0.75 and vol_5d < v_avg_20
+            c_trend = curr_price > sma_50
+            c_rmv = rmv_15 <= 15.0
+
+            if c_vdu and c_trend and c_rmv:
+                qualifies = True
+                status_badge = f"CUMPLE 100% 💧 (VDU RVOL {rvol_20:.2f}x, RMV {rmv_15:.1f}%)"
+            elif c_vdu and c_trend:
+                qualifies = True
+                status_badge = f"SETUP SECADO ⏳ (RVOL {rvol_20:.2f}x)"
+            else:
+                qualifies = False
+                fails = []
+                if not c_vdu: fails.append(f"RVOL {rvol_20:.1f}x > 0.75x")
+                if not c_trend: fails.append("Bajo SMA 50")
+                if not c_rmv: fails.append(f"RMV {rmv_15:.0f}% > 15%")
+                status_badge = f"NO CUMPLE ❌ ({', '.join(fails)})"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "RMV (15d)": f"{rmv_15:.1f}%",
+                "SMA 50": f"${sma_50:.2f}",
+                "SMA 200": f"${sma_200:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 7. TIGHT RANGE
+        elif "Tight Range" in strategy_name:
+            if len(df) >= 15:
+                rmv_15 = float(((df['High'].tail(15).max() - df['Low'].tail(15).min()) / df['Low'].tail(15).min()) * 100.0)
+            else:
+                rmv_15 = 20.0
+            roc_5d = float(((curr_price - float(close.iloc[-6])) / float(close.iloc[-6])) * 100.0) if len(close) >= 6 else 0.0
+            h1, l1 = float(df['High'].iloc[-1]), float(df['Low'].iloc[-1])
+            h2, l2 = float(df['High'].iloc[-2]), float(df['Low'].iloc[-2]) if len(df) >= 2 else (h1, l1)
+            is_inside = (h1 <= h2 and l1 >= l2)
+
+            c_tight = rmv_15 <= 10.5 and (abs(roc_5d) <= 3.5 or is_inside)
+            c_trend = curr_price > sma_50
+
+            if c_tight and c_trend:
+                tag = "Inside Day" if is_inside else f"5d {roc_5d:+.1f}%"
+                status_badge = f"CUMPLE 100% 🎯 (TIGHT RMV {rmv_15:.1f}%, {tag})"
+                qualifies = True
+            elif rmv_15 <= 12.0:
+                status_badge = f"SETUP COMPRESIÓN ⏳ (RMV {rmv_15:.1f}%)"
+                qualifies = True
+            else:
+                qualifies = False
+                status_badge = f"NO CUMPLE ❌ (RMV {rmv_15:.1f}% > 10%)"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "RMV (15d)": f"{rmv_15:.1f}%",
+                "Rendimiento 5d": f"{roc_5d:+.1f}%",
+                "Inside Day": "SÍ" if is_inside else "NO",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "SMA 50": f"${sma_50:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 8. POCKET PIVOTS
+        elif "Pocket Pivot" in strategy_name:
+            day_high = float(df['High'].iloc[-1])
+            day_low = float(df['Low'].iloc[-1])
+            spread = day_high - day_low
+            pos_range = round(((curr_price - day_low) / (spread + 1e-9)) * 100.0, 1)
+            is_up = chg_pct >= 0.3 and pos_range >= 45.0
+            
+            recent_10 = df.iloc[-11:-1] if len(df) >= 11 else df.iloc[:-1]
+            if len(recent_10) >= 5:
+                down_mask = (recent_10['Close'] < recent_10['Close'].shift(1)) | (recent_10['Close'] < recent_10['Open'])
+                down_vols = recent_10.loc[down_mask, 'Volume']
+                max_down_vol = float(down_vols.max()) if not down_vols.empty and not np.isnan(down_vols.max()) else 0.0
+            else:
+                max_down_vol = 0.0
+
+            is_pp_vol = curr_vol > max_down_vol and max_down_vol > 0
+            c_base = curr_price >= sma_50 * 0.97
+            
+            if is_up and is_pp_vol and c_base:
+                pp_ratio = curr_vol / (max_down_vol + 1e-9)
+                status_badge = f"CUMPLE 100% 🎯 (POCKET PIVOT {pp_ratio:.2f}x)"
+                qualifies = True
+            elif is_up and rvol_20 >= 1.2:
+                status_badge = "SETUP VOLUMEN ⏳"
+                qualifies = True
+            else:
+                qualifies = False
+                fails = []
+                if not is_up: fails.append("Día bajista")
+                if not is_pp_vol: fails.append("Vol < Max Bajista 10d")
+                status_badge = f"NO CUMPLE ❌ ({', '.join(fails)})"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "Max Vol Bajista 10d": f"{int(max_down_vol):,}",
+                "Vol Hoy": f"{int(curr_vol):,}",
+                "Posición Rango": f"{pos_range:.1f}%",
+                "SMA 50": f"${sma_50:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 9. POWER 21
+        elif "Power 21" in strategy_name:
+            ema_21 = float(close.ewm(span=21, adjust=False).mean().iloc[-1]) if len(close) >= 21 else sma_50
+            dist_ema21 = round(((curr_price - ema_21) / (ema_21 + 1e-9)) * 100.0, 1)
+            low_today = float(df['Low'].iloc[-1])
+            touched_ema = (low_today <= ema_21 * 1.02) and (curr_price >= ema_21 * 0.98)
+            roc_3m = float(((curr_price - float(close.iloc[-63])) / float(close.iloc[-63])) * 100.0) if len(close) >= 64 else 0.0
+            
+            if touched_ema and roc_3m >= 12.0 and curr_price > sma_50:
+                status_badge = f"CUMPLE 100% ⚡ (PULLBACK 21 EMA {dist_ema21:+.1f}%)"
+                qualifies = True
+            elif abs(dist_ema21) <= 3.0:
+                status_badge = f"SETUP CERCA 21 EMA ⏳ ({dist_ema21:+.1f}%)"
+                qualifies = True
+            else:
+                qualifies = False
+                status_badge = f"NO CUMPLE ❌ (Dist 21 EMA {dist_ema21:+.1f}%)"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "Dist 21 EMA": f"{dist_ema21:+.1f}%",
+                "21 EMA": f"${ema_21:.2f}",
+                "ROC (3M)": f"{roc_3m:+.1f}%",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "SMA 50": f"${sma_50:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 10. WEEKLY STRENGTH
+        elif "Weekly Strength" in strategy_name:
+            w_high = float(df['High'].tail(5).max()) if len(df) >= 5 else float(df['High'].iloc[-1])
+            w_low = float(df['Low'].tail(5).min()) if len(df) >= 5 else float(df['Low'].iloc[-1])
+            pos_week = round(((curr_price - w_low) / (w_high - w_low + 1e-9)) * 100.0, 1)
+            roc_1w = float(((curr_price - float(close.iloc[-6])) / float(close.iloc[-6])) * 100.0) if len(close) >= 6 else 0.0
+
+            if pos_week >= 70.0 and roc_1w >= 1.5 and curr_price > sma_50:
+                status_badge = f"CUMPLE 100% 📅 (FUERZA SEMANAL {pos_week:.0f}%, {roc_1w:+.1f}%)"
+                qualifies = True
+            elif pos_week >= 60.0:
+                status_badge = f"SETUP SEMANAL ⏳ (Rango 5d {pos_week:.0f}%)"
+                qualifies = True
+            else:
+                qualifies = False
+                status_badge = f"NO CUMPLE ❌ (Rango Semanal {pos_week:.0f}% < 70%)"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "Pos Rango Semanal": f"{pos_week:.1f}%",
+                "Rendimiento Semanal": f"{roc_1w:+.1f}%",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "SMA 50": f"${sma_50:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 11. DAILY LIQUIDITY
+        elif "Daily Liquidity" in strategy_name:
+            c_vol_8m = (curr_vol >= 5_000_000) and (curr_price >= 4.0)
+            dvol_m = round((curr_vol * curr_price) / 1e6, 1)
+            if c_vol_8m:
+                status_badge = f"CUMPLE 100% 💧 ({curr_vol/1e6:.1f}M vol, ${dvol_m:.0f}M)"
+                qualifies = True
+            elif curr_vol >= 3_000_000:
+                status_badge = f"ALTA LIQUIDEZ ⏳ ({curr_vol/1e6:.1f}M vol)"
+                qualifies = True
+            else:
+                status_badge = f"NO CUMPLE ❌ ({curr_vol/1e6:.1f}M < 5M)"
+                qualifies = False
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "Volumen Acciones": f"{int(curr_vol):,}",
+                "Vol $ ($M)": f"${dvol_m:.1f}M",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "SMA 50": f"${sma_50:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 12. RS DAYS
+        elif "RS Days" in strategy_name:
+            if len(close) >= 21:
+                ret_20 = close.pct_change().tail(20)
+                up_20 = int((ret_20 > 0.0).sum())
+                rs_pct = round((up_20 / 20.0) * 100.0, 1)
+            else:
+                up_20 = 0
+                rs_pct = 0.0
+
+            if rs_pct >= 60.0 and curr_price > sma_50:
+                status_badge = f"CUMPLE 100% 🛡️ (RS {up_20}/20d = {rs_pct:.0f}%)"
+                qualifies = True
+            elif rs_pct >= 50.0:
+                status_badge = f"SETUP RS ⏳ ({up_20}/20d = {rs_pct:.0f}%)"
+                qualifies = True
+            else:
+                status_badge = f"NO CUMPLE ❌ (RS {rs_pct:.0f}% < 60%)"
+                qualifies = False
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "Días RS (20d)": f"{up_20}/20 ({rs_pct:.0f}%)",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "SMA 50": f"${sma_50:.2f}",
+                "SMA 200": f"${sma_200:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 13. MINERVINI VCP
+        elif "VCP" in strategy_name:
+            high_52w = float(df['High'].tail(252).max())
+            dist_high = round(((curr_price - high_52w) / high_52w) * 100.0, 1)
+            if len(df) >= 15:
+                rmv_15 = float(((df['High'].tail(15).max() - df['Low'].tail(15).min()) / df['Low'].tail(15).min()) * 100.0)
+            else:
+                rmv_15 = 20.0
+            
+            c_vcp = (rmv_15 <= 14.0) and (dist_high >= -22.0) and (curr_price > sma_50 > sma_200) and (rvol_20 <= 1.0)
+            if c_vcp:
+                status_badge = f"CUMPLE 100% 🌀 (VCP RMV {rmv_15:.1f}%, Dist 52w {dist_high:+.1f}%)"
+                qualifies = True
+            elif dist_high >= -25.0 and curr_price > sma_50:
+                status_badge = f"SETUP VCP ⏳ (RMV {rmv_15:.1f}%)"
+                qualifies = True
+            else:
+                status_badge = f"NO CUMPLE ❌ (Lejos 52w o RMV {rmv_15:.1f}%)"
+                qualifies = False
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "RMV (15d)": f"{rmv_15:.1f}%",
+                "Dist 52W High": f"{dist_high:+.1f}%",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "SMA 50": f"${sma_50:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 14. GENÉRICA / MOVERS / MOMENTUM
         else:
             day_high = float(df['High'].iloc[-1])
             day_low = float(df['Low'].iloc[-1])
