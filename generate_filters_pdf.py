@@ -149,6 +149,14 @@ SECTIONS = [
              ["* Pivote Confirmado: Left Strength = 5, Right Strength = 5 en Pivot Lookback = 100 velas",
               "* Momentum & Volumen: ROC(100d) >= +30% y RVOL(20d) > 1.0x (Volumen > Promedio 20d)",
               "* Tendencia: EMA(100) con EMA Slope Lookback(100d, Smooth=1) >= +20% + Momentum Candle Colors"]),
+            ("30", "Donchian 3/13 Breakout", "Deepvue Visual", "Ruptura limpia de rango de 13 sesiones con soporte ascendente (Higher Lows de 3d).",
+             ["* Piso Ascendente: Donchian(3, 0) Low > Donchian(13, 0) Low",
+              "* Ruptura Fresca: Donchian(3, 0) Up > Donchian(13, 0) Up en la vela previa (1 cdl ago)",
+              "* Evita trampas de mercado al exigir que los minimos recientes no esten en el fondo de 13d"]),
+            ("31", "Gap & Go Bullish Ignition", "Deepvue Visual", "Salto alcista puro (Gap Up sobre el maximo previo) con vela verde y actividad institucional.",
+             ["* Gap Alcista Puro: Open Hoy > High de la vela anterior (1 cdl ago)",
+              "* Continuacion Compradora: Close Hoy > Open Hoy (Vela Verde en expansion, no se desinfla)",
+              "* Filtro de Actividad: RVOL(20, SMA) > 0.50x (descarta activos congelados o iliquidos)"]),
         ]
     }
 ]
@@ -160,6 +168,8 @@ FORMULAS = [
     ("RVOL Intradia Ajustado por Sesion", "RVOL_Proj = ( Vol_Hoy / Fraccion_Sesion ) / SMA(Vol, 20d)", "Ajusta el volumen acumulado segun los minutos transcurridos (9:30-16:00 ET)"),
     ("IBD Relative Strength Ponderado", "RS_Raw = 0.40*(3M) + 0.20*(6M) + 0.20*(9M) + 0.20*(12M)", "Escala percentil 1 a 99; lideres institucionales operan con RS >= 85"),
     ("Dealer Gamma Exposure (GEX CBOE)", "GEX_$M = Sign * Gamma_BS * OI * 100 * Spot^2 * 0.01 / 1e6", "Net GEX > 0: Long Gamma (Rango) | Net GEX < 0: Short Gamma (Volatilidad)"),
+    ("Donchian (3/13) Breakout & Higher Low", "High(3d) > High(13d, t-1)  y  Low(3d) > Low(13d)", "Breakout de consolidacion de 2.5 semanas con piso ascendente confirmado"),
+    ("Gap & Go Bullish Ignition Index", "Open > High(t-1)  y  Close > Open  y  RVOL > 0.50x", "Salto limpio con compradores sosteniendo la vela verde tras la campana"),
 ]
 
 
@@ -271,11 +281,12 @@ class VectorPDFBuilder:
 
 def build_master_filters_pdf():
     pdf = VectorPDFBuilder()
-    total_pages = 3
+    total_pages = 4
     page_plan = [
         [SECTIONS[0], SECTIONS[1]],
         [SECTIONS[2], SECTIONS[3]],
-        [SECTIONS[4]]
+        [SECTIONS[4]],
+        []
     ]
 
     for p_idx, sec_list in enumerate(page_plan, start=1):
@@ -312,25 +323,25 @@ def build_master_filters_pdf():
 
             y += 6.0
 
-        if p_idx == 3:
+        if p_idx == 4:
             pdf.rect(24, y, pdf.w - 48, 17, fill=(0.067, 0.094, 0.153), stroke=(0.12, 0.16, 0.23), line_w=0.6)
             pdf.rect(24, y, 4, 17, fill=(0.22, 0.74, 0.97))
             pdf.text(34, y + 12, "6. FORMULARIO MATEMATICO DE INDICADORES BASE DEL MOTOR", font="F2", size=9.2, color=(0.97, 0.98, 0.99))
-            y += 22.0
+            y += 24.0
 
             card_w = (pdf.w - 60) / 2.0
-            card_h = 46.0
+            card_h = 52.0
             for f_idx, (f_title, f_eq, f_note) in enumerate(FORMULAS):
                 col_idx = f_idx % 2
                 row_idx = f_idx // 2
                 cx = 24 + col_idx * (card_w + 12)
-                cy = y + row_idx * (card_h + 7)
+                cy = y + row_idx * (card_h + 10)
                 pdf.rect(cx, cy, card_w, card_h, fill=(0.059, 0.090, 0.165), stroke=(0.15, 0.22, 0.32), line_w=0.5)
                 pdf.rect(cx, cy, 3, card_h, fill=(0.22, 0.74, 0.97))
-                pdf.text(cx + 10, cy + 12, f_title, font="F2", size=8.5, color=(0.22, 0.74, 0.97))
-                pdf.rect(cx + 10, cy + 16, card_w - 20, 14, fill=(0.03, 0.05, 0.08), stroke=(0.12, 0.18, 0.26), line_w=0.4)
-                pdf.text(cx + 15, cy + 26, f_eq, font="F3", size=8.0, color=(0.0, 1.0, 0.53))
-                pdf.text(cx + 10, cy + 40, f_note, font="F1", size=7.6, color=(0.80, 0.84, 0.90))
+                pdf.text(cx + 10, cy + 13, f_title, font="F2", size=8.8, color=(0.22, 0.74, 0.97))
+                pdf.rect(cx + 10, cy + 18, card_w - 20, 16, fill=(0.03, 0.05, 0.08), stroke=(0.12, 0.18, 0.26), line_w=0.4)
+                pdf.text(cx + 15, cy + 29, f_eq, font="F3", size=8.2, color=(0.0, 1.0, 0.53))
+                pdf.text(cx + 10, cy + 44, f_note, font="F1", size=7.8, color=(0.80, 0.84, 0.90))
 
         pdf.draw_footer(p_idx, total_pages)
 

@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>TradingVolt • Catálogo Maestro de Filtros Cuantitativos (Reverse Engineering)</title>
+<style>
+  @page {
+    size: A4 landscape;
+    margin: 12mm 14mm 12mm 14mm;
+  }
+  * {
+    box-sizing: border-box;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  body {
+    font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Helvetica, Arial, sans-serif;
+    background-color: #0B0F19;
+    color: #F8FAFC;
+    margin: 0;
+    padding: 18px 22px;
+    font-size: 11.5px;
+    line-height: 1.45;
+  }
+  .header-banner {
+    background: linear-gradient(135deg, #0F172A 0%, #1E293B 60%, #090D16 100%);
+    border: 1px solid #334155;
+    border-left: 6px solid #00F0FF;
+    border-radius: 10px;
+    padding: 18px 24px;
+    margin-bottom: 18px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .header-title {
+    font-size: 22px;
+    font-weight: 800;
+    color: #FFFFFF;
+    margin: 0 0 4px 0;
+    letter-spacing: -0.3px;
+  }
+  .header-sub {
+    font-size: 12px;
+    color: #38BDF8;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .header-meta {
+    text-align: right;
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 11px;
+    color: #94A3B8;
+  }
+  .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: Consolas, monospace;
+    text-transform: uppercase;
+  }
+  .b-cyan { background: rgba(56, 189, 248, 0.15); color: #38BDF8; border: 1px solid rgba(56, 189, 248, 0.4); }
+  .b-green { background: rgba(16, 185, 129, 0.15); color: #00FF87; border: 1px solid rgba(16, 185, 129, 0.4); }
+  .b-amber { background: rgba(245, 158, 11, 0.15); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.4); }
+  .b-purple { background: rgba(139, 92, 246, 0.15); color: #C084FC; border: 1px solid rgba(139, 92, 246, 0.4); }
+  .b-rose { background: rgba(244, 63, 94, 0.15); color: #FB7185; border: 1px solid rgba(244, 63, 94, 0.4); }
+
+  .section-header {
+    background: #111827;
+    border: 1px solid #1E293B;
+    border-left: 4px solid #10B981;
+    border-radius: 6px;
+    padding: 8px 14px;
+    margin: 16px 0 10px 0;
+    font-size: 14px;
+    font-weight: 800;
+    color: #F8FAFC;
+    letter-spacing: 0.2px;
+    page-break-after: avoid;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 14px;
+    background: #0F172A;
+    border: 1px solid #1E293B;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th {
+    background: #1E293B;
+    color: #38BDF8;
+    font-weight: 800;
+    text-align: left;
+    padding: 8px 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #334155;
+  }
+  td {
+    padding: 8px 10px;
+    border-bottom: 1px solid #1E293B;
+    vertical-align: top;
+    color: #E2E8F0;
+    font-size: 11px;
+  }
+  tr:nth-child(even) td {
+    background: #0B111E;
+  }
+  tr {
+    page-break-inside: avoid;
+  }
+  .filter-name {
+    font-weight: 800;
+    color: #FFFFFF;
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+  .param-list {
+    margin: 0;
+    padding-left: 15px;
+  }
+  .param-list li {
+    margin-bottom: 2px;
+  }
+  code {
+    font-family: Consolas, 'Courier New', monospace;
+    background: #1E293B;
+    color: #00FF87;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 10.5px;
+  }
+  .formula-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 10px;
+  }
+  .formula-card {
+    background: #0F172A;
+    border: 1px solid #1E293B;
+    border-left: 3px solid #38BDF8;
+    border-radius: 6px;
+    padding: 10px 14px;
+    page-break-inside: avoid;
+  }
+  .formula-title {
+    font-weight: 800;
+    color: #38BDF8;
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+  .formula-box {
+    font-family: Consolas, 'Courier New', monospace;
+    background: #080C14;
+    border: 1px solid #1E293B;
+    color: #00FF87;
+    padding: 6px 10px;
+    border-radius: 4px;
+    margin: 5px 0;
+    font-size: 11px;
+  }
+  .page-break {
+    page-break-before: always;
+  }
+  .footer {
+    margin-top: 18px;
+    padding-top: 8px;
+    border-top: 1px solid #1E293B;
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #64748B;
+    font-family: Consolas, monospace;
+  }
+</style>
+</head>
+<body>
+
+<div class="header-banner">
+  <div>
+    <div class="header-sub">⚡ TRADINGVOLT INSTITUTIONAL QUANT DESK • DOCUMENTACIÓN TÉCNICA OFICIAL</div>
+    <h1 class="header-title">Catálogo Maestro de Filtros Cuantitativos (Reverse Engineering)</h1>
+    <div style="color: #CBD5E1; font-size: 12px;">
+      Especificación Matemática Completa de los <b>28 Escáneres Institucionales</b>: Deepvue Core, Ameet Rai, Mark Minervini, William O'Neil (CANSLIM®), Stan Weinstein, Kristjan Qullamaggie, David Ryan y Gil Morales.
+    </div>
+  </div>
+  <div class="header-meta">
+    <div><b>VERSIÓN:</b> v2.5 Quant Pipeline</div>
+    <div><b>FECHA:</b> 26 Octubre 2026</div>
+    <div><b>TOTAL FILTROS:</b> 28 Estrategias</div>
+    <div><b>MOTOR:</b> Vectorizado L1/L2</div>
+  </div>
+</div>
+
+<!-- SECCIÓN 1 -->
+<div class="section-header">🏛️ 1. Universos Maestros &amp; Líderes Institucionales (Deepvue Core)</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 4%;">#</th>
+      <th style="width: 20%;">Filtro Cuantitativo</th>
+      <th style="width: 12%;">Origen / Benchmark</th>
+      <th style="width: 24%;">Objetivo Estratégico / Qué Busca</th>
+      <th style="width: 40%;">Métricas, Parámetros &amp; Reglas Exactas de Filtrado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>01</b></td>
+      <td><div class="filter-name">🌐 Deepvue Universe</div><span class="badge b-cyan">Master Pool</span></td>
+      <td>Deepvue Official<br><code>752 Activos</code></td>
+      <td>Piscina maestra institucional de máxima calidad y absorción para fondos; filtra acciones ilíquidas y sectores rezagados.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Volumen en Dólares 20d (<code>$Vol 20d</code>):</b> <code>&gt;= $20,000,000</code> diarios (o <code>Volumen &gt;= 200,000</code> acciones).</li>
+          <li><b>Precio Institucional:</b> <code>Close &gt;= $10.00</code> (descarta penny stocks).</li>
+          <li><b>Fuerza Relativa (<code>RS 1M</code>):</b> <code>RS 1M &gt; 45</code> (o <code>Dist_Max52w &gt;= -30%</code> y <code>Close &gt;= 0.90 * SMA_200</code>).</li>
+          <li><b>Liderazgo Sectorial:</b> Pertenencia a grupos de industria líderes en ventanas de 1, 3 y 12 meses.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>02</b></td>
+      <td><div class="filter-name">💎 Liquid Leaders</div><span class="badge b-green">Institutional RS</span></td>
+      <td>Deepvue Official<br><code>187 Activos</code></td>
+      <td>Acciones altamente líquidas que combinan tendencia estructural en Etapa 2 con Fuerza Relativa superior frente al S&amp;P 500.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Alta Liquidez Institucional:</b> <code>$Vol 20d &gt;= $15M - $20M</code> diarios (o <code>Volumen &gt;= 200k</code>).</li>
+          <li><b>Estructura de Tendencia:</b> <code>Close &gt;= 0.95 * SMA_50</code> o <code>Close &gt;= 0.95 * SMA_200</code>.</li>
+          <li><b>Proximidad &amp; Momentum:</b> Dentro del 25% del máximo anual (<code>Dist_Max52w &gt;= -25%</code>) y <code>ROC_3M &gt;= +3.0%</code> (o <code>ROC_1M &gt;= 0%</code>).</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>03</b></td>
+      <td><div class="filter-name">🚀 Pure Momentum</div><span class="badge b-green">High Velocity</span></td>
+      <td>Deepvue / TradingVolt<br><code>231 Activos</code></td>
+      <td>Acciones comunes con alta velocidad de desplazamiento diario (ADR elevado) y fuerte liquidez institucional para swing ágil.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Liquidez en Dólares:</b> <code>$Vol 20d &gt;= $7,000,000</code> diarios (tolerancia operativa <code>&gt;= $5M</code>).</li>
+          <li><b>Rango Diario Promedio (<code>ADR 10d</code>):</b> <code>ADR(10) &gt; 3.0%</code> (tolerancia <code>&gt;= 2.8%</code>).</li>
+          <li><b>Fuerza Absoluta (<code>AS</code>):</b> <code>AS 1M &gt; 95</code> o <code>AS 3M &gt; 93</code> (equivalente a <code>ROC_1M &gt;= +10%</code> o <code>ROC_3M &gt;= +20%</code>).</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>04</b></td>
+      <td><div class="filter-name">🚀 Sustained Momentum Leaders</div><span class="badge b-cyan">Medium-Term RS</span></td>
+      <td>Deepvue Official<br><code>186 Activos</code></td>
+      <td>Líderes líquidos con persistencia de tendencia en ventanas de 3 y 6 meses que sostienen estructura alcista institucional.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Liquidez Institucional:</b> <code>$Vol 20d &gt;= $8M - $10M</code> diarios.</li>
+          <li><b>Momentum Sostenido:</b> <code>ROC_3M &gt;= +5.0%</code> o <code>ROC_6M &gt;= +10.0%</code> (<code>RS Rating &gt; 90</code>).</li>
+          <li><b>Soporte de Medias:</b> <code>Close &gt;= 0.95 * SMA_50</code> y dentro del 20-25% de máximos de 52 semanas.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>05</b></td>
+      <td><div class="filter-name">📅 Weekly Strength</div><span class="badge b-purple">Weekly Close</span></td>
+      <td>Deepvue Official<br><code>399 Activos</code></td>
+      <td>Detecta acumulación institucional sostenida de viernes a viernes mediante cierres en el tercio superior del rango semanal.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Posición en Rango Semanal (5 sesiones):</b> <code>Pos_Week &gt;= 65% - 70%</code> o distancia al máximo semanal <code>&gt;= -3.5%</code>.</li>
+          <li><b>Alineación sobre Medias:</b> <code>Close &gt;= 0.97 * EMA_21</code> y <code>Close &gt;= 0.95 * SMA_50/200</code>.</li>
+          <li><b>Liquidez &amp; Fuerza Relativa:</b> <code>$Vol 20d &gt;= $5M</code>, <code>Dist_Max52w &gt;= -25%</code> y <code>ROC_3M &gt;= +2.0%</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>06</b></td>
+      <td><div class="filter-name">⚡ Power 21</div><span class="badge b-amber">21 EMA Pullback</span></td>
+      <td>Deepvue Official<br><code>69 Activos</code></td>
+      <td>Líderes de alto momentum que realizan un retroceso ordenado o consolidan pegados a su media exponencial de 21 días (21 EMA).</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Proximidad a <code>21 EMA</code>:</b> <code>-3.5% &lt;= ((Close - EMA_21) / EMA_21) * 100 &lt;= +4.0%</code>.</li>
+          <li><b>Fuerza Absoluta Previa (<code>AS</code>):</b> <code>ROC_3M &gt;= +3.0%</code>, <code>Close &gt;= 0.95 * SMA_50</code> y <code>Dist_Max52w &gt;= -25%</code>.</li>
+          <li><b>Liquidez Institucional:</b> <code>$Vol 20d &gt;= $5M - $10M</code> diarios (o <code>Volumen &gt;= 100k</code>).</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- SECCIÓN 2 -->
+<div class="section-header">🧠 2. Suite Institucional de Ameet Rai (Rutinas Diarias &amp; de Fin de Semana)</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 4%;">#</th>
+      <th style="width: 20%;">Filtro Cuantitativo</th>
+      <th style="width: 12%;">Origen / Benchmark</th>
+      <th style="width: 24%;">Objetivo Estratégico / Qué Busca</th>
+      <th style="width: 40%;">Métricas, Parámetros &amp; Reglas Exactas de Filtrado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>07</b></td>
+      <td><div class="filter-name">🌱 Ameet Rai: IPO Last 1 Year</div><span class="badge b-green">Weekend Routine</span></td>
+      <td>Ameet Rai (Deepvue)<br><code>189 Activos</code></td>
+      <td>Barómetro macro <i>Risk-On vs Risk-Off</i>: evalúa si las empresas que debutaron en bolsa en el último año tienen soporte institucional.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Antigüedad de Cotización:</b> <code>Sesiones_Cotizadas &lt;= 260</code> (debut bursátil en los últimos 365 días).</li>
+          <li><b>Salud Institucional (Risk-On):</b> <code>Close &gt;= 0.95 * EMA_21</code> o <code>Close &gt;= 0.95 * SMA_20</code> (o <code>Dist_Max52w &gt;= -25%</code>).</li>
+          <li><b>Filtro Operativo:</b> <code>Close &gt;= $1.00</code> y <code>$Vol 20d &gt;= $0.5M</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>08</b></td>
+      <td><div class="filter-name">⚡ Ameet Rai: HV Edge</div><span class="badge b-cyan">Daily Routine</span></td>
+      <td>Ameet Rai (Deepvue)<br><code>45 Activos</code></td>
+      <td>Rastrea en el día exacto la huella de acumulación institucional masiva mediante récords estructurales de volumen (HV Edge).</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Condición Triple <code>HV Edge</code> (Cumplir al menos 1 de 3):</b>
+            <br>1. <b>HVE 1 Año:</b> <code>Vol_Hoy &gt;= max(Vol_últimas_252_sesiones)</code>
+            <br>2. <b>HVE Desde IPO:</b> <code>Vol_Hoy &gt;= max(Vol_histórico_post_día_1)</code>
+            <br>3. <b>HVE Post-Earnings:</b> <code>Vol_Hoy &gt;= max(Vol_últimas_63_sesiones)</code>
+          </li>
+          <li><b>Filtro Base:</b> <code>Close &gt;= $1.00</code> y <code>$Vol 20d &gt;= $1.0M</code> (o <code>Vol &gt;= 25k</code>).</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>09</b></td>
+      <td><div class="filter-name">🚩 Ameet Rai: High Tight Flags</div><span class="badge b-rose">Explosive Setup</span></td>
+      <td>Ameet Rai (Deepvue)<br><code>12 Activos</code></td>
+      <td>Detecta el patrón más explosivo del análisis técnico: activos que duplican su precio rápidamente y consolidan en bandera estrecha.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Mástil Explosivo (20 sesiones):</b> Subida <code>((Max_20d - Min_20d) / Min_20d) &gt;= +80% a +100%</code>.</li>
+          <li><b>Profundidad de Bandera (<code>Flag Depth</code>):</b> Retroceso desde el pico de 20d inferior al 25-30% (<code>Flag_Depth &gt;= -30%</code>).</li>
+          <li><b>Filtro Base:</b> <code>Close &gt;= $1.00</code> y <code>$Vol 20d &gt;= $1.0M</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>10</b></td>
+      <td><div class="filter-name">💧 Ameet Rai: Daily Liquidity</div><span class="badge b-cyan">Daily Routine</span></td>
+      <td>Ameet Rai (Deepvue)<br><code>296 Activos</code></td>
+      <td>Monitorea dónde se mueve el dinero institucional pesado todos los días para detectar rotación temática temprana.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Umbral de Volumen Físico:</b> <code>Volumen_Hoy &gt;= 8,000,000</code> acciones (o <code>Vol_Promedio_20d &gt;= 8,000,000</code>).</li>
+          <li><b>Flujo en Dólares:</b> <code>$Vol_Hoy &gt;= $15,000,000</code> (o <code>$Vol 20d &gt;= $15M</code>).</li>
+          <li><b>Precio Mínimo:</b> <code>Close &gt;= $2.00</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>11</b></td>
+      <td><div class="filter-name">🛡️ Ameet Rai: 62.5% RS Days</div><span class="badge b-purple">Corrections Filter</span></td>
+      <td>Ameet Rai (Deepvue)<br><code>191 Activos</code></td>
+      <td>Identifica los líderes más resilientes que registran días positivos constantes mientras el mercado general atraviesa correcciones.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Ratio de Días RS:</b> Al menos <code>62.5%</code> de sesiones con retorno positivo en ventanas rodantes de <code>5, 8, 10, 15, 20, 30, 40 o 60</code> sesiones.</li>
+          <li><b>Fase de Fuerza Relativa:</b> <code>Close &gt;= 0.95 * SMA_50/200</code> o <code>Dist_Max52w &gt;= -25%</code>.</li>
+          <li><b>Filtro Base:</b> <code>Close &gt;= $3.00</code> y <code>$Vol 20d &gt;= $3.0M</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>12</b></td>
+      <td><div class="filter-name">🔥 Highest Volume IPO</div><span class="badge b-amber">IPO Breakout</span></td>
+      <td>Deepvue Official<br><code>7 Activos</code></td>
+      <td>Detecta nuevas emisiones bursátiles que rompen récord absoluto de volumen desde su estreno con fuerte cierre diario.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Firma de Volumen:</b> <code>Volumen_Hoy &gt;= max(Volumen_desde_día_post_IPO)</code>.</li>
+          <li><b>Rango de Cierre Diario (<code>DCR</code>):</b> <code>Pos_in_Range &gt;= 40.0%</code> con variación diaria positiva (<code>Chg_Today &gt; 0%</code>).</li>
+          <li><b>Liquidez Mínima:</b> <code>$Vol 20d &gt;= $3,000,000</code> diarios.</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- SECCIÓN 3 -->
+<div class="section-header">🎯 3. Compresión de Volatilidad, VCP &amp; Secado de Volumen (Mark Minervini / Deepvue)</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 4%;">#</th>
+      <th style="width: 20%;">Filtro Cuantitativo</th>
+      <th style="width: 12%;">Origen / Benchmark</th>
+      <th style="width: 24%;">Objetivo Estratégico / Qué Busca</th>
+      <th style="width: 40%;">Métricas, Parámetros &amp; Reglas Exactas de Filtrado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>13</b></td>
+      <td><div class="filter-name">🌀 Minervini VCP Pattern</div><span class="badge b-green">VCP Coiling</span></td>
+      <td>Mark Minervini<br><code>43 Activos</code></td>
+      <td>Patrón de Contracción de Volatilidad (VCP): estrechamiento progresivo de precios en el lado derecho de la base con secado de oferta.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Contracción de Volumen:</b> <code>Media_Vol(5d) / Media_Vol(50d) &lt;= 1.35x</code> en consolidación cerca del pivote.</li>
+          <li><b>Estructura Etapa 2:</b> <code>Close &gt;= 0.95 * SMA_50/200</code> y <code>Dist_Max52w &gt;= -20%</code>.</li>
+          <li><b>Liquidez Institucional:</b> <code>$Vol 20d &gt;= $10,000,000</code> diarios (o <code>Vol &gt;= 100k</code>).</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>14</b></td>
+      <td><div class="filter-name">🎯 Minervini Stage 2</div><span class="badge b-cyan">Trend Template</span></td>
+      <td>Mark Minervini<br><code>Trend Template</code></td>
+      <td>Plantilla estructural de tendencia de Mark Minervini para operar exclusivamente acciones en fase de aceleración institucional.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Alineación de Medias:</b> <code>Close &gt; SMA_50 &gt; SMA_200</code>.</li>
+          <li><b>Cercanía a Máximos / Lejanía de Mínimos:</b> <code>Dist_Max52w &gt;= -20%</code> y <code>Dist_Min52w &gt;= +20%</code> sobre el mínimo anual.</li>
+          <li><b>Fuerza No Sobrecomprada:</b> <code>50 &lt;= RSI(14) &lt;= 78</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>15</b></td>
+      <td><div class="filter-name">💧 Volume Dry Up (VDU)</div><span class="badge b-purple">RMV Tight &amp; VDU</span></td>
+      <td>Deepvue Official<br><code>160 Activos</code></td>
+      <td>Agotamiento de presión vendedora sobre la media de 50 sesiones combinado con compresión en el indicador RMV antes de rotura.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Soporte Sobre SMA 50:</b> <code>Close &gt;= 0.98 * SMA_50</code>.</li>
+          <li><b>Secado de Volumen (<code>VDU</code>):</b> <code>RVOL_20d &lt;= 0.85x</code> (o <code>Vol_5d / Vol_50d &lt;= 0.75x</code>).</li>
+          <li><b>Compresión <code>RMV(15)</code>:</b> <code>((High_15d - Low_15d) / Low_15d) * 100 &lt;= 15.0%</code> (<code>&lt;= 10%</code> activa alerta <i>Tight Verde</i>).</li>
+          <li><b>Liquidez:</b> <code>$Vol 20d &gt;= $3,000,000</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>16</b></td>
+      <td><div class="filter-name">🎯 Tight Range</div><span class="badge b-amber">Pre-Breakout Coil</span></td>
+      <td>Deepvue Official<br><code>26 Activos</code></td>
+      <td>Identifica acciones en calma institucional extrema (baja volatilidad de 15 días o Double Inside Days) listas para expandir rango.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Volatilidad de Rango 15d (<code>RMV 15</code>):</b> <code>RMV(15) &lt;= 10.0%</code>.</li>
+          <li><b>Compresión 5d o Inside Days:</b> <code>|Chg_5d| &lt;= 4.0%</code> <b>O</b> patrón <b>Double Inside Days</b> (<code>H0 &lt;= H1 &lt;= H2</code> y <code>L0 &gt;= L1 &gt;= L2</code>).</li>
+          <li><b>Convergencia de Medias:</b> Distancia a <code>SMA_50 &lt;= 10%</code> y a <code>SMA_200 &lt;= 20%</code> con <code>$Vol &gt;= $3M</code>.</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- SECCIÓN 4 -->
+<div class="section-header">🏆 4. Metodología CANSLIM®, Stan Weinstein &amp; Acumulación Temprana</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 4%;">#</th>
+      <th style="width: 20%;">Filtro Cuantitativo</th>
+      <th style="width: 12%;">Origen / Benchmark</th>
+      <th style="width: 24%;">Objetivo Estratégico / Qué Busca</th>
+      <th style="width: 40%;">Métricas, Parámetros &amp; Reglas Exactas de Filtrado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>17</b></td>
+      <td><div class="filter-name">🏆 CANSLIM® Official Leaders</div><span class="badge b-green">William O'Neil</span></td>
+      <td>O'Neil / Deepvue<br><code>36 Activos</code></td>
+      <td>Selecciona los verdaderos líderes institucionales combinando fortaleza técnica en máximos con patrocinio de fondos.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Calidad &amp; Liquidez:</b> <code>Close &gt;= $10.00</code> y <code>$Vol 20d &gt;= $5,000,000</code>.</li>
+          <li><b>Nuevos Máximos &amp; Liderazgo (N / L):</b> <code>Dist_Max52w &gt;= -15% a -20%</code> y <code>ROC_3M &gt; 0%</code>.</li>
+          <li><b>Tendencia Estructural (M):</b> Etapa 2 alcista (<code>Close &gt;= SMA_50 &gt; SMA_200</code>).</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>18</b></td>
+      <td><div class="filter-name">🚀 CANSLIM High RS Leaders</div><span class="badge b-cyan">Tech &amp; Growth</span></td>
+      <td>O'Neil / Deepvue<br><code>137 Activos</code></td>
+      <td>Líderes de alto crecimiento en Tecnología y Consumo Discrecional con máxima calificación de Fuerza Relativa ponderada.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Fuerza Relativa IBD Ponderada:</b> <code>0.40*(ROC_3M) + 0.20*(ROC_6M) + 0.20*(ROC_9M) + 0.20*(ROC_12M)</code> en percentil <code>&gt; 85</code>.</li>
+          <li><b>Liquidez Institucional:</b> <code>$Vol 20d &gt;= $15,000,000</code> y <code>Close &gt;= $10.00</code> sobre <code>SMA_50/200</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>19</b></td>
+      <td><div class="filter-name">🏆 True Market Leaders (TML &amp; BO60)</div><span class="badge b-green">BO60 Breakout</span></td>
+      <td>TradingVolt CANSLIM<br><code>331 Activos</code></td>
+      <td>Monitorea la canasta TML para detectar rupturas de bases de 60 días (BO60) dentro de la zona oficial de compra institucional.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Pivote <code>BO60</code>:</b> Superación del máximo de las últimas 60 sesiones con <code>RVOL &gt;= 1.25x</code>.</li>
+          <li><b>Zona de Compra O'Neil:</b> Entre <code>0.0% y +5.0%</code> por encima del pivote (<code>&gt; +5%</code> se marca como <i>Extendida</i>).</li>
+          <li><b>Rating Acumulación/Distribución (13s):</b> Ratio Chaikin Money Flow Positivo/Negativo <code>&gt;= 1.45 = A+</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>20</b></td>
+      <td><div class="filter-name">📈 Stage Analysis: Weinstein 2/2A</div><span class="badge b-purple">Stage 2 Markup</span></td>
+      <td>Stan Weinstein<br><code>417 Activos</code></td>
+      <td>Captura la transición desde la Etapa 1 (Base) hacia la Etapa 2A (Early Markup) y Etapa 2 en industrias líderes.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Regla Etapa 2 / 2A:</b> <code>Close &gt;= 0.97 * SMA_50</code> y <code>Close &gt;= 0.96 * SMA_200</code> con media de 150d/200d en pendiente alcista.</li>
+          <li><b>Clasificación:</b> <code>Dist_Max52w &gt;= -15%</code> clasifica como <b>Etapa 2A (Early Markup)</b>; hasta <code>-30%</code> como <b>Etapa 2</b>.</li>
+          <li><b>Liquidez:</b> <code>$Vol 20d &gt;= $15M - $20M</code> y Fuerza Relativa <code>RS &gt; 85</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>21</b></td>
+      <td><div class="filter-name">🎯 Pocket Pivots</div><span class="badge b-amber">Morales &amp; Kacher</span></td>
+      <td>Gil Morales &amp; Kacher<br><code>45 Activos</code></td>
+      <td>Punto de entrada temprano de bajo riesgo: detecta compra institucional agresiva dentro de la base antes del breakout clásico.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Sesión Positiva (Up Day):</b> <code>Close_Hoy &gt; Close_Ayer</code>.</li>
+          <li><b>Firma de Volumen Pocket Pivot:</b> <code>Vol_Hoy &gt; max(Volumen de CUALQUIER día bajista en las 10 sesiones previas)</code>.</li>
+          <li><b>Contexto de Base:</b> Cotizando sobre/cerca de <code>SMA_20/50</code>, <code>Dist_Max52w &gt;= -35%</code> y <code>$Vol &gt;= $2M</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>22</b></td>
+      <td><div class="filter-name">🐜 David Ryan: Ants</div><span class="badge b-cyan">15d Accumulation</span></td>
+      <td>David Ryan<br><code>Institutional Ants</code></td>
+      <td>Rastrea acumulación institucional persistente durante 3 semanas (15 barras) cerca de máximos anuales o de 20 días.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Conteo de Acumulación (15 sesiones):</b> <code>&gt;= 4 a 5 sesiones</code> alcistas donde <code>Vol_Día &gt; Vol_Previo</code> o <code>Vol_Día &gt; SMA_Vol_20/50</code>.</li>
+          <li><b>Ubicación de Precio:</b> Dentro del <code>5%</code> del máximo de 20 días o dentro del <code>25%</code> del máximo de 52 semanas.</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="page-break"></div>
+
+<!-- SECCIÓN 5 -->
+<div class="section-header">⚡ 5. Catalizadores Explosivos, Intradía, Pre/Post-Market &amp; Swing Táctico</div>
+<table>
+  <thead>
+    <tr>
+      <th style="width: 4%;">#</th>
+      <th style="width: 20%;">Filtro Cuantitativo</th>
+      <th style="width: 12%;">Origen / Benchmark</th>
+      <th style="width: 24%;">Objetivo Estratégico / Qué Busca</th>
+      <th style="width: 40%;">Métricas, Parámetros &amp; Reglas Exactas de Filtrado</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><b>23</b></td>
+      <td><div class="filter-name">⚡ Qullamaggie: Episodic Pivot (EP)</div><span class="badge b-rose">Catalyst Breakout</span></td>
+      <td>Kristjan Qullamaggie<br><code>EP 10d Window</code></td>
+      <td>Captura revalorizaciones explosivas por sorpresas de earnings, contratos o FDA que cambian la narrativa fundamental del activo.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Salto Explosivo (Ventana 10d):</b> <code>Ganancia_Diaria &gt;= +7.5% (+8%)</code> <b>O</b> <code>Gap_Apertura &gt;= +4.0% (+5%)</code>.</li>
+          <li><b>Explosión de Volumen:</b> <code>RVOL_20d &gt;= 1.05x - 1.2x</code> o <code>Volumen &gt;= 400k - 500k</code> (o <code>$Vol &gt;= $2M</code>).</li>
+          <li><b>Fuerza de Cierre:</b> <code>Close &gt; High_Previo</code> o <code>Daily Closing Range (DCR) &gt;= 40%</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>24</b></td>
+      <td><div class="filter-name">📈 Up on Volume</div><span class="badge b-green">Volume Expansion</span></td>
+      <td>Deepvue Official<br><code>64 Activos</code></td>
+      <td>Identifica sesiones de expansión alcista respaldadas por volumen superior al promedio y cierre en la mitad superior de la vela.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Avance Diario:</b> <code>Chg_Today &gt;= +1.0%</code> (o <code>&gt;= +1.5%</code> en la sesión previa).</li>
+          <li><b>Calidad de Cierre (<code>DCR</code>):</b> <code>Pos_in_Range &gt;= 45% - 50%</code>.</li>
+          <li><b>Participación Institucional:</b> <code>RVOL_20d &gt;= 0.95x - 1.0x</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>25</b></td>
+      <td><div class="filter-name">🌅 Pre Market Movers &amp; Gap Ups</div><span class="badge b-amber">Pre-Market Radar</span></td>
+      <td>TradingVolt / Deepvue<br><code>Pre-Mkt Basket</code></td>
+      <td>Detecta las acciones en juego antes del toque de campana con gap alcista y liquidez suficiente para operativa de apertura (ORB).</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Precio &amp; Gap:</b> <code>Precio &gt;= $3.00 - $5.00</code> con <code>Gap_Pct &gt;= +0.5% a +2.0%</code> (o <code>Chg &gt;= +1.0%</code>).</li>
+          <li><b>Actividad Relativa:</b> <code>RVOL &gt;= 1.1x</code> o <code>Pos_in_Range &gt;= 30%</code>.</li>
+          <li><b>Liquidez Institucional:</b> <code>$Vol 20d &gt; $10M</code> (tolerancia <code>&gt;= $1.5M</code>) o <code>Market Cap &gt; $500M</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>26</b></td>
+      <td><div class="filter-name">🌆 Post Market Movers</div><span class="badge b-purple">After-Hours / Earnings</span></td>
+      <td>Deepvue Official<br><code>21 Activos</code></td>
+      <td>Captura reacciones inmediatas tras el cierre (16:00–20:00 ET) a reportes trimestrales de resultados (Earnings) o guías corporativas.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Precio Institucional:</b> <code>Close &gt;= $5.00</code>.</li>
+          <li><b>Magnitud de Reacción:</b> <code>|Chg_Pct| &gt;= 2.0%</code> en cualquier dirección (<code>&gt;= +2%</code> o <code>&lt;= -2%</code>).</li>
+          <li><b>Filtro de Liquidez:</b> <code>$Vol 20d &gt;= $10,000,000</code> diarios o <code>Market Cap &gt; $500M</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>27</b></td>
+      <td><div class="filter-name">🔄 Pullback SMA 20/50 &amp; 💥 Breakout 20d</div><span class="badge b-cyan">Classical Swing</span></td>
+      <td>TradingVolt Core<br><code>Swing Tactical</code></td>
+      <td>Dos configuraciones complementarias: entrada en retroceso a soporte dinámico (SMA 20/50) y entrada en ruptura de rango de 20 días.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Pullback SMA 20/50:</b> <code>SMA_50 &gt; SMA_200</code>, distancia a <code>SMA_20 &lt;= 2.0%</code> (o a <code>SMA_50 &lt;= 2.5%</code>) y <code>40 &lt;= RSI(14) &lt;= 60</code>.</li>
+          <li><b>Breakout 20 Días:</b> <code>Close_Hoy &gt;= max(High_20_sesiones_previas)</code> confirmado con <code>RVOL &gt;= 1.2x</code>.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>28</b></td>
+      <td><div class="filter-name">🔥 Top Gappers &amp; ⚡ Impulso en Máximos</div><span class="badge b-rose">5-Min Intraday</span></td>
+      <td>TradingVolt DayTrade<br><code>5m Intraday Bars</code></td>
+      <td>Escáneres puramente intradía ejecutados sobre velas de 5 minutos para capturar momentum direccional durante la sesión regular.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Top Gappers &amp; RVOL:</b> <code>Close_5m &gt;= $5.00</code>, <code>|Gap_Pct| &gt;= 2.0%</code> y <code>RVOL(5m_vs_30bars) &gt;= 1.5x</code>.</li>
+          <li><b>Impulso en Máximos del Día:</b> <code>Gap_Pct &gt; 0%</code>, <code>RVOL &gt;= 1.2x - 1.5x</code> y cotizando en el <b>top 15% del rango del día</b> (<code>Pos_in_Range &gt;= 85%</code>).</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>29</b></td>
+      <td><div class="filter-name">🌲 Daily Pivot Breakout</div><span class="badge b-green">Pivot Breakout (Mike)</span></td>
+      <td>TradingVolt / TV Pine<br><code>Pivot Lookback 100</code></td>
+      <td>Ruptura confirmada de pivote estructural fractal (5L / 5R) con aceleración en ROC 100d, RVOL y pendiente de EMA 100.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Pivote Fractal Confirmado:</b> <code>Left Strength = 5</code>, <code>Right Strength = 5</code> sobre ventana de <code>100 barras</code>.</li>
+          <li><b>Momentum &amp; Volumen:</b> <code>ROC(100d) &gt;= +30.0%</code> y <code>RVOL(20d) &gt;= 1.0x</code>.</li>
+          <li><b>Pendiente de Tendencia:</b> <code>EMA_Slope(100d, smooth=1) &gt;= +20.0%</code> y vela cerrando sobre el pivote.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>30</b></td>
+      <td><div class="filter-name">🛡️ Donchian (3,13) Breakout &amp; Higher Low</div><span class="badge b-cyan">Deepvue Visual</span></td>
+      <td>Deepvue Rule Builder<br><code>Donchian (3,13)</code></td>
+      <td>Captura el día 1 de ruptura alcista de una consolidación de 2.5 semanas (13 sesiones), asegurando que el activo no venga de tocar suelo reciente (mínimos crecientes / Higher Lows).</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Piso Ascendente (Higher Low):</b> <code>Donchian(3, 0), Low (last) &gt; Donchian(13, 0), Low (last)</code>. El mínimo de 3 días está por encima del mínimo de 13 días.</li>
+          <li><b>Ruptura Activa (New 13-Day High):</b> <code>Donchian(3, 0), Up (last) &gt; Donchian(13, 0), Up 1 cdl. ago</code>. El precio supera el techo previo de las últimas 13 sesiones.</li>
+          <li><b>Ventaja Táctica:</b> Elimina falsos rebotes que vienen de desplomes o nuevos mínimos relativos.</li>
+        </ul>
+      </td>
+    </tr>
+    <tr>
+      <td><b>31</b></td>
+      <td><div class="filter-name">🚀 Gap &amp; Go Bullish Ignition</div><span class="badge b-amber">Deepvue Visual</span></td>
+      <td>Deepvue Rule Builder<br><code>Gap &amp; Go Setup</code></td>
+      <td>Detecta aperturas con salto alcista puro (por encima de todo el rango de la sesión anterior) que sostienen fuerza y expanden en vela verde con volumen institucional activo.</td>
+      <td>
+        <ul class="param-list">
+          <li><b>Salto Alcista Puro (True Gap Up):</b> <code>Price.Open (last) &gt; Price.High 1 cdl. ago</code>. Abre por encima del máximo absoluto de ayer.</li>
+          <li><b>Filtro de Actividad Institucional:</b> <code>Rvol(20, SMA, 1) (last) &gt; 0.50</code>. Descarta activos ilíquidos o congelados; exige al menos 50% del volumen normal.</li>
+          <li><b>Vela Verde en Expansión:</b> <code>Price.Close (last) &gt; Price.Open (last)</code>. Los compradores sostienen y empujan el precio (evita trampas de <i>Fade</i>).</li>
+        </ul>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- SECCIÓN 6: FÓRMULAS -->
+<div class="section-header">📐 6. Formulario Matemático de Indicadores Cuantitativos del Motor</div>
+<div class="formula-grid">
+  <div class="formula-card">
+    <div class="formula-title">1. ADR 10d (Average Daily Range %)</div>
+    <div>Mide la velocidad y amplitud porcentual promedio de cada vela diaria durante las últimas 10 sesiones:</div>
+    <div class="formula-box">ADR_10 = ( Mean_10d( High / Low ) - 1.0 ) * 100</div>
+    <div>• <b>Umbral Pure Momentum:</b> <code>ADR_10 &gt; 3.0%</code> (ideal entre <code>3.5% y 8.0%</code> para swing trading).</div>
+  </div>
+
+  <div class="formula-card">
+    <div class="formula-title">2. RMV 15d (Range Volatility / Compresión Deepvue)</div>
+    <div>Cuantifica el grado de contracción porcentual del rango de 15 días y aplica suavizado polinomial/EMA curvo:</div>
+    <div class="formula-box">RMV_15 = ( (Max(High, 15) - Min(Low, 15)) / Min(Low, 15) ) * 100</div>
+    <div>• <b>Zonas Oficiales:</b> <code>RMV &lt;= 10%</code> (Tight Verde / Compresión Extrema) • <code>10% - 15%</code> (Nivel 1).</div>
+  </div>
+
+  <div class="formula-card">
+    <div class="formula-title">3. RVOL Intradía Ajustado por Fracción de Sesión</div>
+    <div>Normaliza el volumen acumulado de hoy según el porcentaje transcurrido de la sesión regular (9:30–16:00 ET = 390 min):</div>
+    <div class="formula-box">RVOL_Proj = ( Vol_Hoy / Fracción_Sesión_Transcurrida ) / SMA(Vol, 20d)</div>
+    <div>• <b>Run Rate 20d (%):</b> <code>RVOL_Proj * 100</code> (ej. <code>180%</code> = proyecta cerrar con 1.8x su volumen normal).</div>
+  </div>
+
+  <div class="formula-card">
+    <div class="formula-title">4. IBD Relative Strength Ponderado &amp; JdK RRG</div>
+    <div>Ponderación trimestral estilo O'Neil/IBD y modelo rotacional Julius de Kempenaer frente al benchmark (<code>$SPX</code>):</div>
+    <div class="formula-box">RS_Raw = 0.40*(ROC_3M) + 0.20*(ROC_6M) + 0.20*(ROC_9M) + 0.20*(ROC_12M)</div>
+    <div>• <b>JdK RS-Ratio &amp; Momentum:</b> Normalización Z-Score suavizada centrada en <code>100.0</code> (3M Diario / 1A Semanal).</div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>⚡ TradingVolt Institutional Terminal &amp; Market Desk • Arquitectura Cuantitativa Vectorizada</span>
+  <span>Generado automáticamente • Referencia Oficial de los 31 Filtros Cuantitativos</span>
+</div>
+
+</body>
+</html>
