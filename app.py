@@ -2720,9 +2720,9 @@ elif nav_view == "⚡ Screener Cuantitativo":
             "badge": "ACUMULACIÓN INSTITUCIONAL",
             "type": "Swing",
             "strategy": "🐜 David Ryan: Ants (Acumulación Sostenida)",
-            "description": "Filtro oficial David Ryan: Al menos 4-5 sesiones de acumulación en las últimas 15 sesiones (subidas con volumen superior al día previo o a la media) operando cerca de máximos.",
-            "benchmark_tickers": engine.ANTS_3_TICKERS,
-            "criteria": ["4-5 Días Acumulación / 15s", "Volumen > Media / Previo", "Dentro de 25% de Máximos"]
+            "description": "Filtro oficial David Ryan (Deepvue): >= 11-12 sesiones alcistas de las últimas 15 sesiones con avance acumulado >= +12% y liquidez institucional (patrón de hormigas subiendo una colina de forma persistente y controlada).",
+            "benchmark_tickers": getattr(engine, "ANTS_DEEPVUE_8_TICKERS", ["BLCO", "BSY", "ENOV", "KRRO", "MAGH", "REPL", "TRNS", "VCEL"]),
+            "criteria": [">= 11-12 Días Alcistas / 15s", "Ganancia 15d >= +12%", "Precio >= $5.00", "Liquidez Institucional"]
         },
         "📈 Up on Volume": {
             "title": "📈 Up on Volume (Cierre Alto + Volumen)",
@@ -3036,7 +3036,7 @@ elif nav_view == "⚡ Screener Cuantitativo":
     with col_u_sel:
         scan_univ_choice = st.selectbox(
             "🌐 Universo a Evaluar:",
-            ["Lista de Referencia Oficial", "Top 100 S&P 500 & Nasdaq Líderes", "Liquid Leaders (187 Líderes)"],
+            ["Lista de Referencia Oficial", "Deepvue Universe (752 Acciones)", "Top 100 S&P 500 & Nasdaq Líderes", "Liquid Leaders (187 Líderes)"],
             index=0,
             key="sel_screener_active_univ"
         )
@@ -3050,7 +3050,9 @@ elif nav_view == "⚡ Screener Cuantitativo":
         )
 
     # Determinar lista de tickers según universo
-    if "Top 100" in scan_univ_choice:
+    if "Deepvue Universe" in scan_univ_choice:
+        active_eval_tickers = list(getattr(engine, 'DEEPVUE_UNIVERSE_752_TICKERS', []))
+    elif "Top 100" in scan_univ_choice:
         active_eval_tickers = list(getattr(engine, 'SP500_30_TICKERS', [])) + list(getattr(engine, 'MOMENTUM_LEADERS_186_TICKERS', []))[:70]
     elif "Liquid Leaders" in scan_univ_choice:
         active_eval_tickers = list(getattr(engine, 'LIQUID_LEADERS_187_TICKERS', []))
@@ -3129,6 +3131,7 @@ elif nav_view == "⚡ Screener Cuantitativo":
         else:
             pref_cols = [
                 "Ticker", "¿Cumple Hoy?", "Precio", "Cambio %",
+                "Días Verdes (15d)", "Avance 15d", "Vol Prom (20d)",
                 "ROC (100d)", "RVOL (20d)", "EMA Slope", "Pivote ($)", "Dist Pivote (%)",
                 "Dist 52W High", "RSI 14", "Posición Rango", "Vol $ ($M)", "RV 20d", "Next Earnings"
             ]
@@ -3142,6 +3145,9 @@ elif nav_view == "⚡ Screener Cuantitativo":
                 "¿Cumple Hoy?": st.column_config.TextColumn("¿Cumple Hoy?", width="medium", help="Diagnóstico cuantitativo en tiempo real"),
                 "Precio": st.column_config.NumberColumn("Precio", format="$%.2f", width="small"),
                 "Cambio %": st.column_config.NumberColumn("Cambio %", format="%+.2f%%", width="small"),
+                "Días Verdes (15d)": st.column_config.TextColumn("Días Verdes", width="small", help="Días alcistas en las últimas 15 sesiones (Umbral: >= 11-12)"),
+                "Avance 15d": st.column_config.TextColumn("Avance 15d", width="small", help="Avance acumulado en 15 sesiones (Umbral: >= +12%)"),
+                "Vol Prom (20d)": st.column_config.TextColumn("Vol Prom 20d", width="small"),
                 "ROC (100d)": st.column_config.TextColumn("ROC 100d", width="small", help="Rate of Change de 100 días (Umbral: >= 30%)"),
                 "RVOL (20d)": st.column_config.TextColumn("RVOL 20d", width="small", help="Volumen relativo sobre media de 20 días"),
                 "EMA Slope": st.column_config.TextColumn("Slope 100", width="small", help="Pendiente de la EMA 100 (Umbral: >= 20%)"),

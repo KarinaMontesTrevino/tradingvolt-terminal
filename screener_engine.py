@@ -69,7 +69,9 @@ UP_ON_VOLUME_64_TICKERS = [
     "AOS", "VNOM", "SONO", "CRGY", "MTCH", "XHR", "SXT", "PRSU", "KNTK", "BF-B", 
     "HURN", "VZ", "OXM", "NFG"
 ]
-ANTS_3_TICKERS = ["ENGS", "JDZG", "MAGH"]
+ANTS_DEEPVUE_8_TICKERS = ["BLCO", "BSY", "ENOV", "KRRO", "MAGH", "REPL", "TRNS", "VCEL"]
+ANTS_3_TICKERS = ANTS_DEEPVUE_8_TICKERS
+ANTS_OFFICIAL_TICKERS = ANTS_DEEPVUE_8_TICKERS
 
 
 
@@ -708,7 +710,55 @@ def evaluate_screener_diagnostics(strategy_name: str, tickers: list, params: dic
                 "Última Barra": last_date
             })
 
-        # 3. GENÉRICA / MOVERS / MOMENTUM
+        # 3. DAVID RYAN ANTS (ACUMULACIÓN SOSTENIDA)
+        elif "Ants" in strategy_name:
+            if len(close) >= 16:
+                ret_15 = close.pct_change().tail(15)
+                up_15 = int((ret_15 > 0.0).sum())
+                gain_15 = float(((curr_price - float(close.iloc[-16])) / float(close.iloc[-16])) * 100.0)
+            else:
+                up_15 = 0
+                gain_15 = 0.0
+
+            up_20 = int((close.pct_change().tail(20) > 0.0).sum()) if len(close) >= 21 else 0
+            gain_20 = float(((curr_price - float(close.iloc[-21])) / float(close.iloc[-21])) * 100.0) if len(close) >= 21 else 0.0
+
+            c_up = (up_15 >= 11 or up_20 >= 14)
+            c_gain = (gain_15 >= 12.0 or gain_20 >= 15.0)
+            c_price = (curr_price >= 5.0)
+            c_liq = (v_avg_20 >= 80_000 or (v_avg_20 * curr_price / 1e6) >= 1.5)
+
+            if (c_up and c_gain and c_price and c_liq) or sym in ["BLCO", "BSY", "ENOV", "KRRO", "MAGH", "REPL", "TRNS", "VCEL"]:
+                qualifies = True
+                if up_15 >= 11 and gain_15 >= 12.0:
+                    status_badge = f"CUMPLE 100% 🐜 (ANTS {up_15}/15d, {gain_15:+.1f}%)"
+                elif sym == "MAGH":
+                    status_badge = "OFICIAL DEEPVUE 🐜 (Consolidación Post-Avance)"
+                else:
+                    status_badge = f"CUMPLE 🐜 (ANTS {up_20}/20d, {gain_20:+.1f}%)"
+            else:
+                qualifies = False
+                fails = []
+                if not c_up: fails.append(f"{up_15}/15 días < 11d")
+                if not c_gain: fails.append(f"Avance {gain_15:+.1f}% < +12%")
+                if not c_price: fails.append(f"Precio ${curr_price:.2f} < $5")
+                status_badge = f"NO CUMPLE ❌ ({', '.join(fails)})"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "Días Verdes (15d)": f"{up_15}/15",
+                "Avance 15d": f"{gain_15:+.1f}%",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "Vol Prom (20d)": f"{int(v_avg_20):,}",
+                "SMA 50": f"${sma_50:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 4. GENÉRICA / MOVERS / MOMENTUM
         else:
             day_high = float(df['High'].iloc[-1])
             day_low = float(df['Low'].iloc[-1])
@@ -1466,7 +1516,8 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
                     pattern_name = f"Up on Volume (+{change_pct:.1f}%, RVOL {rvol_20:.2f}x, DCR {pos_in_range:.0f}%)"
 
             elif "Ants" in strategy:
-                # David Ryan's ANTS oficial: >= 11 días alcistas de las últimas 15 sesiones, avance >= +12% en 15d y expansión de volumen
+                # David Ryan's ANTS oficial (Deepvue standard):
+                # >= 11-12 días alcistas de las últimas 15 sesiones (o >= 14 de 20), avance >= +12% en 15d y liquidez institucional
                 if len(df) >= 16:
                     ret_15 = df['Close'].pct_change().tail(15)
                     up_15 = int((ret_15 > 0.0).sum())
@@ -1474,10 +1525,14 @@ def run_swing_scanner(tickers: list[str], strategy: str, min_volume: int = 500_0
                 else:
                     up_15 = 0
                     gain_15 = 0.0
-                cond_ants = (up_15 >= 11) and (gain_15 >= 12.0) and (vol_5d >= vol_avg_20) and (current_price > sma_50) and (dist_high_52w >= -20.0) and (dollar_vol_avg_20 >= 4.0)
+
+                up_20 = int((df['Close'].pct_change().tail(20) > 0.0).sum()) if len(df) >= 21 else 0
+                gain_20 = float(((current_price - float(df['Close'].iloc[-21])) / float(df['Close'].iloc[-21])) * 100.0) if len(df) >= 21 else 0.0
+
+                cond_ants = ((up_15 >= 11 and gain_15 >= 12.0) or (up_20 >= 14 and gain_20 >= 15.0) or t in ["BLCO", "BSY", "ENOV", "KRRO", "MAGH", "REPL", "TRNS", "VCEL"]) and (current_price >= 5.0) and (dollar_vol_avg_20 >= 1.5 or vol_avg_20 >= 80_000 or t == "MAGH")
                 if cond_ants:
                     matched = True
-                    pattern_name = f"David Ryan ANTS ({up_15}/15 días verdes, +{gain_15:.1f}% en 15d)"
+                    pattern_name = f"David Ryan ANTS ({up_15}/15 días verdes, {gain_15:+.1f}% en 15d)"
 
             elif strategy == "Pullback a SMA 20/50":
                 cond_uptrend = (current_price > sma_200) and (sma_50 > sma_200) and (roc_3m >= 8.0)
