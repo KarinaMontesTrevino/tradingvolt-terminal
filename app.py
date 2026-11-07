@@ -3015,61 +3015,139 @@ elif nav_view == "⚡ Screener Cuantitativo":
 
     st.markdown("<div style='height: 8px;'></div>", unsafe_allow_html=True)
 
-    # 5. Cargar métricas en tiempo real de los candidatos (Caché RAM de alta velocidad)
-    @st.cache_data(ttl=300, show_spinner=False)
-    def _get_cached_screener_factors(tickers_tuple):
-        if dvw is not None:
-            return dvw.compute_watchlist_factors(list(tickers_tuple))
-        return pd.DataFrame({"Symbol": list(tickers_tuple)})
+    # 5. Evaluación Cuantitativa 100% en Tiempo Real con Diagnóstico Transparente
+    pivot_params_dict = None
+    if is_pivot_strategy:
+        pivot_params_dict = {
+            "left_strength": piv_left,
+            "right_strength": piv_right,
+            "pivot_lookback": piv_lookback,
+            "roc_period": piv_roc_len,
+            "min_roc_pct": piv_min_roc,
+            "rvol_period": piv_rvol_len,
+            "ema_length": piv_ema_len,
+            "ema_slope_lookback": piv_slope_lb,
+            "ema_smooth_length": piv_smooth,
+            "min_ema_slope_pct": piv_min_slope
+        }
+
+    # Selector de Universo para Escaneo Cuantitativo
+    col_u_sel, col_mode_sel = st.columns([1.5, 2.5])
+    with col_u_sel:
+        scan_univ_choice = st.selectbox(
+            "🌐 Universo a Evaluar:",
+            ["Lista de Referencia Oficial", "Top 100 S&P 500 & Nasdaq Líderes", "Liquid Leaders (187 Líderes)"],
+            index=0,
+            key="sel_screener_active_univ"
+        )
+    with col_mode_sel:
+        st.markdown("<div style='height: 4px;'></div>", unsafe_allow_html=True)
+        view_filter_mode = st.radio(
+            "🎯 Filtrado de Candidatos:",
+            ["🟢 Solo Calificados Hoy (Cumplen o en Setup)", "📋 Universo Completo con Diagnóstico"],
+            horizontal=True,
+            key="rb_screener_filter_mode"
+        )
+
+    # Determinar lista de tickers según universo
+    if "Top 100" in scan_univ_choice:
+        active_eval_tickers = list(getattr(engine, 'SP500_30_TICKERS', [])) + list(getattr(engine, 'MOMENTUM_LEADERS_186_TICKERS', []))[:70]
+    elif "Liquid Leaders" in scan_univ_choice:
+        active_eval_tickers = list(getattr(engine, 'LIQUID_LEADERS_187_TICKERS', []))
+    else:
+        active_eval_tickers = base_tickers
+
+    # Ejecutar diagnóstico cuantitativo real día por día
+    @st.cache_data(ttl=180, show_spinner=False)
+    def _run_realtime_screener_diagnostics(strat_name, tickers_tup, p_params):
+        if hasattr(engine, "evaluate_screener_diagnostics"):
+            return engine.evaluate_screener_diagnostics(strat_name, list(tickers_tup), params=p_params)
+        elif dvw is not None:
+            return dvw.compute_watchlist_factors(list(tickers_tup))
+        return pd.DataFrame()
 
     if st.session_state.get("_force_refresh_factors"):
         st.session_state.pop("_force_refresh_factors", None)
-        _get_cached_screener_factors.clear()
-        if dvw:
-            dvw.compute_watchlist_factors(base_tickers, force_refresh=True)
+        _run_realtime_screener_diagnostics.clear()
 
-    results_df = _get_cached_screener_factors(tuple(base_tickers))
+    with st.spinner("⚡ Evaluando barras diarias y fórmulas cuantitativas de hoy..."):
+        results_df = _run_realtime_screener_diagnostics(
+            selected_screener_name,
+            tuple(active_eval_tickers),
+            pivot_params_dict
+        )
 
-    if not results_df.empty and "Symbol" in results_df.columns:
-        results_df = results_df.rename(columns={"Symbol": "Ticker"})
+    # Filtrar según el modo elegido por el usuario
+    if not results_df.empty and "Cumple_Bool" in results_df.columns:
+        total_eval = len(results_df)
+        num_qual = int((results_df["Cumple_Bool"] == True).sum())
+        num_fail = total_eval - num_qual
 
-    if results_df.empty:
-        st.warning("No hay activos disponibles para este filtro en este momento.")
-    else:
-        # Enviar automáticamente al Radar Global
-        if are:
-            are.set_active_radar(
-                tickers=base_tickers,
-                source_name=f"{selected_screener_name}",
-                description=f"{len(base_tickers)} activos calificados bajo {current_screener['strategy']}"
-            )
-        if qdp is not None:
-            qdp.save_live_filter_execution(selected_screener_name, base_tickers, results_df)
-
-        col_table, col_chart = st.columns([1.1, 1.9], gap="medium")
-
-        with col_table:
-            st.markdown('''
-            <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
-                <span style="font-size: 13px; font-weight: 700; color: #FFFFFF; text-transform: uppercase;">
-                    Candidatos Calificados
-                </span>
-                <span style="font-size: 11px; color: #00F0FF; font-weight: 600;">
-                    💡 Haz clic en una fila para ver su gráfico
-                </span>
+        # Mostrar métricas de resumen de auditoría
+        st.markdown(f'''
+        <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+            <div style="background: #090D16; border: 1px solid #1E293B; border-radius: 6px; padding: 6px 12px; font-size: 11.5px;">
+                <span style="color: #64748B;">Total Evaluados Hoy:</span> <strong style="color: #F8FAFC;">{total_eval}</strong>
             </div>
-            ''', unsafe_allow_html=True)
+            <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid #059669; border-radius: 6px; padding: 6px 12px; font-size: 11.5px;">
+                <span style="color: #34D399;">CUMPLEN / SETUP:</span> <strong style="color: #10B981;">{num_qual}</strong>
+            </div>
+            <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid #DC2626; border-radius: 6px; padding: 6px 12px; font-size: 11.5px;">
+                <span style="color: #F87171;">DESCARTADOS (FALLAN CRITERIOS):</span> <strong style="color: #EF4444;">{num_fail}</strong>
+            </div>
+            <div style="background: #090D16; border: 1px solid #1E293B; border-radius: 6px; padding: 6px 12px; font-size: 11.5px;">
+                <span style="color: #64748B;">Fecha Datos:</span> <strong style="color: #38BDF8;">{results_df['Última Barra'].iloc[0] if 'Última Barra' in results_df.columns and len(results_df) > 0 else 'Hoy'}</strong>
+            </div>
+        </div>
+        ''', unsafe_allow_html=True)
 
-            compact_cols = [c for c in ["Ticker", "Precio", "Cambio %", "RV 20d", "RV 50d", "Next Earnings"] if c in results_df.columns]
+        if "Solo Calificados" in view_filter_mode:
+            results_df = results_df[results_df["Cumple_Bool"] == True]
+
+    col_table, col_chart = st.columns([1.25, 1.75], gap="medium")
+
+    with col_table:
+        st.markdown('''
+        <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 6px;">
+            <span style="font-size: 13px; font-weight: 700; color: #FFFFFF; text-transform: uppercase;">
+                Candidatos Calificados
+            </span>
+            <span style="font-size: 11px; color: #00F0FF; font-weight: 600;">
+                👆 Haz clic en una fila para ver su gráfico
+            </span>
+        </div>
+        ''', unsafe_allow_html=True)
+
+        if results_df.empty:
+            st.info("ℹ️ Ningún activo de este universo cumple actualmente el 100% de los criterios estrictos hoy (ej. ROC >= 30% y Breakout activo simultáneamente).\n\nCambia arriba a **'📋 Universo Completo con Diagnóstico'** para inspeccionar qué tan cerca está cada activo y qué criterio particular no superó hoy.")
+            selected_ticker = "SPY"
+            table_df = pd.DataFrame()
+        else:
+            pref_cols = [
+                "Ticker", "¿Cumple Hoy?", "Precio", "Cambio %",
+                "ROC (100d)", "RVOL (20d)", "EMA Slope", "Pivote ($)", "Dist Pivote (%)",
+                "Dist 52W High", "RSI 14", "Posición Rango", "Vol $ ($M)", "RV 20d", "Next Earnings"
+            ]
+            compact_cols = [c for c in pref_cols if c in results_df.columns and c != "Cumple_Bool"]
+            if not compact_cols:
+                compact_cols = [c for c in results_df.columns if c != "Cumple_Bool"]
             table_df = results_df[compact_cols].copy()
 
             col_cfg = {
-                "Ticker": st.column_config.TextColumn("Ticker", help="Símbolo del activo"),
-                "Precio": st.column_config.NumberColumn("Precio", format="$%.2f"),
-                "Cambio %": st.column_config.NumberColumn("Cambio %", format="%+.2f%%"),
-                "RV 20d": st.column_config.NumberColumn("RVOL 20d", format="%.2fx", help="Volumen Relativo sobre media de 20 días"),
-                "RV 50d": st.column_config.NumberColumn("RS 50d", format="%.2f", help="Fuerza Relativa de 50 días"),
-                "Next Earnings": st.column_config.TextColumn("Próx Earnings", help="Fecha estimada de presentación de resultados")
+                "Ticker": st.column_config.TextColumn("Ticker", width="small"),
+                "¿Cumple Hoy?": st.column_config.TextColumn("¿Cumple Hoy?", width="medium", help="Diagnóstico cuantitativo en tiempo real"),
+                "Precio": st.column_config.NumberColumn("Precio", format="$%.2f", width="small"),
+                "Cambio %": st.column_config.NumberColumn("Cambio %", format="%+.2f%%", width="small"),
+                "ROC (100d)": st.column_config.TextColumn("ROC 100d", width="small", help="Rate of Change de 100 días (Umbral: >= 30%)"),
+                "RVOL (20d)": st.column_config.TextColumn("RVOL 20d", width="small", help="Volumen relativo sobre media de 20 días"),
+                "EMA Slope": st.column_config.TextColumn("Slope 100", width="small", help="Pendiente de la EMA 100 (Umbral: >= 20%)"),
+                "Pivote ($)": st.column_config.TextColumn("Pivote ($)", width="small", help="Nivel de Pivot High estructural"),
+                "Dist Pivote (%)": st.column_config.TextColumn("Dist Pivote", width="small", help="Distancia porcentual al pivote intacto"),
+                "Dist 52W High": st.column_config.TextColumn("Dist 52W", width="small"),
+                "RSI 14": st.column_config.NumberColumn("RSI 14", format="%.1f"),
+                "Posición Rango": st.column_config.TextColumn("Pos Rango", width="small"),
+                "Vol $ ($M)": st.column_config.TextColumn("Vol $M", width="small"),
+                "Next Earnings": st.column_config.TextColumn("Próx Earnings")
             }
 
             selection = st.dataframe(
@@ -3115,10 +3193,11 @@ elif nav_view == "⚡ Screener Cuantitativo":
                     else:
                         st.error("Configura el Webhook.")
 
-        with col_chart:
-            render_institutional_chart(selected_ticker, key_suffix="screener_main")
+    with col_chart:
+        render_institutional_chart(selected_ticker, key_suffix="screener_main")
 
-        # Descarga CSV
+    # Descarga CSV
+    if not results_df.empty:
         st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
         csv_data = results_df.to_csv(index=False).encode('utf-8')
         clean_strat = selected_screener_name.replace(' ', '_').replace(':', '').replace('>', 'GT')
@@ -3131,9 +3210,7 @@ elif nav_view == "⚡ Screener Cuantitativo":
         )
 
 
-# -----------------------------------------------------------------------------
-# VISTA 3: TERMINAL CANSLIM LÍDERES • BREAKOUT DESK (BO60)
-# -----------------------------------------------------------------------------
+
 elif "Convicción Cruzada" in nav_view or "Matriz de Convicción" in nav_view:
     st.markdown("""
         <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15), rgba(168, 85, 247, 0.12)); border: 1px solid rgba(14, 165, 233, 0.4); border-radius: 12px; padding: 18px 24px; margin-bottom: 20px; box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);">

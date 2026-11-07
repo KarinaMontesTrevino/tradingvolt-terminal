@@ -335,25 +335,10 @@ def compute_watchlist_factors(tickers: List[str], force_refresh: bool = False) -
             except Exception:
                 curr_c, chg_pct, rv_20d, rv_50d, rv_5d = 50.0, 0.0, 1.0, 1.0, 1.0
         else:
-            # Estimación determinista basada en el símbolo
-            h = abs(hash(sym)) % 100
-            curr_c = round(15.0 + (h * 1.8), 2)
-            chg_pct = round(((h % 25) - 8.0) * 0.45, 2)
-            rv_20d = round(1.0 + (h % 35) / 10.0, 2)
-            rv_50d = round(1.0 + ((h + 10) % 35) / 10.0, 2)
-            rv_5d = round(1.0 + ((h + 20) % 35) / 10.0, 2)
+            # Sin datos de mercado reales: omitir ticker para no mostrar numeros mockeados
+            continue
 
-        # Lookup de Earnings Date
-        earn_date = KNOWN_EARNINGS_MAP.get(sym)
-        if not earn_date:
-            # Determinista si no se conoce
-            h_e = abs(hash(sym)) % 30
-            if h_e < 8:
-                earn_date = f"Nov {4 + (h_e % 15):02d}, 2026"
-            elif h_e < 14:
-                earn_date = f"Oct {28 + (h_e % 4):02d}, 2026"
-            else:
-                earn_date = "—"
+        earn_date = KNOWN_EARNINGS_MAP.get(sym, "--")
 
         rows.append({
             "Symbol": sym,

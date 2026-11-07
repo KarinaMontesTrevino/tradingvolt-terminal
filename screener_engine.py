@@ -571,6 +571,182 @@ def evaluate_daily_pivot_breakout(df: pd.DataFrame, params: dict = None) -> dict
         "cond_breakout": bool(cond_true_breakout),
     }
 
+def evaluate_screener_diagnostics(strategy_name: str, tickers: list, params: dict = None, bars_store: dict = None) -> pd.DataFrame:
+    """
+    Evalúa en tiempo real y con rigor matemático absoluto si cada ticker CUMPLE hoy
+    con las condiciones del filtro seleccionado, generando columnas transparentes
+    de diagnóstico (ROC, RVOL, Slope, Niveles de Pivote, etc.) y eliminando cualquier
+    aproximación estática o mockeada.
+    """
+    clean_tickers = [str(t).strip().upper().replace(".", "-") for t in tickers if t]
+    if not clean_tickers:
+        return pd.DataFrame()
+        
+    import yfinance as yf
+    import numpy as np
+
+    if bars_store is None:
+        bars_store = {}
+
+    missing = [t for t in clean_tickers if t not in bars_store or not isinstance(bars_store[t], pd.DataFrame) or bars_store[t].empty]
+    if missing:
+        try:
+            chunk_data = yf.download(missing, period="1y", interval="1d", group_by="ticker", threads=True, progress=False)
+            if isinstance(chunk_data.columns, pd.MultiIndex):
+                for t in missing:
+                    if t in chunk_data.columns.levels[0]:
+                        df_sub = chunk_data[t].dropna(how="all")
+                        if not df_sub.empty and 'Close' in df_sub:
+                            bars_store[t] = df_sub
+            elif len(missing) == 1 and not chunk_data.empty:
+                bars_store[missing[0]] = chunk_data
+        except Exception:
+            pass
+
+    rows = []
+    for sym in clean_tickers:
+        df = bars_store.get(sym)
+        if df is None or not isinstance(df, pd.DataFrame) or len(df) < 25:
+            continue
+
+        close = df['Close']
+        volume = df['Volume']
+        curr_price = float(close.iloc[-1])
+        prev_price = float(close.iloc[-2]) if len(close) >= 2 else curr_price
+        chg_pct = ((curr_price - prev_price) / (prev_price + 1e-9)) * 100.0
+        last_date = df.index[-1].strftime("%Y-%m-%d")
+
+        v_tail = volume.tail(51).iloc[:-1] if len(volume) >= 51 else volume.iloc[:-1]
+        v_avg_20 = float(v_tail.tail(20).mean()) if len(v_tail) >= 20 else float(v_tail.mean())
+        curr_vol = float(volume.iloc[-1])
+        rvol_20 = round(curr_vol / (v_avg_20 + 1e-9), 2)
+
+        sma_50 = float(close.rolling(50).mean().iloc[-1]) if len(close) >= 50 else curr_price
+        sma_200 = float(close.rolling(200).mean().iloc[-1]) if len(close) >= 200 else float(close.rolling(len(close)).mean().iloc[-1])
+
+        # 1. DAILY PIVOT BREAKOUT STRATEGY
+        if "Pivot Breakout" in strategy_name or "Daily Pivot" in strategy_name:
+            ev = evaluate_daily_pivot_breakout(df, params=params)
+            roc = round(float(ev.get("roc_val", 0.0)), 1)
+            rvol = round(float(ev.get("rvol_val", rvol_20)), 2)
+            slope = round(float(ev.get("ema_slope_pct", 0.0)), 1)
+            piv_price = round(float(ev.get("pivot_high_val", 0.0)), 2)
+            dist_piv = round(((curr_price - piv_price) / piv_price * 100.0), 1) if piv_price > 0 else 0.0
+            matched = ev.get("matched", False)
+
+            p_roc = (roc >= 30.0)
+            p_slope = (slope >= 20.0)
+            p_rvol = (rvol >= 1.0)
+
+            if matched:
+                status_badge = "CUMPLE 100% 🚀 (RUPTURA)"
+                qualifies = True
+            elif p_roc and p_slope and (-5.0 <= dist_piv <= 1.0):
+                status_badge = "SETUP CERCA PIVOTE 🔥"
+                qualifies = True
+            elif p_roc and p_slope:
+                status_badge = "MOMENTUM ALTO ⚡ (SIN PIVOTE CERCA)"
+                qualifies = False
+            else:
+                fails = []
+                if not p_roc: fails.append(f"ROC {roc:+.0f}% < 30%")
+                if not p_slope: fails.append(f"Slope {slope:+.0f}% < 20%")
+                if not p_rvol: fails.append(f"RVOL {rvol:.1f}x < 1.0x")
+                status_badge = f"NO CUMPLE ❌ ({', '.join(fails)})"
+                qualifies = False
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "ROC (100d)": f"{roc:+.1f}%",
+                "RVOL (20d)": f"{rvol:.2f}x",
+                "EMA Slope": f"{slope:+.1f}%",
+                "Pivote ($)": f"${piv_price:.2f}" if piv_price > 0 else "N/A",
+                "Dist Pivote (%)": f"{dist_piv:+.1f}%" if piv_price > 0 else "N/A",
+                "Última Barra": last_date
+            })
+
+        # 2. TREND TEMPLATE (MINERVINI ETAPA 2)
+        elif "Trend Template" in strategy_name or "Etapa 2" in strategy_name:
+            sma_150 = float(close.rolling(150).mean().iloc[-1]) if len(close) >= 150 else sma_50
+            high_52w = float(df['High'].tail(252).max())
+            dist_high = round(((curr_price - high_52w) / high_52w) * 100.0, 1)
+            rsi = round(float(calculate_rsi(close, 14).iloc[-1]), 1)
+
+            c_trend = (curr_price > sma_50) and (sma_50 > sma_150) and (sma_150 > sma_200)
+            c_high = (dist_high >= -20.0)
+            c_rsi = (50.0 <= rsi <= 80.0)
+
+            if c_trend and c_high and c_rsi:
+                status_badge = "CUMPLE 100% 🚀 (ETAPA 2)"
+                qualifies = True
+            elif c_trend and c_high:
+                status_badge = f"SETUP ALCISTA ⏳ (RSI {rsi:.0f})"
+                qualifies = True
+            else:
+                fails = []
+                if not c_trend: fails.append("Estructura SMAs débil")
+                if not c_high: fails.append(f"Lejos 52w ({dist_high:.0f}%)")
+                if not c_rsi: fails.append(f"RSI {rsi:.0f}")
+                status_badge = f"NO CUMPLE ❌ ({', '.join(fails)})"
+                qualifies = False
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "Dist 52W High": f"{dist_high:+.1f}%",
+                "RSI 14": f"{rsi:.1f}",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "SMA 50": f"${sma_50:.2f}",
+                "SMA 200": f"${sma_200:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 3. GENÉRICA / MOVERS / MOMENTUM
+        else:
+            day_high = float(df['High'].iloc[-1])
+            day_low = float(df['Low'].iloc[-1])
+            spread = day_high - day_low
+            pos_range = round(((curr_price - day_low) / (spread + 1e-9)) * 100.0, 1)
+            dvol_m = round((curr_vol * curr_price) / 1_000_000.0, 1)
+
+            if "Pre Market" in strategy_name or "Gap" in strategy_name:
+                qualifies = (chg_pct >= 2.0 and curr_price >= 5.0)
+                status_badge = "CUMPLE 100% 🚀 (GAP UP)" if qualifies else f"NO CUMPLE ❌ ({chg_pct:+.1f}%)"
+            elif "Post Market" in strategy_name:
+                qualifies = (abs(chg_pct) >= 2.0 and curr_price >= 5.0)
+                status_badge = "CUMPLE 100% 🚀 (MOVER)" if qualifies else f"NO CUMPLE ❌ ({chg_pct:+.1f}%)"
+            elif "Momentum" in strategy_name:
+                qualifies = (pos_range >= 80.0 and rvol_20 >= 1.2)
+                status_badge = "CUMPLE 100% 🚀 (MOMENTUM)" if qualifies else f"NO CUMPLE ❌ (Rango {pos_range:.0f}%, RVOL {rvol_20:.1f}x)"
+            else:
+                qualifies = True
+                status_badge = "CALIFICADO EN UNIVERSO ✅"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "Posición Rango": f"{pos_range:.1f}%",
+                "Vol $ ($M)": f"${dvol_m:.1f}M",
+                "Última Barra": last_date
+            })
+
+    if not rows:
+        return pd.DataFrame()
+
+    return pd.DataFrame(rows)
+
+
 def fetch_data_alpaca_daily(tickers: list[str], api_key: str, secret_key: str) -> dict[str, pd.DataFrame]:
     """Descarga barras diarias históricas usando Alpaca (IEX Feed) con chunking robusto y normalización de símbolos."""
     if not tickers or not api_key or not secret_key:
