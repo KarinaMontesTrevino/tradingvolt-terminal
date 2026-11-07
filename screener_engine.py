@@ -69,6 +69,7 @@ UP_ON_VOLUME_64_TICKERS = [
     "AOS", "VNOM", "SONO", "CRGY", "MTCH", "XHR", "SXT", "PRSU", "KNTK", "BF-B", 
     "HURN", "VZ", "OXM", "NFG"
 ]
+CAPITULATION_VIX_12_TICKERS = ["NVDA", "SMH", "AMD", "MU", "WDC", "QQQ", "IWM", "MRVL", "ARM", "AVGO", "CRWD", "PANW"]
 ANTS_DEEPVUE_8_TICKERS = ["BLCO", "BSY", "ENOV", "KRRO", "MAGH", "REPL", "TRNS", "VCEL"]
 ANTS_3_TICKERS = ANTS_DEEPVUE_8_TICKERS
 ANTS_OFFICIAL_TICKERS = ANTS_DEEPVUE_8_TICKERS
@@ -1119,6 +1120,59 @@ def evaluate_screener_diagnostics(strategy_name: str, tickers: list, params: dic
                 "Dist 52W High": f"{dist_high:+.1f}%",
                 "RVOL (20d)": f"{rvol_20:.2f}x",
                 "SMA 50": f"${sma_50:.2f}",
+                "Última Barra": last_date
+            })
+
+        # 14. CAPITULACIÓN POR PÁNICO VIX & GAMMA SQUEEZE (MEAN-REVERSION ASIMÉTRICO)
+        elif any(k in strategy_name.lower() for k in ["capitulación", "capitulacion", "vix", "gamma", "panic"]):
+            roc_5d = float(((curr_price - float(close.iloc[-6])) / float(close.iloc[-6])) * 100.0) if len(close) >= 6 else chg_pct
+            
+            # Z-Score a 20 periodos (desviaciones estándar respecto a la SMA 20)
+            roll_mean_20 = float(close.rolling(20).mean().iloc[-1]) if len(close) >= 20 else curr_price
+            roll_std_20 = float(close.rolling(20).std().iloc[-1]) if len(close) >= 20 else 1.0
+            z_score_20 = round((curr_price - roll_mean_20) / (roll_std_20 + 1e-9), 2)
+            
+            dist_sma50_pct = round(((curr_price - sma_50) / (sma_50 + 1e-9)) * 100.0, 1)
+            dist_sma200_pct = round(((curr_price - sma_200) / (sma_200 + 1e-9)) * 100.0, 1)
+            
+            # RSI 14
+            delta = close.diff()
+            gain = (delta.where(delta > 0, 0)).rolling(14).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(14).mean()
+            rs = gain / (loss + 1e-9)
+            rsi_14 = round(float((100 - (100 / (1 + rs))).iloc[-1]), 1) if len(close) >= 15 else 50.0
+
+            c_drop = (roc_5d <= -6.0) or (chg_pct <= -3.0)
+            c_oversold = (z_score_20 <= -1.7) or (rsi_14 <= 38.0) or (dist_sma50_pct <= -6.0)
+            c_vol = (rvol_20 >= 1.1)
+            c_support = (dist_sma200_pct >= -12.0)
+
+            if c_drop and c_oversold and c_vol and c_support:
+                qualifies = True
+                status_badge = f"CUMPLE 100% 🌪️ (CAPITULACIÓN Z={z_score_20}σ, RVOL {rvol_20:.1f}x)"
+            elif c_drop and c_oversold:
+                qualifies = True
+                status_badge = f"ZONA REVERSIÓN ⚠️ (RoC 5d {roc_5d:+.1f}%, RSI {rsi_14:.0f})"
+            elif c_support and (c_drop or c_oversold):
+                qualifies = True
+                status_badge = f"TEST SOPORTE SMA 200 🛡️ (Dist {dist_sma200_pct:+.1f}%)"
+            else:
+                qualifies = False
+                status_badge = f"NEUTRAL 👀 (Z={z_score_20}σ, RoC {roc_5d:+.1f}%)"
+
+            rows.append({
+                "Ticker": sym,
+                "Precio": round(curr_price, 2),
+                "Cambio %": round(chg_pct, 2),
+                "¿Cumple Hoy?": status_badge,
+                "Cumple_Bool": qualifies,
+                "RoC 5-Días %": f"{roc_5d:+.1f}%",
+                "Z-Score (20)": f"{z_score_20:+.2f}σ",
+                "RSI (14)": f"{rsi_14:.1f}",
+                "Dist SMA 50 %": f"{dist_sma50_pct:+.1f}%",
+                "Dist SMA 200 %": f"{dist_sma200_pct:+.1f}%",
+                "RVOL (20d)": f"{rvol_20:.2f}x",
+                "SMA 200": f"${sma_200:.2f}",
                 "Última Barra": last_date
             })
 

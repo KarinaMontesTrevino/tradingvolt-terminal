@@ -425,7 +425,7 @@ endobj
 << /Type /Page /Parent 2 0 R /MediaBox [0 0 841.89 595.28] /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R >> >> /Contents 13 0 R >>
 endobj
 13 0 obj
-<< /Length 5677 >>
+<< /Length 6255 >>
 stream
 0.60 w 0.043 0.059 0.098 rg 0.00 0.00 841.89 595.28 re f
 0.80 w 0.059 0.090 0.165 rg 0.196 0.255 0.333 RG 24.00 533.28 793.89 44.00 re B
@@ -485,6 +485,12 @@ BT /F2 8.8 Tf 0.220 0.740 0.970 rg 436.94 304.28 Td (Gap & Go Bullish Ignition I
 0.40 w 0.030 0.050 0.080 rg 0.120 0.180 0.260 RG 436.94 283.28 370.94 16.00 re B
 BT /F3 8.2 Tf 0.000 1.000 0.530 rg 441.94 288.28 Td (Open > High\(t-1\)  y  Close > Open  y  RVOL > 0.50x) Tj ET
 BT /F1 7.8 Tf 0.800 0.840 0.900 rg 436.94 273.28 Td (Salto limpio con compradores sosteniendo la vela verde tras la campana) Tj ET
+0.50 w 0.059 0.090 0.165 rg 0.150 0.220 0.320 RG 24.00 203.28 390.94 52.00 re B
+0.60 w 0.220 0.740 0.970 rg 24.00 203.28 3.00 52.00 re f
+BT /F2 8.8 Tf 0.220 0.740 0.970 rg 34.00 242.28 Td (Capitulacion VIX & Z-Score Squeeze) Tj ET
+0.40 w 0.030 0.050 0.080 rg 0.120 0.180 0.260 RG 34.00 221.28 370.94 16.00 re B
+BT /F3 8.2 Tf 0.000 1.000 0.530 rg 39.00 226.28 Td (Z_Score\(20\) = \(Close - SMA20\) / Std20 <= -1.70  y  Dist200 >= -12%) Tj ET
+BT /F1 7.8 Tf 0.800 0.840 0.900 rg 34.00 211.28 Td (Extrema sobreventa estadistica con soporte estructural de largo plazo intacto) Tj ET
 0.60 w 0.120 0.160 0.230 rg 24.00 23.40 793.89 0.60 re f
 BT /F1 7.5 Tf 0.400 0.450 0.530 rg 24.00 12.00 Td (TradingVolt Institutional Terminal & Market Desk  •  Especificacion Matematica de Escaneres y Motores Cuantitativos) Tj ET
 BT /F3 7.5 Tf 0.220 0.740 0.970 rg 711.89 12.00 Td (Pagina 4 / 4) Tj ET
@@ -509,5 +515,5 @@ xref
 trailer
 << /Size 14 /Root 1 0 R >>
 startxref
-43447
+44025
 %%EOF

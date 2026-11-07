@@ -2751,6 +2751,15 @@ elif nav_view == "⚡ Screener Cuantitativo":
             "benchmark_tickers": getattr(engine, 'CANSLIM_OFFICIAL_36_TICKERS', []),
             "criteria": ["Crecimiento Acelerado Ventas/EPS", "Dentro de 15% de Máximos", "Etapa 2 Alcista (SMA 50 > SMA 200)", "Patrocinio Institucional Líquido"]
         },
+        "🌪️ Capitulación VIX & Gamma": {
+            "title": "🌪️ Capitulación por Pánico VIX & Gamma Squeeze",
+            "badge": "CAPITULACIÓN & MEAN-REVERSION",
+            "type": "Swing / Mean-Reversion",
+            "strategy": "🌪️ Capitulación por Pánico VIX & Gamma Squeeze",
+            "description": "Filtro institucional de Capitulación Extrema (TradingVolt): Diseñado a partir del shock de noviembre de 2026 para capturar activos líderes de crecimiento y ETFs que sufrieron una liquidación mecánica por ventas forzadas de ETFs apalancados ($52B MOC) y aceleración en gamma negativa (VIX spike >= 50-70%, Z-score <= -1.7 sigma bajo SMA 20, caída 5d <= -6% a -20% con RVOL de capitulación >= 1.1x) mientras mantienen soporte estructural de largo plazo sobre o cerca de su SMA 200 (Dist >= -12%). Diseñado para compras escalonadas de alta asimetría positiva hacia la media móvil.",
+            "benchmark_tickers": getattr(engine, 'CAPITULATION_VIX_12_TICKERS', ["NVDA", "SMH", "AMD", "MU", "WDC", "QQQ", "IWM", "MRVL", "ARM", "AVGO", "CRWD", "PANW"]),
+            "criteria": ["VIX Spike / Gamma Squeeze", "Caída 5d <= -6% / Z-Score <= -1.7σ", "RVOL Capitulación >= 1.1x", "Soporte Estructural >= SMA 200"]
+        },
         "🔥 Highest Volume IPO": {
             "title": "🔥 Highest Volume IPO (Highest Volume Since IPO Day)",
             "badge": "RÉCORD VOLUMEN IPO",
@@ -3131,6 +3140,7 @@ elif nav_view == "⚡ Screener Cuantitativo":
         else:
             pref_cols = [
                 "Ticker", "¿Cumple Hoy?", "Precio", "Cambio %",
+                "RoC 5-Días %", "Z-Score (20)", "RSI (14)", "Dist SMA 50 %", "Dist SMA 200 %", "SMA 200",
                 "Días Verdes (15d)", "Avance 15d",
                 "EP Salto %", "EP RVOL", "EP Fecha",
                 "RMV (15d)", "Rendimiento 5d", "Inside Day",

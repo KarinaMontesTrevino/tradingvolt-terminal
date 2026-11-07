@@ -7,7 +7,7 @@ import shutil
 import textwrap
 
 WORKSPACE_DIR = r"C:\Users\kim17\.gemini\antigravity\scratch\trading_screener"
-ARTIFACT_DIR = r"C:\Users\kim17\.gemini\antigravity\brain\c5eba840-a175-4523-8ad5-46a40732b62e"
+ARTIFACT_DIR = r"C:\Users\kim17\.gemini\antigravity\brain\251115e7-87b3-4a8e-b1bc-a23583973e71"
 
 PDF_OUT = os.path.join(WORKSPACE_DIR, "TradingVolt_Catalogo_Maestro_Filtros_Cuantitativos.pdf")
 PDF_ARTIFACT = os.path.join(ARTIFACT_DIR, "TradingVolt_Catalogo_Maestro_Filtros_Cuantitativos.pdf")
@@ -170,6 +170,7 @@ FORMULAS = [
     ("Dealer Gamma Exposure (GEX CBOE)", "GEX_$M = Sign * Gamma_BS * OI * 100 * Spot^2 * 0.01 / 1e6", "Net GEX > 0: Long Gamma (Rango) | Net GEX < 0: Short Gamma (Volatilidad)"),
     ("Donchian (3/13) Breakout & Higher Low", "High(3d) > High(13d, t-1)  y  Low(3d) > Low(13d)", "Breakout de consolidacion de 2.5 semanas con piso ascendente confirmado"),
     ("Gap & Go Bullish Ignition Index", "Open > High(t-1)  y  Close > Open  y  RVOL > 0.50x", "Salto limpio con compradores sosteniendo la vela verde tras la campana"),
+    ("Capitulacion VIX & Z-Score Squeeze", "Z_Score(20) = (Close - SMA20) / Std20 <= -1.70  y  Dist200 >= -12%", "Extrema sobreventa estadistica con soporte estructural de largo plazo intacto"),
 ]
 
 

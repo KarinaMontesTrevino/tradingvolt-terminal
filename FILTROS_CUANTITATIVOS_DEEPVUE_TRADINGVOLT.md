@@ -129,6 +129,7 @@ All of the following happened:
 | **29** | **Daily Pivot Breakout** | Mike 5L/5R (42) | Ruptura fractal ($5L/5R$, lookback 100) con $\text{ROC}_{100d} \ge +30\%$, $\text{Slope} \ge +20\%$ |
 | **30** | **Donchian (3,13) Breakout** | Deepvue Visual | $\text{Low}_{3d} > \text{Low}_{13d}$ y $\text{High}_{3d} > \text{High}_{13d}[1]$ (Rotura de 2.5 semanas) |
 | **31** | **Gap & Go Bullish Ignition** | Deepvue Visual | $\text{Open} > \text{High}[1]$, $\text{Close} > \text{Open}$ y $\text{RVOL}_{20d} > 0.50\text{x}$ |
+| **32** | **Capitulación VIX & Gamma** | TradingVolt Institutional | $\text{VIX Spike} \ge +50\%$, $\text{RoC}_{5d} \le -6\%$ o $Z_{20} \le -1.7\sigma$, $\text{RVOL} \ge 1.1\text{x}$, $\text{Dist}_{200} \ge -12\%$ |
 
 ---
 
