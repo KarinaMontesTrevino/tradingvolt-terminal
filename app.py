@@ -3077,6 +3077,10 @@ elif nav_view == "⚡ Screener Cuantitativo":
             pivot_params_dict
         )
 
+    if not results_df.empty:
+        if "Symbol" in results_df.columns and "Ticker" not in results_df.columns:
+            results_df = results_df.rename(columns={"Symbol": "Ticker"})
+
     # Filtrar según el modo elegido por el usuario
     if not results_df.empty and "Cumple_Bool" in results_df.columns:
         total_eval = len(results_df)
@@ -3160,15 +3164,25 @@ elif nav_view == "⚡ Screener Cuantitativo":
                 column_config={k: v for k, v in col_cfg.items() if k in compact_cols}
             )
 
+            ticker_col_name = "Ticker" if "Ticker" in table_df.columns else ("Symbol" if "Symbol" in table_df.columns else None)
+            
             if selection and hasattr(selection, "selection") and selection.selection.rows:
                 clicked_idx = selection.selection.rows[0]
-                if clicked_idx < len(table_df):
-                    clicked_ticker = table_df.iloc[clicked_idx]["Ticker"]
+                if clicked_idx < len(table_df) and ticker_col_name:
+                    clicked_ticker = str(table_df.iloc[clicked_idx][ticker_col_name])
                     if clicked_ticker != st.session_state.get("selected_screener_ticker"):
                         st.session_state["selected_screener_ticker"] = clicked_ticker
                         st.rerun()
 
-            selected_ticker = st.session_state.get("selected_screener_ticker", table_df.iloc[0]["Ticker"])
+            fallback_t = "SPY"
+            if not table_df.empty and ticker_col_name:
+                fallback_t = str(table_df.iloc[0][ticker_col_name])
+            elif not results_df.empty and "Ticker" in results_df.columns:
+                fallback_t = str(results_df.iloc[0]["Ticker"])
+
+            selected_ticker = st.session_state.get("selected_screener_ticker", fallback_t)
+            if not selected_ticker:
+                selected_ticker = fallback_t
 
             # Botones de difusión a Discord
             st.markdown("<div style='height: 6px;'></div>", unsafe_allow_html=True)
