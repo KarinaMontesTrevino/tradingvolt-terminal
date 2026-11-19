@@ -1353,6 +1353,10 @@ with st.sidebar:
                 <span>🧪 Quant Lab &amp; Portal</span>
                 <span style="background: rgba(16,185,129,0.15); font-size: 10px; padding: 1px 6px; border-radius: 4px;">:8080 ↗</span>
             </a>
+            <a href="http://localhost:8503" target="_blank" style="color: #F59E0B; font-size: 11.5px; font-weight: 700; text-decoration: none; display: flex; justify-content: space-between; align-items: center;">
+                <span>📊 Quant Value Screener</span>
+                <span style="background: rgba(245,158,11,0.15); font-size: 10px; padding: 1px 6px; border-radius: 4px;">:8503 ↗</span>
+            </a>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -4346,7 +4350,7 @@ elif "Quant Options" in nav_view:
 
     # ----------------- SUB-TAB 1: GEX LIVE CBOE -----------------
     with tab_gex:
-        col_ctrl1, col_ctrl2, col_ctrl3 = st.columns([2, 2, 2])
+        col_ctrl1, col_ctrl1b, col_ctrl2, col_ctrl3 = st.columns([2, 1.5, 1.8, 1.5])
         with col_ctrl1:
             sym_options = {
                 "ES (Futuros E-mini S&P 500)": "ES",
@@ -4355,16 +4359,30 @@ elif "Quant Options" in nav_view:
                 "QQQ (Invesco QQQ Trust)": "QQQ",
                 "SPX (S&P 500 Index CBOE)": "SPX",
                 "IWM (Russell 2000 ETF)": "IWM",
+                "AMD (Advanced Micro Devices)": "AMD",
                 "NVDA (NVIDIA Corp)": "NVDA",
                 "AAPL (Apple Inc)": "AAPL",
                 "MSFT (Microsoft Corp)": "MSFT",
                 "AMZN (Amazon.com Inc)": "AMZN",
                 "META (Meta Platforms Inc)": "META",
                 "GOOGL (Alphabet Inc)": "GOOGL",
-                "TSLA (Tesla Inc)": "TSLA"
+                "TSLA (Tesla Inc)": "TSLA",
+                "PLTR (Palantir Technologies)": "PLTR",
+                "AVGO (Broadcom Inc)": "AVGO",
+                "TLT (20+ Year Treasury Bond ETF)": "TLT",
+                "GLD (SPDR Gold Shares)": "GLD",
             }
             sel_label = st.selectbox("Activo Subyacente:", list(sym_options.keys()), index=0, key="gex_sym_sel")
             gex_sym = sym_options[sel_label]
+        with col_ctrl1b:
+            custom_gex_ticker = st.text_input(
+                "O Ticker Libre (CBOE Live):",
+                value="",
+                placeholder="Ej: AMD, ANF, NFLX",
+                key="gex_custom_ticker",
+            ).strip().upper()
+            if custom_gex_ticker:
+                gex_sym = custom_gex_ticker
         with col_ctrl2:
             r_rate = st.slider("Tasa Libre de Riesgo (%):", 0.0, 7.0, 4.5, 0.25, key="gex_rate_sel") / 100.0
         with col_ctrl3:
@@ -7206,58 +7224,21 @@ elif "Insider & Institutional" in nav_view:
 # VISTA 16: NYSE ORDER IMBALANCE TRACKER (NOI AUCTIONS)
 # =========================================================================
 elif "Order Imbalance" in nav_view or "NOI" in nav_view:
-    st.markdown('<div class="brand-title">🔔 NYSE Order Imbalance Tracker (NOI Flow)</div>', unsafe_allow_html=True)
-    st.markdown('<div class="brand-sub">NYSE PRE-AUCTION ORDER FLOW • NET ORDER IMBALANCE (NOI) • DIRECTION, MAGNITUDE &amp; CONVERGENCE • REVERSE ENGINEERED FROM MASSIVE WEBSOCKET</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brand-title">🔔 Order Imbalance &amp; Live Flow Tracker</div>', unsafe_allow_html=True)
+    st.markdown('<div class="brand-sub">LIVE INTRADAY &amp; AUCTION ORDER FLOW • SIGNED VOLUME IMBALANCE, % ADV &amp; CONVERGENCE • REAL-TIME 5M FEED (YFINANCE)</div>', unsafe_allow_html=True)
     st.write("")
 
     if "noi_active_ticker" not in st.session_state:
         st.session_state["noi_active_ticker"] = "JPM"
 
-    # Tarjetas HUD de Resumen del Mercado de Subastas
-    k1, k2, k3, k4 = st.columns(4)
-    with k1:
-        st.markdown("""
-            <div class="metric-card">
-                <div class="metric-label">🟢 Desequilibrio Comprador (BUY)</div>
-                <div class="metric-val" style="color:#10B981;">$154.2M</div>
-                <div style="font-size:12.5px; color:#94A3B8;">Exceso de órdenes de compra en cola</div>
-            </div>
-        """, unsafe_allow_html=True)
-    with k2:
-        st.markdown("""
-            <div class="metric-card">
-                <div class="metric-label">🔴 Desequilibrio Vendedor (SELL)</div>
-                <div class="metric-val" style="color:#EF4444;">$48.5M</div>
-                <div style="font-size:12.5px; color:#94A3B8;">Presión vendedora acumulada</div>
-            </div>
-        """, unsafe_allow_html=True)
-    with k3:
-        st.markdown("""
-            <div class="metric-card">
-                <div class="metric-label">🤝 Tasa de Emparejamiento (Paired)</div>
-                <div class="metric-val" style="color:#38BDF8;">86.4%</div>
-                <div style="font-size:12.5px; color:#94A3B8;">Volumen listo para liquidar</div>
-            </div>
-        """, unsafe_allow_html=True)
-    with k4:
-        st.markdown("""
-            <div class="metric-card">
-                <div class="metric-label">🔄 Convergencias (Contra-Liquidez)</div>
-                <div class="metric-val" style="color:#00FF87;">5 Activos</div>
-                <div style="font-size:12.5px; color:#94A3B8;">Desequilibrio decreciendo (Shrinking)</div>
-            </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
-
     # Barra de Controles y Filtros Institucionales
     f1, f2, f3, f4 = st.columns([1.5, 1.2, 1.2, 1.1])
     with f1:
-        noi_search = st.text_input("🔍 Buscar Ticker NYSE:", placeholder="Ej: JPM, GS, PLTR, BAC, UBER...", key="noi_search_in")
+        noi_search = st.text_input("🔍 Buscar Cualquier Ticker (Live):", placeholder="Ej: AMD, JPM, GS, PLTR, ANF...", key="noi_search_in")
     with f2:
         noi_auction_type = st.selectbox(
-            "Tipo de Subasta:",
-            ["All", "Market Open (09:30 AM)", "Market Close (04:00 PM)", "Halt Reopening"],
+            "Ventana / Sesión:",
+            ["All", "Market Open (09:30 AM)", "Market Close (04:00 PM)", "Intraday / Flow"],
             index=0,
             key="noi_auc_sel"
         )
@@ -7276,12 +7257,58 @@ elif "Order Imbalance" in nav_view or "NOI" in nav_view:
             key="noi_trend_sel"
         )
 
-    df_noi = oie.get_latest_noi_feed(
-        auction_filter=noi_auction_type,
-        direction_filter=noi_direction,
-        trend_filter=noi_trend,
-        search_query=noi_search
-    )
+    with st.spinner("📡 Descargando flujo intradía en vivo (5m)..."):
+        df_noi = oie.get_latest_noi_feed(
+            auction_filter=noi_auction_type,
+            direction_filter=noi_direction,
+            trend_filter=noi_trend,
+            search_query=noi_search
+        )
+
+    if not df_noi.empty and noi_search.strip():
+        st.session_state["noi_active_ticker"] = df_noi.iloc[0]["symbol"]
+
+    buy_total_m = float(df_noi[df_noi["direction"] == "BUY"]["imbalance_val_m"].sum()) if not df_noi.empty else 0.0
+    sell_total_m = float(df_noi[df_noi["direction"] == "SELL"]["imbalance_val_m"].sum()) if not df_noi.empty else 0.0
+    avg_paired = float(df_noi["paired_ratio"].mean()) if not df_noi.empty else 0.0
+    shrink_cnt = int((df_noi["trend"] == "shrinking").sum()) if not df_noi.empty else 0
+
+    # Tarjetas HUD Dinámicas en Tiempo Real
+    k1, k2, k3, k4 = st.columns(4)
+    with k1:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">🟢 Desequilibrio Comprador (BUY)</div>
+                <div class="metric-val" style="color:#10B981;">${buy_total_m:,.2f}M</div>
+                <div style="font-size:12.5px; color:#94A3B8;">Presión compradora neta en vivo</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with k2:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">🔴 Desequilibrio Vendedor (SELL)</div>
+                <div class="metric-val" style="color:#EF4444;">${sell_total_m:,.2f}M</div>
+                <div style="font-size:12.5px; color:#94A3B8;">Presión vendedora neta en vivo</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with k3:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">🤝 Tasa de Emparejamiento (Paired)</div>
+                <div class="metric-val" style="color:#38BDF8;">{avg_paired:.1f}%</div>
+                <div style="font-size:12.5px; color:#94A3B8;">Volumen equilibrado promedio</div>
+            </div>
+        """, unsafe_allow_html=True)
+    with k4:
+        st.markdown(f"""
+            <div class="metric-card">
+                <div class="metric-label">🔄 Convergencias (Shrinking)</div>
+                <div class="metric-val" style="color:#00FF87;">{shrink_cnt} Activos</div>
+                <div style="font-size:12.5px; color:#94A3B8;">Desequilibrio decreciendo</div>
+            </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height: 10px;'></div>", unsafe_allow_html=True)
 
     st.markdown(f"""
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
